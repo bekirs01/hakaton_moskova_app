@@ -40,8 +40,8 @@ class MemeopsApiClient {
   final SupabaseClient _supabase;
 
   static const _requestTimeout = Duration(seconds: 45);
-  /// Image gen ~10s typical; allow headroom for OpenAI + Supabase upload in one HTTP call.
-  static const _imageJobTimeout = Duration(seconds: 120);
+  /// OpenAI gpt-image-1 (özellikle quality=high) + b64 + Supabase; Python ile aynı mertebede tut.
+  static const _imageJobTimeout = Duration(seconds: 360);
   static const _briefBatchTimeout = Duration(seconds: 120);
 
   Uri _u(String path) {

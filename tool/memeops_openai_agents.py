@@ -11,7 +11,8 @@ import base64
 import json
 import os
 import re
-from typing import Any, List, Optional
+import time
+from typing import Any, List, Optional, Tuple
 
 import httpx
 
@@ -43,6 +44,25 @@ def _openai_text_model() -> str:
 
 def _openai_image_model() -> str:
     return os.environ.get("OPENAI_IMAGE_MODEL", "gpt-image-1").strip() or "gpt-image-1"
+
+
+def _openai_image_quality() -> str:
+    return os.environ.get("OPENAI_IMAGE_QUALITY", "medium").strip() or "medium"
+
+
+def openai_image_read_timeout_seconds() -> float:
+    """gpt-image-1: high/hd daha uzun sürer; kısa timeout kesilince SDK 'Connection error.' verir."""
+    q = _openai_image_quality().lower()
+    if q in ("high", "hd"):
+        return 300.0
+    if q in ("low", "standard"):
+        return 120.0
+    return 180.0
+
+
+def meme_image_job_max_wait_seconds() -> float:
+    """Python image job: OpenAI (read) + b64 + Supabase Storage + REST."""
+    return openai_image_read_timeout_seconds() + 150.0
 
 
 def llm_profession_situations(profession_title: str) -> Optional[List[str]]:
@@ -96,29 +116,26 @@ Meme theme / situation (from previous agent):
 Create ONE square meme image that captures this."""
 
 
-def generate_meme_image_png_bytes(theme: str) -> tuple[bytes, str]:
-    """Returns PNG bytes and the prompt used. Raises RuntimeError on failure."""
+def _generate_meme_image_png_bytes_once(theme: str) -> Tuple[bytes, str]:
     key = os.environ.get("OPENAI_API_KEY", "").strip()
     if not key:
         raise RuntimeError("missing_openai_key")
     prompt = build_meme_image_user_prompt(theme)
     from openai import OpenAI
 
-    # SDK default httpx timeouts are short; ~10s generation still needs headroom for TLS/TTFB.
-    # "Connection error." from the SDK is usually a dropped idle socket / transient network, not "need 10 min".
+    read_sec = openai_image_read_timeout_seconds()
     client = OpenAI(
         api_key=key,
-        timeout=httpx.Timeout(90.0, connect=20.0),
-        max_retries=2,
+        timeout=httpx.Timeout(read_sec, connect=30.0),
+        max_retries=3,
     )
     try:
-        # b64_json: ikinci bir URL indirme adımı yok; "Connection error" / CDN kopmaları azalır.
         result = client.images.generate(
             model=_openai_image_model(),
             prompt=prompt,
             size="1024x1024",
             response_format="b64_json",
-            quality=os.environ.get("OPENAI_IMAGE_QUALITY", "medium").strip() or "medium",
+            quality=_openai_image_quality(),
         )
     except Exception as e:
         raise RuntimeError(str(e)[:500]) from e
@@ -130,7 +147,10 @@ def generate_meme_image_png_bytes(theme: str) -> tuple[bytes, str]:
         return base64.b64decode(item.b64_json), prompt
     if item.url:
         try:
-            r = httpx.get(item.url, timeout=httpx.Timeout(60.0, connect=15.0))
+            r = httpx.get(
+                item.url,
+                timeout=httpx.Timeout(min(read_sec, 120.0), connect=20.0),
+            )
             r.raise_for_status()
             return r.content, prompt
         except Exception as e:
@@ -138,6 +158,41 @@ def generate_meme_image_png_bytes(theme: str) -> tuple[bytes, str]:
                 f"Image URL fetch failed (prefer b64 from API): {str(e)[:400]}"
             ) from e
     raise RuntimeError("OpenAI returned neither b64_json nor url")
+
+
+def _transient_image_error(msg: str) -> bool:
+    low = msg.lower()
+    return any(
+        x in low
+        for x in (
+            "connection",
+            "timeout",
+            "temporarily",
+            "network",
+            "503",
+            "502",
+            "429",
+            "disconnect",
+            "reset",
+            "eof",
+        )
+    )
+
+
+def generate_meme_image_png_bytes(theme: str) -> tuple[bytes, str]:
+    """Returns PNG bytes and the prompt used. Raises RuntimeError on failure."""
+    last: Optional[RuntimeError] = None
+    for attempt in range(2):
+        try:
+            return _generate_meme_image_png_bytes_once(theme)
+        except RuntimeError as e:
+            last = e
+            if attempt == 0 and _transient_image_error(str(e)):
+                time.sleep(2.0)
+                continue
+            raise
+    assert last is not None
+    raise last
 
 
 def llm_telegram_meme_lines(

@@ -12,7 +12,10 @@ from typing import Any
 
 import httpx
 
-from memeops_openai_agents import generate_meme_image_png_bytes
+from memeops_openai_agents import (
+    generate_meme_image_png_bytes,
+    meme_image_job_max_wait_seconds,
+)
 from memeops_profession_supabase import _sb_headers
 
 
@@ -32,7 +35,10 @@ async def run_meme_image_job(jwt: str, meme_brief_id: str) -> dict[str, Any]:
     h = _sb_headers(jwt)
     auth_bin = _auth_headers_raw(jwt)
 
-    async with httpx.AsyncClient(timeout=httpx.Timeout(120.0, connect=30.0)) as client:
+    job_timeout = meme_image_job_max_wait_seconds()
+    async with httpx.AsyncClient(
+        timeout=httpx.Timeout(job_timeout, connect=45.0)
+    ) as client:
         br = await client.get(
             f"{url}/rest/v1/meme_briefs?id=eq.{meme_brief_id}"
             "&select=id,workspace_id,profession_id,brief_title,memotype_idea,suggested_caption_ru",
