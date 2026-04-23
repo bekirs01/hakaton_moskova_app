@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
-# Bir kez çalıştır: Telefon/kod gir → .env içine TELEGRAM_SESSION_STRING yazar.
+# Bir kez (veya oturum bozulunca): Telefon + Telegram kodu → .env içine TELEGRAM_SESSION_STRING yazar.
+# Bu adım etkileşimlidir; otomatik tamamlanamaz.
 set -euo pipefail
 cd "$(dirname "$0")"
 
@@ -15,4 +16,10 @@ fi
 source .venv-telegram/bin/activate
 pip install -q -r tool/requirements-telegram.txt
 
-exec python3 tool/telethon_create_string_session.py
+echo "→ Telegram girişi başlıyor (kod telefona gelir)."
+python3 tool/telethon_create_string_session.py
+
+echo ""
+echo "→ Oturum doğrulanıyor..."
+python3 tool/verify_telethon_session.py || exit 1
+echo "→ Tamam. Şimdi: ./run_telegram_api.sh"

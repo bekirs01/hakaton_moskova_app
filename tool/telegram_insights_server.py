@@ -70,13 +70,24 @@ async def lifespan(app: FastAPI):
     api_id = os.environ.get("TELEGRAM_API_ID", "").strip()
     api_hash = os.environ.get("TELEGRAM_API_HASH", "").strip()
     session_s = os.environ.get("TELEGRAM_SESSION_STRING", "").strip()
+    if (session_s.startswith('"') and session_s.endswith('"')) or (
+        session_s.startswith("'") and session_s.endswith("'")
+    ):
+        session_s = session_s[1:-1].strip()
     if api_id and api_hash and session_s:
         _client = TelegramClient(StringSession(session_s), int(api_id), api_hash)
         await _client.connect()
         ok = await _client.is_user_authorized()
         print(
             "telegram_insights_server: Telethon "
-            + ("connected." if ok else "not authorized — check TELEGRAM_SESSION_STRING.")
+            + (
+                "connected."
+                if ok
+                else (
+                    "not authorized — .env oturumu bu API_ID ile eşleşmiyor veya süresi doldu. "
+                    "Çalıştır: ./setup_telegram_session.sh (telefon + kod gerekir), sonra API’yi yeniden başlat."
+                )
+            )
         )
     else:
         print(

@@ -1,0 +1,473 @@
+// ignore: unused_import
+import 'package:intl/intl.dart' as intl;
+import 'app_localizations.dart';
+
+// ignore_for_file: type=lint
+
+/// The translations for Turkish (`tr`).
+class AppLocalizationsTr extends AppLocalizations {
+  AppLocalizationsTr([String locale = 'tr']) : super(locale);
+
+  @override
+  String get appTitle => 'MemeOps';
+
+  @override
+  String get defaultDisplayName => 'üretici';
+
+  @override
+  String greeting(String name) {
+    return 'İyi günler, $name';
+  }
+
+  @override
+  String get homeSubtitle => 'Meme akışına devam et — aşağıdan sekme seç.';
+
+  @override
+  String get tabProfession => 'Meslek';
+
+  @override
+  String get tabTelegram => 'Telegram';
+
+  @override
+  String get tabPublish => 'Yayın';
+
+  @override
+  String get tabArchive => 'Arşiv';
+
+  @override
+  String get languageTitle => 'Dil';
+
+  @override
+  String get languageTurkish => 'Türkçe';
+
+  @override
+  String get languageRussian => 'Русский';
+
+  @override
+  String get languagePickHint =>
+      'Uygulama dilini seçin. Tüm metinler buna göre değişir.';
+
+  @override
+  String get authTagline => 'Mizah fikirleri ve görseller — tek akışta';
+
+  @override
+  String get authSignInTitle => 'Giriş yap';
+
+  @override
+  String get authUsername => 'Kullanıcı adı';
+
+  @override
+  String get authUsernameHint => 'admin';
+
+  @override
+  String get authPassword => 'Şifre';
+
+  @override
+  String get authPasswordHint => '12345678';
+
+  @override
+  String get authSignIn => 'Giriş yap';
+
+  @override
+  String get authSignUp => 'İlk kurulum: kayıt oluştur (admin + şifre)';
+
+  @override
+  String get authErrEmptyUser => 'Kullanıcı adını girin.';
+
+  @override
+  String get authErrNoAt => 'Sadece kullanıcı adı yazın (@ ve e-posta yok).';
+
+  @override
+  String get authErrPasswordShort =>
+      'Şifre en az 6 karakter olsun (örn. 12345678).';
+
+  @override
+  String get authErrInvalidLogin =>
+      'Bu kullanıcı Supabase’te yok veya şifre uyuşmuyor. Alttaki «İlk kurulum: kayıt oluştur» ile dene, ya da Dashboard’da Authentication → Users ile kullanıcı ekle.';
+
+  @override
+  String get authErrAlreadyRegistered =>
+      'Bu kullanıcı zaten var. Doğrudan «Giriş yap» kullan.';
+
+  @override
+  String get authSnackSignUp =>
+      'Kayıt oluşturuldu. Giriş olmadıysa: Supabase → Authentication → Providers → «Confirm email» kapatıp tekrar dene, veya e-postadaki linke tıkla.';
+
+  @override
+  String get authBenefitTitle => 'Giriş yapınca neler kazanırsın?';
+
+  @override
+  String get authBenefitTelegram =>
+      'Telegram kanalından canlı özet ve fikirler';
+
+  @override
+  String get authBenefitProfession => 'Meslek / konuya göre AI durum mizahı';
+
+  @override
+  String get authBenefitImage => 'gpt-image-1 ile kare meme görseli';
+
+  @override
+  String get authBenefitSupabase => 'Supabase’de brief ve görsel sürümleri';
+
+  @override
+  String get configTitle => 'Yapılandırma';
+
+  @override
+  String get configBody =>
+      'Public Supabase URL + anon key ve MemeOps API tabanı eksik. Uygulamada servis rolü veya OpenAI anahtarı yok:';
+
+  @override
+  String get configBullet1 =>
+      '1) Proje kökünde `.env` (env.sample’dan kopyala) — IDE / simülatör bu dosyayı okur.';
+
+  @override
+  String get configBullet2 =>
+      '2) flutter run --dart-define=SUPABASE_URL=... --dart-define=SUPABASE_ANON_KEY=... --dart-define=MEMEOPS_API_BASE=https://...';
+
+  @override
+  String get configApiNote =>
+      'Yerel API: MEMEOPS_API_BASE=http://127.0.0.1:3000 (iOS Simülatör uyumlu; ./run_dev.sh veya ./run_telegram_api.sh).';
+
+  @override
+  String get archiveTitle => 'Arşiv';
+
+  @override
+  String get archiveSubtitle =>
+      'Ürettiğin görseller bu cihazda saklanır; tarih ve kaynak aşağıda.';
+
+  @override
+  String get archiveEmpty =>
+      'Henüz kayıtlı görsel yok.\nMeslek veya Telegram sekmesinden meme üret.';
+
+  @override
+  String get archiveFileMissing => 'Dosya bulunamadı (silinmiş olabilir).';
+
+  @override
+  String archiveDownloadFailed(int code) {
+    return 'Görsel indirilemedi (HTTP $code).';
+  }
+
+  @override
+  String get publishTitle => 'Yayın';
+
+  @override
+  String get publishBody =>
+      'İleride: kayıtlı `meme_brief` + `asset` satırlarını bağlı Telegram / VK vb. kanallara `publish_jobs` ile göndermek. Mobil uygulamada henüz yok.';
+
+  @override
+  String get publishStubButton => 'PublicationPort’u çağır (stub)';
+
+  @override
+  String get publicationComingSoon => 'Yayın hattı henüz bağlı değil.';
+
+  @override
+  String get publicationDone => 'Tamam';
+
+  @override
+  String get professionStep1Title => 'Meslek veya konu';
+
+  @override
+  String get professionStep1Subtitle =>
+      'AI’dan 7–10 durum fikri almak için kısa bir başlık yaz.';
+
+  @override
+  String get professionFlowCaption =>
+      'Meslek akışı — GPT fikirler + gpt-image-1';
+
+  @override
+  String get professionNameLabel => 'Meslek adı';
+
+  @override
+  String get professionNameHint => 'örn. mimar, hemşire, sihirbaz';
+
+  @override
+  String get professionGenerateIdeas => 'Durum fikirlerini üret';
+
+  @override
+  String get professionStartOver => 'Baştan başla';
+
+  @override
+  String get professionStep2Title => 'Metin seç';
+
+  @override
+  String get professionStep2Subtitle => 'Bir satıra dokun; sonra görsel üret.';
+
+  @override
+  String get professionGeneratingMeme => 'Mem görseli oluşturuluyor…';
+
+  @override
+  String get professionGenerateImage => 'Mem görselini üret';
+
+  @override
+  String get professionErrShortName =>
+      'En az 3 karakterlik bir meslek adı girin.';
+
+  @override
+  String get professionErrNoVariants =>
+      'Sunucudan varyant gelmedi. Backend / mock modunu kontrol edin.';
+
+  @override
+  String get professionSnackSaved =>
+      'Görsel üretildi ve Supabase’e kaydedildi (Storage: meme-assets; tablolar: meme_assets / meme_asset_versions).';
+
+  @override
+  String get professionSourceLabel => 'Meslek akışı';
+
+  @override
+  String professionSavedLine(String info) {
+    return 'Kayıt: $info';
+  }
+
+  @override
+  String get professionPublication => 'Yayın (yakında)';
+
+  @override
+  String get profProgressCreating => 'Meslek kaydı oluşturuluyor…';
+
+  @override
+  String get profProgressSituations =>
+      '7–10 durum fikri üretiliyor (API’de OpenAI)…';
+
+  @override
+  String get profProgressImage => 'Mem görseli oluşturuluyor…';
+
+  @override
+  String get profProgressSaving => 'Sonuç kaydediliyor…';
+
+  @override
+  String get telegramChannelDefault => 'Telegram kanalı';
+
+  @override
+  String get telegramStep1Title => 'Kanal bağlantısı';
+
+  @override
+  String get telegramStep1SubtitleLive =>
+      'Yerel Telethon API ile canlı özet; aynı bağlamdan fikirler.';
+
+  @override
+  String get telegramStep1SubtitleStub =>
+      'Genel kanal linki · canlı çekim için ./run_telegram_api.sh';
+
+  @override
+  String get telegramLinkLabel => 'Telegram kanalı / genel link';
+
+  @override
+  String get telegramAnalyzing => 'Kanal analiz ediliyor…';
+
+  @override
+  String get telegramAnalyseButton => 'Bağlantıyı analiz et';
+
+  @override
+  String get telegramStep2Title => 'Özet ve fikir üretimi';
+
+  @override
+  String get telegramStep2Subtitle =>
+      'Kanal DNA’sını kontrol et; ardından varyantları oluştur.';
+
+  @override
+  String get telegramStubBanner =>
+      'Stub modu — Telegram okunmuyor. ./run_telegram_api.sh çalıştırın; .env içinde TELEGRAM_* ve geçerli TELEGRAM_SESSION_STRING olsun.';
+
+  @override
+  String telegramInsightChannel(String title) {
+    return 'Kanal: $title';
+  }
+
+  @override
+  String telegramInsightTopic(String topic) {
+    return 'Konu: $topic';
+  }
+
+  @override
+  String telegramInsightStyle(String style) {
+    return 'Üslup: $style';
+  }
+
+  @override
+  String telegramInsightTone(String tone) {
+    return 'Ton: $tone';
+  }
+
+  @override
+  String telegramInsightThemes(String themes) {
+    return 'Temalar: $themes';
+  }
+
+  @override
+  String telegramInsightPostMix(String mix) {
+    return 'Gönderi dengesi: $mix';
+  }
+
+  @override
+  String telegramInsightMediaTypes(String types) {
+    return 'Medya türleri: $types';
+  }
+
+  @override
+  String get telegramMediaSection => 'Medya / görseller';
+
+  @override
+  String get telegramRecentSection => 'Son örnekler';
+
+  @override
+  String telegramMemeAngles(String angles) {
+    return 'Mem açıları: $angles';
+  }
+
+  @override
+  String get telegramBadgeLive => 'Canlı';
+
+  @override
+  String get telegramBadgeStub => 'Stub';
+
+  @override
+  String get telegramGenerateLive => '7–10 yapay zeka varyantı üret ve kaydet';
+
+  @override
+  String get telegramGenerateHosted =>
+      '5 fikir varyantı üret (barındırılan API)';
+
+  @override
+  String get telegramLiveHint =>
+      'Varyantlar meme_briefs olarak kaydedilir; görseller Python API’de OPENAI_API_KEY kullanır.';
+
+  @override
+  String get telegramStep3Title => 'Metin ve görsel';
+
+  @override
+  String get telegramStep3Subtitle =>
+      'Bir varyanta dokun; meme görselini üret.';
+
+  @override
+  String get telegramGeneratingMeme => 'Mem görseli oluşturuluyor…';
+
+  @override
+  String get telegramGenerateMemeButton => 'Seçimden meme üret';
+
+  @override
+  String get telegramSnackSaved =>
+      'Görsel üretildi ve Supabase’e kaydedildi (Storage: meme-assets).';
+
+  @override
+  String get telegramSourceLabel => 'Telegram akışı';
+
+  @override
+  String telegramAssetVersion(String id) {
+    return 'Varlık sürümü: $id';
+  }
+
+  @override
+  String get telegramErrShortLink =>
+      'Tam kanal bağlantısı yapıştırın (en az 8 karakter).';
+
+  @override
+  String get telegramErrStubOffline =>
+      'Bu çevrimdışı stub verisi, gerçek kanalınız değil. .env içinde TELEGRAM_* + oturum ile ./run_telegram_api.sh başlatın ve tekrar deneyin.';
+
+  @override
+  String telegramErrTooFewIdeas(int count) {
+    return 'Sunucudan çok az fikir geldi ($count). API .env içinde OPENAI_API_KEY kontrol edin.';
+  }
+
+  @override
+  String get telegramErrNoIdeas => 'Sunucudan fikir gelmedi.';
+
+  @override
+  String get telegramFutureContext =>
+      'Telegram içe aktarma — kanal DNA’sı olarak meme ajanlarına verin.';
+
+  @override
+  String get tgProgressFetching =>
+      'Kanal mesajları alınıyor ve özet oluşturuluyor…';
+
+  @override
+  String get tgProgressPreparing => 'Bağlam hazırlanıyor…';
+
+  @override
+  String get tgProgressIdeas =>
+      '7–10 meme fikri (AI) üretiliyor ve çalışma alanınıza kaydediliyor…';
+
+  @override
+  String get tgProgressImage =>
+      'Seçilen varyanttaki meme görseli oluşturuluyor…';
+
+  @override
+  String get tgProgressSaving => 'Kaydediliyor…';
+
+  @override
+  String get retry => 'Yeniden dene';
+
+  @override
+  String get imageLoadError => 'Görsel yüklenemedi';
+
+  @override
+  String get imageOfflineError =>
+      'Görsel URL’si var ancak çevrimdışı görüntülenemedi.';
+
+  @override
+  String get errUnexpected => 'Bir şeyler ters gitti. Lütfen tekrar deneyin.';
+
+  @override
+  String get errNetworkUser =>
+      'Sunucuya ulaşılamıyor. Bağlantınızı kontrol edin.';
+
+  @override
+  String get errNetworkDebug =>
+      'MemeOps API’ye ulaşılamıyor. Proje kökünde ./run_telegram_api.sh çalıştırın (veya MEMEOPS_USE_PYTHON_API=1 ./run_dev.sh).';
+
+  @override
+  String errApiTimeoutDebug(String origin, int seconds) {
+    return 'MemeOps API zaman aşımı ($origin, $seconds sn).';
+  }
+
+  @override
+  String get errApiTimeoutUser =>
+      'Sunucu çok geç yanıt verdi. Daha sonra tekrar deneyin.';
+
+  @override
+  String errApiUnreachableDebug(String origin, int port) {
+    return 'MemeOps API’ye ($origin) ulaşılamıyor. Proje kökünde: ./run_telegram_api.sh (Python, port $port; .env’de TELEGRAM_* + OPENAI_* gerekir). Veya: MEMEOPS_USE_PYTHON_API=1 ./run_dev.sh — aynı API’yi başlatır. OpenAI/Telegram yoksa Dart stub: dart run tool/memeops_dev_server.dart --port $port.';
+  }
+
+  @override
+  String get errApiUnreachableUser =>
+      'MemeOps sunucusuna ulaşılamıyor. Bağlantınızı kontrol edin.';
+
+  @override
+  String debugApiNotRunning(String base) {
+    return 'MemeOps: $base yanıt vermiyor. Gömülü stub BAŞLATILMIYOR (MEMEOPS_USE_PYTHON_API=1). Önce ./run_telegram_api.sh çalıştır, sonra uygulamayı yeniden aç.';
+  }
+
+  @override
+  String archiveDebugSkip(String error) {
+    return 'Arşiv kaydı atlandı: $error';
+  }
+
+  @override
+  String get stubDefaultTopic => 'konu';
+
+  @override
+  String stubProfessionIdea1(String topic) {
+    return 'Beklenti ve gerçek mizahı: «$topic»';
+  }
+
+  @override
+  String stubProfessionIdea2(String topic) {
+    return '«$topic» gönderisine kitle tepkisi';
+  }
+
+  @override
+  String stubProfessionIdea3(String topic) {
+    return '«$topic» nişindeki tartışmanın ironisi';
+  }
+
+  @override
+  String stubProfessionIdea4(String topic) {
+    return 'Önce/sonra: «$topic» farkındalığı';
+  }
+
+  @override
+  String stubProfessionIdea5(String topic) {
+    return '«$topic» kitlesinin iç şakaları';
+  }
+}

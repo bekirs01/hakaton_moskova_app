@@ -1,0 +1,222 @@
+{
+  "@@locale": "tr",
+  "appTitle": "MemeOps",
+  "defaultDisplayName": "üretici",
+  "greeting": "İyi günler, {name}",
+  "@greeting": {
+    "placeholders": {
+      "name": {"type": "String"}
+    }
+  },
+  "homeSubtitle": "Meme akışına devam et — aşağıdan sekme seç.",
+  "tabProfession": "Meslek",
+  "tabTelegram": "Telegram",
+  "tabPublish": "Yayın",
+  "tabArchive": "Arşiv",
+  "languageTitle": "Dil",
+  "languageTurkish": "Türkçe",
+  "languageRussian": "Русский",
+  "languagePickHint": "Uygulama dilini seçin. Tüm metinler buna göre değişir.",
+  "authTagline": "Mizah fikirleri ve görseller — tek akışta",
+  "authSignInTitle": "Giriş yap",
+  "authUsername": "Kullanıcı adı",
+  "authUsernameHint": "admin",
+  "authPassword": "Şifre",
+  "authPasswordHint": "12345678",
+  "authSignIn": "Giriş yap",
+  "authSignUp": "İlk kurulum: kayıt oluştur (admin + şifre)",
+  "authErrEmptyUser": "Kullanıcı adını girin.",
+  "authErrNoAt": "Sadece kullanıcı adı yazın (@ ve e-posta yok).",
+  "authErrPasswordShort": "Şifre en az 6 karakter olsun (örn. 12345678).",
+  "authErrInvalidLogin": "Bu kullanıcı Supabase’te yok veya şifre uyuşmuyor. Alttaki «İlk kurulum: kayıt oluştur» ile dene, ya da Dashboard’da Authentication → Users ile kullanıcı ekle.",
+  "authErrAlreadyRegistered": "Bu kullanıcı zaten var. Doğrudan «Giriş yap» kullan.",
+  "authSnackSignUp": "Kayıt oluşturuldu. Giriş olmadıysa: Supabase → Authentication → Providers → «Confirm email» kapatıp tekrar dene, veya e-postadaki linke tıkla.",
+  "authBenefitTitle": "Giriş yapınca neler kazanırsın?",
+  "authBenefitTelegram": "Telegram kanalından canlı özet ve fikirler",
+  "authBenefitProfession": "Meslek / konuya göre AI durum mizahı",
+  "authBenefitImage": "gpt-image-1 ile kare meme görseli",
+  "authBenefitSupabase": "Supabase’de brief ve görsel sürümleri",
+  "configTitle": "Yapılandırma",
+  "configBody": "Public Supabase URL + anon key ve MemeOps API tabanı eksik. Uygulamada servis rolü veya OpenAI anahtarı yok:",
+  "configBullet1": "1) Proje kökünde `.env` (env.sample’dan kopyala) — IDE / simülatör bu dosyayı okur.",
+  "configBullet2": "2) flutter run --dart-define=SUPABASE_URL=... --dart-define=SUPABASE_ANON_KEY=... --dart-define=MEMEOPS_API_BASE=https://...",
+  "configApiNote": "Yerel API: MEMEOPS_API_BASE=http://127.0.0.1:3000 (iOS Simülatör uyumlu; ./run_dev.sh veya ./run_telegram_api.sh).",
+  "archiveTitle": "Arşiv",
+  "archiveSubtitle": "Ürettiğin görseller bu cihazda saklanır; tarih ve kaynak aşağıda.",
+  "archiveEmpty": "Henüz kayıtlı görsel yok.\nMeslek veya Telegram sekmesinden meme üret.",
+  "archiveFileMissing": "Dosya bulunamadı (silinmiş olabilir).",
+  "archiveDownloadFailed": "Görsel indirilemedi (HTTP {code}).",
+  "@archiveDownloadFailed": {
+    "placeholders": {
+      "code": {"type": "int"}
+    }
+  },
+  "publishTitle": "Yayın",
+  "publishBody": "İleride: kayıtlı `meme_brief` + `asset` satırlarını bağlı Telegram / VK vb. kanallara `publish_jobs` ile göndermek. Mobil uygulamada henüz yok.",
+  "publishStubButton": "PublicationPort’u çağır (stub)",
+  "publicationComingSoon": "Yayın hattı henüz bağlı değil.",
+  "publicationDone": "Tamam",
+  "professionStep1Title": "Meslek veya konu",
+  "professionStep1Subtitle": "AI’dan 7–10 durum fikri almak için kısa bir başlık yaz.",
+  "professionFlowCaption": "Meslek akışı — GPT fikirler + gpt-image-1",
+  "professionNameLabel": "Meslek adı",
+  "professionNameHint": "örn. mimar, hemşire, sihirbaz",
+  "professionGenerateIdeas": "Durum fikirlerini üret",
+  "professionStartOver": "Baştan başla",
+  "professionStep2Title": "Metin seç",
+  "professionStep2Subtitle": "Bir satıra dokun; sonra görsel üret.",
+  "professionGeneratingMeme": "Mem görseli oluşturuluyor…",
+  "professionGenerateImage": "Mem görselini üret",
+  "professionErrShortName": "En az 3 karakterlik bir meslek adı girin.",
+  "professionErrNoVariants": "Sunucudan varyant gelmedi. Backend / mock modunu kontrol edin.",
+  "professionSnackSaved": "Görsel üretildi ve Supabase’e kaydedildi (Storage: meme-assets; tablolar: meme_assets / meme_asset_versions).",
+  "professionSourceLabel": "Meslek akışı",
+  "professionSavedLine": "Kayıt: {info}",
+  "@professionSavedLine": {
+    "placeholders": {
+      "info": {"type": "String"}
+    }
+  },
+  "professionPublication": "Yayın (yakında)",
+  "profProgressCreating": "Meslek kaydı oluşturuluyor…",
+  "profProgressSituations": "7–10 durum fikri üretiliyor (API’de OpenAI)…",
+  "profProgressImage": "Mem görseli oluşturuluyor…",
+  "profProgressSaving": "Sonuç kaydediliyor…",
+  "telegramChannelDefault": "Telegram kanalı",
+  "telegramStep1Title": "Kanal bağlantısı",
+  "telegramStep1SubtitleLive": "Yerel Telethon API ile canlı özet; aynı bağlamdan fikirler.",
+  "telegramStep1SubtitleStub": "Genel kanal linki · canlı çekim için ./run_telegram_api.sh",
+  "telegramLinkLabel": "Telegram kanalı / genel link",
+  "telegramAnalyzing": "Kanal analiz ediliyor…",
+  "telegramAnalyseButton": "Bağlantıyı analiz et",
+  "telegramStep2Title": "Özet ve fikir üretimi",
+  "telegramStep2Subtitle": "Kanal DNA’sını kontrol et; ardından varyantları oluştur.",
+  "telegramStubBanner": "Stub modu — Telegram okunmuyor. ./run_telegram_api.sh çalıştırın; .env içinde TELEGRAM_* ve geçerli TELEGRAM_SESSION_STRING olsun.",
+  "telegramInsightChannel": "Kanal: {title}",
+  "@telegramInsightChannel": {
+    "placeholders": {
+      "title": {"type": "String"}
+    }
+  },
+  "telegramInsightTopic": "Konu: {topic}",
+  "@telegramInsightTopic": {
+    "placeholders": {
+      "topic": {"type": "String"}
+    }
+  },
+  "telegramInsightStyle": "Üslup: {style}",
+  "@telegramInsightStyle": {
+    "placeholders": {
+      "style": {"type": "String"}
+    }
+  },
+  "telegramInsightTone": "Ton: {tone}",
+  "@telegramInsightTone": {
+    "placeholders": {
+      "tone": {"type": "String"}
+    }
+  },
+  "telegramInsightThemes": "Temalar: {themes}",
+  "@telegramInsightThemes": {
+    "placeholders": {
+      "themes": {"type": "String"}
+    }
+  },
+  "telegramInsightPostMix": "Gönderi dengesi: {mix}",
+  "@telegramInsightPostMix": {
+    "placeholders": {
+      "mix": {"type": "String"}
+    }
+  },
+  "telegramInsightMediaTypes": "Medya türleri: {types}",
+  "@telegramInsightMediaTypes": {
+    "placeholders": {
+      "types": {"type": "String"}
+    }
+  },
+  "telegramMediaSection": "Medya / görseller",
+  "telegramRecentSection": "Son örnekler",
+  "telegramMemeAngles": "Mem açıları: {angles}",
+  "@telegramMemeAngles": {
+    "placeholders": {
+      "angles": {"type": "String"}
+    }
+  },
+  "telegramBadgeLive": "Canlı",
+  "telegramBadgeStub": "Stub",
+  "telegramGenerateLive": "7–10 yapay zeka varyantı üret ve kaydet",
+  "telegramGenerateHosted": "5 fikir varyantı üret (barındırılan API)",
+  "telegramLiveHint": "Varyantlar meme_briefs olarak kaydedilir; görseller Python API’de OPENAI_API_KEY kullanır.",
+  "telegramStep3Title": "Metin ve görsel",
+  "telegramStep3Subtitle": "Bir varyanta dokun; meme görselini üret.",
+  "telegramGeneratingMeme": "Mem görseli oluşturuluyor…",
+  "telegramGenerateMemeButton": "Seçimden meme üret",
+  "telegramSnackSaved": "Görsel üretildi ve Supabase’e kaydedildi (Storage: meme-assets).",
+  "telegramSourceLabel": "Telegram akışı",
+  "telegramAssetVersion": "Varlık sürümü: {id}",
+  "@telegramAssetVersion": {
+    "placeholders": {
+      "id": {"type": "String"}
+    }
+  },
+  "telegramErrShortLink": "Tam kanal bağlantısı yapıştırın (en az 8 karakter).",
+  "telegramErrStubOffline": "Bu çevrimdışı stub verisi, gerçek kanalınız değil. .env içinde TELEGRAM_* + oturum ile ./run_telegram_api.sh başlatın ve tekrar deneyin.",
+  "telegramErrTooFewIdeas": "Sunucudan çok az fikir geldi ({count}). API .env içinde OPENAI_API_KEY kontrol edin.",
+  "@telegramErrTooFewIdeas": {
+    "placeholders": {
+      "count": {"type": "int"}
+    }
+  },
+  "telegramErrNoIdeas": "Sunucudan fikir gelmedi.",
+  "telegramFutureContext": "Telegram içe aktarma — kanal DNA’sı olarak meme ajanlarına verin.",
+  "tgProgressFetching": "Kanal mesajları alınıyor ve özet oluşturuluyor…",
+  "tgProgressPreparing": "Bağlam hazırlanıyor…",
+  "tgProgressIdeas": "7–10 meme fikri (AI) üretiliyor ve çalışma alanınıza kaydediliyor…",
+  "tgProgressImage": "Seçilen varyanttaki meme görseli oluşturuluyor…",
+  "tgProgressSaving": "Kaydediliyor…",
+  "retry": "Yeniden dene",
+  "imageLoadError": "Görsel yüklenemedi",
+  "imageOfflineError": "Görsel URL’si var ancak çevrimdışı görüntülenemedi.",
+  "errUnexpected": "Bir şeyler ters gitti. Lütfen tekrar deneyin.",
+  "errNetworkUser": "Sunucuya ulaşılamıyor. Bağlantınızı kontrol edin.",
+  "errNetworkDebug": "MemeOps API’ye ulaşılamıyor. Proje kökünde ./run_telegram_api.sh çalıştırın (veya MEMEOPS_USE_PYTHON_API=1 ./run_dev.sh).",
+  "errApiTimeoutDebug": "MemeOps API zaman aşımı ({origin}, {seconds} sn).",
+  "@errApiTimeoutDebug": {
+    "placeholders": {
+      "origin": {"type": "String"},
+      "seconds": {"type": "int"}
+    }
+  },
+  "errApiTimeoutUser": "Sunucu çok geç yanıt verdi. Daha sonra tekrar deneyin.",
+  "errApiUnreachableDebug": "MemeOps API’ye ({origin}) ulaşılamıyor. Proje kökünde: ./run_telegram_api.sh (Python, port {port}; .env’de TELEGRAM_* + OPENAI_* gerekir). Veya: MEMEOPS_USE_PYTHON_API=1 ./run_dev.sh — aynı API’yi başlatır. OpenAI/Telegram yoksa Dart stub: dart run tool/memeops_dev_server.dart --port {port}.",
+  "@errApiUnreachableDebug": {
+    "placeholders": {
+      "origin": {"type": "String"},
+      "port": {"type": "int"}
+    }
+  },
+  "errApiUnreachableUser": "MemeOps sunucusuna ulaşılamıyor. Bağlantınızı kontrol edin.",
+  "debugApiNotRunning": "MemeOps: {base} yanıt vermiyor. Gömülü stub BAŞLATILMIYOR (MEMEOPS_USE_PYTHON_API=1). Önce ./run_telegram_api.sh çalıştır, sonra uygulamayı yeniden aç.",
+  "@debugApiNotRunning": {
+    "placeholders": {
+      "base": {"type": "String"}
+    }
+  },
+  "archiveDebugSkip": "Arşiv kaydı atlandı: {error}",
+  "@archiveDebugSkip": {
+    "placeholders": {
+      "error": {"type": "String"}
+    }
+  },
+  "stubDefaultTopic": "konu",
+  "stubProfessionIdea1": "Beklenti ve gerçek mizahı: «{topic}»",
+  "@stubProfessionIdea1": {"placeholders": {"topic": {"type": "String"}}},
+  "stubProfessionIdea2": "«{topic}» gönderisine kitle tepkisi",
+  "@stubProfessionIdea2": {"placeholders": {"topic": {"type": "String"}}},
+  "stubProfessionIdea3": "«{topic}» nişindeki tartışmanın ironisi",
+  "@stubProfessionIdea3": {"placeholders": {"topic": {"type": "String"}}},
+  "stubProfessionIdea4": "Önce/sonra: «{topic}» farkındalığı",
+  "@stubProfessionIdea4": {"placeholders": {"topic": {"type": "String"}}},
+  "stubProfessionIdea5": "«{topic}» kitlesinin iç şakaları",
+  "@stubProfessionIdea5": {"placeholders": {"topic": {"type": "String"}}}
+}

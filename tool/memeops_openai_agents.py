@@ -43,26 +43,35 @@ def _openai_text_model() -> str:
 
 
 def _openai_image_model() -> str:
-    return os.environ.get("OPENAI_IMAGE_MODEL", "gpt-image-1").strip() or "gpt-image-1"
+    # gpt-image-1-mini: daha düşük gecikme / maliyet; kalite için .env ile gpt-image-1 veya 1.5
+    return os.environ.get("OPENAI_IMAGE_MODEL", "gpt-image-1-mini").strip() or "gpt-image-1-mini"
 
 
 def _openai_image_quality() -> str:
-    return os.environ.get("OPENAI_IMAGE_QUALITY", "medium").strip() or "medium"
+    # low: en hızlı üretim (token sayısı düşük); final kalite için medium/high
+    return os.environ.get("OPENAI_IMAGE_QUALITY", "low").strip() or "low"
+
+
+def _openai_image_size() -> str:
+    allowed = {"1024x1024", "1024x1536", "1536x1024", "auto"}
+    v = os.environ.get("OPENAI_IMAGE_SIZE", "1024x1024").strip() or "1024x1024"
+    return v if v in allowed else "1024x1024"
 
 
 def openai_image_read_timeout_seconds() -> float:
-    """gpt-image-1: high/hd daha uzun sürer; kısa timeout kesilince SDK 'Connection error.' verir."""
-    q = _openai_image_quality().lower()
-    if q in ("high", "hd"):
-        return 300.0
-    if q in ("low", "standard"):
-        return 120.0
-    return 180.0
+    """Görsel üretim HTTP okuma üst sınırı (sn). Kısa değerlerde SDK sık 'Connection error.' döner."""
+    raw = os.environ.get("OPENAI_IMAGE_READ_TIMEOUT", "").strip()
+    if raw:
+        try:
+            return max(120.0, min(float(raw), 1200.0))
+        except ValueError:
+            pass
+    return 900.0
 
 
 def meme_image_job_max_wait_seconds() -> float:
-    """Python image job: OpenAI (read) + b64 + Supabase Storage + REST."""
-    return openai_image_read_timeout_seconds() + 150.0
+    """OpenAI (10 dk) + b64 + Supabase Storage + REST — tek AsyncClient üst sınırı."""
+    return openai_image_read_timeout_seconds() + 180.0
 
 
 def llm_profession_situations(profession_title: str) -> Optional[List[str]]:
@@ -110,10 +119,10 @@ def build_meme_image_user_prompt(theme: str) -> str:
     t = (theme or "").strip()
     return f"""{_MEME_IMAGE_SYSTEM}
 
-Meme theme / situation (from previous agent):
+The image MUST match this exact situation / joke (same meaning and punchline idea). Use it as the single source of truth for what to draw:
 {t}
 
-Create ONE square meme image that captures this."""
+Create ONE square meme that clearly illustrates the situation above (classic meme layout when it helps)."""
 
 
 def _generate_meme_image_png_bytes_once(theme: str) -> Tuple[bytes, str]:
@@ -126,17 +135,25 @@ def _generate_meme_image_png_bytes_once(theme: str) -> Tuple[bytes, str]:
     read_sec = openai_image_read_timeout_seconds()
     client = OpenAI(
         api_key=key,
-        timeout=httpx.Timeout(read_sec, connect=30.0),
-        max_retries=3,
+        timeout=httpx.Timeout(connect=120.0, read=read_sec, write=read_sec, pool=read_sec),
+        max_retries=2,
     )
+    model = _openai_image_model()
+    gen_kwargs: dict[str, Any] = {
+        "model": model,
+        "prompt": prompt,
+        "size": _openai_image_size(),
+        "quality": _openai_image_quality(),
+    }
+    # GPT Image (gpt-image-*) API: response_format desteklenmiyor → 400 unknown_parameter.
+    if model.startswith("dall-e"):
+        gen_kwargs["response_format"] = "b64_json"
+    if model.startswith("gpt-image"):
+        mod = os.environ.get("OPENAI_IMAGE_MODERATION", "low").strip() or "low"
+        if mod in ("low", "auto"):
+            gen_kwargs["moderation"] = mod
     try:
-        result = client.images.generate(
-            model=_openai_image_model(),
-            prompt=prompt,
-            size="1024x1024",
-            response_format="b64_json",
-            quality=_openai_image_quality(),
-        )
+        result = client.images.generate(**gen_kwargs)
     except Exception as e:
         raise RuntimeError(str(e)[:500]) from e
 
@@ -149,7 +166,7 @@ def _generate_meme_image_png_bytes_once(theme: str) -> Tuple[bytes, str]:
         try:
             r = httpx.get(
                 item.url,
-                timeout=httpx.Timeout(min(read_sec, 120.0), connect=20.0),
+                timeout=httpx.Timeout(min(read_sec, 300.0), connect=45.0),
             )
             r.raise_for_status()
             return r.content, prompt
@@ -181,18 +198,15 @@ def _transient_image_error(msg: str) -> bool:
 
 def generate_meme_image_png_bytes(theme: str) -> tuple[bytes, str]:
     """Returns PNG bytes and the prompt used. Raises RuntimeError on failure."""
-    last: Optional[RuntimeError] = None
-    for attempt in range(2):
+    for attempt in range(3):
         try:
             return _generate_meme_image_png_bytes_once(theme)
         except RuntimeError as e:
-            last = e
-            if attempt == 0 and _transient_image_error(str(e)):
-                time.sleep(2.0)
+            if attempt < 2 and _transient_image_error(str(e)):
+                time.sleep(2.0 * (attempt + 1))
                 continue
             raise
-    assert last is not None
-    raise last
+    raise RuntimeError("meme image: retry loop exhausted")
 
 
 def llm_telegram_meme_lines(

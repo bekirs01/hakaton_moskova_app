@@ -3,6 +3,8 @@ import 'dart:convert';
 
 import 'package:flutter/foundation.dart';
 import 'package:hakaton_moskova_app/core/config/app_env.dart';
+import 'package:hakaton_moskova_app/core/locale/app_locale_controller.dart';
+import 'package:hakaton_moskova_app/l10n/app_localizations.dart';
 import 'package:hakaton_moskova_app/data/models/channel_insights.dart';
 import 'package:hakaton_moskova_app/data/models/meme_brief_list_item.dart';
 import 'package:http/http.dart' as http;
@@ -22,16 +24,14 @@ class MemeopsApiException implements Exception {
 /// Short message for presentation-layer catch blocks (no stack traces).
 String memeopsUnexpectedErrorMessage(Object error) {
   if (error is MemeopsApiException) return error.message;
+  final L = lookupAppLocalizations(AppLocaleController.instance.locale);
   final t = error.toString().toLowerCase();
   if (t.contains('connection refused') ||
       t.contains('socketexception') ||
       t.contains('failed host lookup')) {
-    return kDebugMode
-        ? 'Cannot reach the MemeOps API. Run ./run_telegram_api.sh from the project root '
-            '(or MEMEOPS_USE_PYTHON_API=1 ./run_dev.sh).'
-        : 'Cannot reach the server. Check your connection and try again.';
+    return kDebugMode ? L.errNetworkDebug : L.errNetworkUser;
   }
-  return 'Something went wrong. Please try again.';
+  return L.errUnexpected;
 }
 
 class MemeopsApiClient {
@@ -40,9 +40,9 @@ class MemeopsApiClient {
   final SupabaseClient _supabase;
 
   static const _requestTimeout = Duration(seconds: 45);
-  /// OpenAI gpt-image-1 (özellikle quality=high) + b64 + Supabase; Python ile aynı mertebede tut.
-  static const _imageJobTimeout = Duration(seconds: 360);
-  static const _briefBatchTimeout = Duration(seconds: 120);
+  /// Görsel: OpenAI (uzun okuma) + Supabase; Python tarafı ~15 dk + pay.
+  static const _imageJobTimeout = Duration(seconds: 1200);
+  static const _briefBatchTimeout = Duration(seconds: 180);
 
   Uri _u(String path) {
     final base = AppEnv.memeopsApiBase.replaceAll(RegExp(r'/$'), '');
@@ -71,10 +71,9 @@ class MemeopsApiClient {
           .timeout(timeout ?? _requestTimeout);
     } on TimeoutException {
       final secs = (timeout ?? _requestTimeout).inSeconds;
+      final L = lookupAppLocalizations(AppLocaleController.instance.locale);
       throw MemeopsApiException(
-        kDebugMode
-            ? 'MemeOps API timed out (${uri.origin}) after ${secs}s.'
-            : 'The server took too long to respond. Try again later.',
+        kDebugMode ? L.errApiTimeoutDebug(uri.origin, secs) : L.errApiTimeoutUser,
       );
     } catch (e) {
       final friendly = _connectionFailureMessage(uri, e);
@@ -93,14 +92,11 @@ class MemeopsApiClient {
         t.contains('failed host lookup') ||
         t.contains('host lookup failed') ||
         t.contains('network is unreachable')) {
+      final L = lookupAppLocalizations(AppLocaleController.instance.locale);
       if (kDebugMode) {
-        return 'Cannot reach MemeOps API at ${uri.origin}. '
-            'In the project root run: ./run_telegram_api.sh '
-            '(Python on port ${uri.port}; needs .env with TELEGRAM_* + OPENAI_*). '
-            'Or: MEMEOPS_USE_PYTHON_API=1 ./run_dev.sh — it starts the same API then Flutter. '
-            'Only without OpenAI/Telegram may you use the Dart stub: dart run tool/memeops_dev_server.dart --port ${uri.port}.';
+        return L.errApiUnreachableDebug(uri.origin, uri.port);
       }
-      return 'Cannot reach the MemeOps server. Check your connection and try again.';
+      return L.errApiUnreachableUser;
     }
     return null;
   }

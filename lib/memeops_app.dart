@@ -1,8 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:hakaton_moskova_app/core/config/app_env.dart';
+import 'package:hakaton_moskova_app/core/locale/app_locale_controller.dart';
+import 'package:hakaton_moskova_app/l10n/app_localizations.dart';
 import 'package:hakaton_moskova_app/presentation/screens/auth_sign_in_screen.dart';
 import 'package:hakaton_moskova_app/presentation/screens/config_missing_screen.dart';
 import 'package:hakaton_moskova_app/presentation/screens/home_shell.dart';
+import 'package:hakaton_moskova_app/presentation/theme/memeops_theme.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 class MemeopsApp extends StatelessWidget {
@@ -10,19 +14,44 @@ class MemeopsApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    if (!AppEnv.isSupabaseConfigured || !AppEnv.isApiConfigured) {
-      return const MaterialApp(
-        title: 'MemeOps',
-        home: ConfigMissingScreen(),
-      );
-    }
-    return MaterialApp(
-      title: 'MemeOps',
-      theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.indigo),
-        useMaterial3: true,
-      ),
-      home: const _SessionGate(),
+    final theme = memeopsDarkTheme();
+    return ListenableBuilder(
+      listenable: AppLocaleController.instance,
+      builder: (context, _) {
+        final title = lookupAppLocalizations(AppLocaleController.instance.locale).appTitle;
+        if (!AppEnv.isSupabaseConfigured || !AppEnv.isApiConfigured) {
+          return MaterialApp(
+            title: title,
+            theme: theme,
+            debugShowCheckedModeBanner: false,
+            locale: AppLocaleController.instance.locale,
+            supportedLocales: const [Locale('tr'), Locale('ru')],
+            localizationsDelegates: const [
+              AppLocalizations.delegate,
+              GlobalMaterialLocalizations.delegate,
+              GlobalWidgetsLocalizations.delegate,
+              GlobalCupertinoLocalizations.delegate,
+            ],
+            localeResolutionCallback: (_, _) => AppLocaleController.instance.locale,
+            home: const ConfigMissingScreen(),
+          );
+        }
+        return MaterialApp(
+          title: title,
+          theme: theme,
+          debugShowCheckedModeBanner: false,
+          locale: AppLocaleController.instance.locale,
+          supportedLocales: const [Locale('tr'), Locale('ru')],
+          localizationsDelegates: const [
+            AppLocalizations.delegate,
+            GlobalMaterialLocalizations.delegate,
+            GlobalWidgetsLocalizations.delegate,
+            GlobalCupertinoLocalizations.delegate,
+          ],
+          localeResolutionCallback: (_, _) => AppLocaleController.instance.locale,
+          home: const _SessionGate(),
+        );
+      },
     );
   }
 }

@@ -1,0 +1,472 @@
+// ignore: unused_import
+import 'package:intl/intl.dart' as intl;
+import 'app_localizations.dart';
+
+// ignore_for_file: type=lint
+
+/// The translations for Russian (`ru`).
+class AppLocalizationsRu extends AppLocalizations {
+  AppLocalizationsRu([String locale = 'ru']) : super(locale);
+
+  @override
+  String get appTitle => 'MemeOps';
+
+  @override
+  String get defaultDisplayName => 'создатель';
+
+  @override
+  String greeting(String name) {
+    return 'Добрый день, $name';
+  }
+
+  @override
+  String get homeSubtitle => 'Продолжайте поток мемов — выберите вкладку ниже.';
+
+  @override
+  String get tabProfession => 'Профессия';
+
+  @override
+  String get tabTelegram => 'Telegram';
+
+  @override
+  String get tabPublish => 'Публикация';
+
+  @override
+  String get tabArchive => 'Архив';
+
+  @override
+  String get languageTitle => 'Язык';
+
+  @override
+  String get languageTurkish => 'Türkçe';
+
+  @override
+  String get languageRussian => 'Русский';
+
+  @override
+  String get languagePickHint =>
+      'Выберите язык приложения. Все тексты изменятся.';
+
+  @override
+  String get authTagline => 'Идеи для юмора и картинки — в одном потоке';
+
+  @override
+  String get authSignInTitle => 'Вход';
+
+  @override
+  String get authUsername => 'Имя пользователя';
+
+  @override
+  String get authUsernameHint => 'admin';
+
+  @override
+  String get authPassword => 'Пароль';
+
+  @override
+  String get authPasswordHint => '12345678';
+
+  @override
+  String get authSignIn => 'Войти';
+
+  @override
+  String get authSignUp => 'Первый запуск: создать аккаунт (admin + пароль)';
+
+  @override
+  String get authErrEmptyUser => 'Введите имя пользователя.';
+
+  @override
+  String get authErrNoAt => 'Только имя пользователя (без @ и e-mail).';
+
+  @override
+  String get authErrPasswordShort =>
+      'Пароль не короче 6 символов (например 12345678).';
+
+  @override
+  String get authErrInvalidLogin =>
+      'Такого пользователя нет в Supabase или неверный пароль. Попробуйте «Первый запуск: создать аккаунт» ниже или добавьте пользователя в Dashboard → Authentication → Users.';
+
+  @override
+  String get authErrAlreadyRegistered =>
+      'Пользователь уже существует. Используйте «Войти».';
+
+  @override
+  String get authSnackSignUp =>
+      'Регистрация создана. Если вход не выполнен: Supabase → Authentication → Providers → отключите «Confirm email» и попробуйте снова, или перейдите по ссылке в письме.';
+
+  @override
+  String get authBenefitTitle => 'Что вы получите после входа?';
+
+  @override
+  String get authBenefitTelegram => 'Живое резюме канала Telegram и идеи';
+
+  @override
+  String get authBenefitProfession => 'AI-ситуации для профессии / темы';
+
+  @override
+  String get authBenefitImage => 'Квадратный мем через gpt-image-1';
+
+  @override
+  String get authBenefitSupabase => 'Брифы и версии изображений в Supabase';
+
+  @override
+  String get configTitle => 'Настройка';
+
+  @override
+  String get configBody =>
+      'Не заданы публичный URL Supabase + anon key и база MemeOps API. В приложении нет сервисной роли или ключа OpenAI:';
+
+  @override
+  String get configBullet1 =>
+      '1) Файл `.env` в корне проекта (скопируйте из env.sample) — IDE / симулятор читают его.';
+
+  @override
+  String get configBullet2 =>
+      '2) flutter run --dart-define=SUPABASE_URL=... --dart-define=SUPABASE_ANON_KEY=... --dart-define=MEMEOPS_API_BASE=https://...';
+
+  @override
+  String get configApiNote =>
+      'Локальный API: MEMEOPS_API_BASE=http://127.0.0.1:3000 (совместимо с iOS Simulator; ./run_dev.sh или ./run_telegram_api.sh).';
+
+  @override
+  String get archiveTitle => 'Архив';
+
+  @override
+  String get archiveSubtitle =>
+      'Созданные изображения хранятся на устройстве; ниже дата и источник.';
+
+  @override
+  String get archiveEmpty =>
+      'Пока нет сохранённых изображений.\nСоздайте мем во вкладке «Профессия» или «Telegram».';
+
+  @override
+  String get archiveFileMissing => 'Файл не найден (возможно удалён).';
+
+  @override
+  String archiveDownloadFailed(int code) {
+    return 'Не удалось скачать изображение (HTTP $code).';
+  }
+
+  @override
+  String get publishTitle => 'Публикация';
+
+  @override
+  String get publishBody =>
+      'В будущем: отправка сохранённых строк `meme_brief` + `asset` в подключённые каналы Telegram / VK и т.д. через `publish_jobs` на бэкенде. В мобильном приложении пока не реализовано.';
+
+  @override
+  String get publishStubButton => 'Вызвать PublicationPort (заглушка)';
+
+  @override
+  String get publicationComingSoon => 'Конвейер публикации ещё не подключён.';
+
+  @override
+  String get publicationDone => 'Готово';
+
+  @override
+  String get professionStep1Title => 'Профессия или тема';
+
+  @override
+  String get professionStep1Subtitle =>
+      'Краткий заголовок, чтобы получить 7–10 идей ситуаций от AI.';
+
+  @override
+  String get professionFlowCaption =>
+      'Поток профессии — идеи GPT + gpt-image-1';
+
+  @override
+  String get professionNameLabel => 'Название профессии';
+
+  @override
+  String get professionNameHint => 'напр. архитектор, медсестра, волшебник';
+
+  @override
+  String get professionGenerateIdeas => 'Сгенерировать идеи ситуаций';
+
+  @override
+  String get professionStartOver => 'Начать заново';
+
+  @override
+  String get professionStep2Title => 'Выберите текст';
+
+  @override
+  String get professionStep2Subtitle =>
+      'Нажмите на строку; затем создайте изображение.';
+
+  @override
+  String get professionGeneratingMeme => 'Создаётся изображение мема…';
+
+  @override
+  String get professionGenerateImage => 'Создать изображение мема';
+
+  @override
+  String get professionErrShortName =>
+      'Введите название профессии (не меньше 3 символов).';
+
+  @override
+  String get professionErrNoVariants =>
+      'Сервер не вернул варианты. Проверьте бэкенд / режим mock.';
+
+  @override
+  String get professionSnackSaved =>
+      'Изображение создано и сохранено в Supabase (Storage: meme-assets; таблицы: meme_assets / meme_asset_versions).';
+
+  @override
+  String get professionSourceLabel => 'Поток профессии';
+
+  @override
+  String professionSavedLine(String info) {
+    return 'Сохранено: $info';
+  }
+
+  @override
+  String get professionPublication => 'Публикация (скоро)';
+
+  @override
+  String get profProgressCreating => 'Создаётся запись профессии…';
+
+  @override
+  String get profProgressSituations =>
+      'Генерируются 7–10 идей ситуаций (OpenAI на API)…';
+
+  @override
+  String get profProgressImage => 'Создаётся изображение мема…';
+
+  @override
+  String get profProgressSaving => 'Сохранение результата…';
+
+  @override
+  String get telegramChannelDefault => 'Канал Telegram';
+
+  @override
+  String get telegramStep1Title => 'Ссылка на канал';
+
+  @override
+  String get telegramStep1SubtitleLive =>
+      'Живое резюме через локальный Telethon API; идеи из того же контекста.';
+
+  @override
+  String get telegramStep1SubtitleStub =>
+      'Публичная ссылка на канал · для живого чтения запустите ./run_telegram_api.sh';
+
+  @override
+  String get telegramLinkLabel => 'Канал Telegram / публичная ссылка';
+
+  @override
+  String get telegramAnalyzing => 'Анализ канала…';
+
+  @override
+  String get telegramAnalyseButton => 'Анализировать ссылку';
+
+  @override
+  String get telegramStep2Title => 'Резюме и идеи';
+
+  @override
+  String get telegramStep2Subtitle =>
+      'Проверьте ДНК канала; затем создайте варианты.';
+
+  @override
+  String get telegramStubBanner =>
+      'Режим заглушки — Telegram не читается. Запустите ./run_telegram_api.sh с TELEGRAM_* и действующей TELEGRAM_SESSION_STRING в .env.';
+
+  @override
+  String telegramInsightChannel(String title) {
+    return 'Канал: $title';
+  }
+
+  @override
+  String telegramInsightTopic(String topic) {
+    return 'Тема: $topic';
+  }
+
+  @override
+  String telegramInsightStyle(String style) {
+    return 'Стиль: $style';
+  }
+
+  @override
+  String telegramInsightTone(String tone) {
+    return 'Тон: $tone';
+  }
+
+  @override
+  String telegramInsightThemes(String themes) {
+    return 'Темы: $themes';
+  }
+
+  @override
+  String telegramInsightPostMix(String mix) {
+    return 'Смесь постов: $mix';
+  }
+
+  @override
+  String telegramInsightMediaTypes(String types) {
+    return 'Типы медиа: $types';
+  }
+
+  @override
+  String get telegramMediaSection => 'Медиа / изображения';
+
+  @override
+  String get telegramRecentSection => 'Недавние примеры';
+
+  @override
+  String telegramMemeAngles(String angles) {
+    return 'Углы для мемов: $angles';
+  }
+
+  @override
+  String get telegramBadgeLive => 'Живой';
+
+  @override
+  String get telegramBadgeStub => 'Stub';
+
+  @override
+  String get telegramGenerateLive =>
+      'Сгенерировать и сохранить 7–10 AI-вариантов';
+
+  @override
+  String get telegramGenerateHosted =>
+      'Сгенерировать 5 вариантов идей (хостинг API)';
+
+  @override
+  String get telegramLiveHint =>
+      'Варианты сохраняются как meme_briefs; изображения используют OPENAI_API_KEY в Python API.';
+
+  @override
+  String get telegramStep3Title => 'Текст и изображение';
+
+  @override
+  String get telegramStep3Subtitle =>
+      'Нажмите на вариант; создайте изображение мема.';
+
+  @override
+  String get telegramGeneratingMeme => 'Создаётся изображение мема…';
+
+  @override
+  String get telegramGenerateMemeButton => 'Создать мем из выбора';
+
+  @override
+  String get telegramSnackSaved =>
+      'Изображение создано и сохранено в Supabase (Storage: meme-assets).';
+
+  @override
+  String get telegramSourceLabel => 'Поток Telegram';
+
+  @override
+  String telegramAssetVersion(String id) {
+    return 'Версия ассета: $id';
+  }
+
+  @override
+  String get telegramErrShortLink =>
+      'Вставьте полную ссылку на канал (минимум 8 символов).';
+
+  @override
+  String get telegramErrStubOffline =>
+      'Это офлайн-заглушка, не ваш канал. Запустите ./run_telegram_api.sh с TELEGRAM_* и сессией в .env и попробуйте снова.';
+
+  @override
+  String telegramErrTooFewIdeas(int count) {
+    return 'Слишком мало идей с сервера ($count). Проверьте OPENAI_API_KEY в .env API.';
+  }
+
+  @override
+  String get telegramErrNoIdeas => 'Сервер не вернул идей.';
+
+  @override
+  String get telegramFutureContext =>
+      'Импорт из Telegram — передайте агентам мемов как ДНК канала.';
+
+  @override
+  String get tgProgressFetching => 'Загрузка сообщений канала и сводки…';
+
+  @override
+  String get tgProgressPreparing => 'Подготовка контекста…';
+
+  @override
+  String get tgProgressIdeas =>
+      'Генерация 7–10 идей мемов (AI) и сохранение в рабочую область…';
+
+  @override
+  String get tgProgressImage => 'Создание мема по выбранному варианту…';
+
+  @override
+  String get tgProgressSaving => 'Сохранение…';
+
+  @override
+  String get retry => 'Повторить';
+
+  @override
+  String get imageLoadError => 'Ошибка загрузки изображения';
+
+  @override
+  String get imageOfflineError =>
+      'URL изображения есть, но офлайн показать нельзя.';
+
+  @override
+  String get errUnexpected => 'Что-то пошло не так. Попробуйте ещё раз.';
+
+  @override
+  String get errNetworkUser =>
+      'Не удаётся связаться с сервером. Проверьте подключение.';
+
+  @override
+  String get errNetworkDebug =>
+      'Нет доступа к MemeOps API. В корне проекта выполните ./run_telegram_api.sh (или MEMEOPS_USE_PYTHON_API=1 ./run_dev.sh).';
+
+  @override
+  String errApiTimeoutDebug(String origin, int seconds) {
+    return 'Тайм-аут MemeOps API ($origin, $seconds с).';
+  }
+
+  @override
+  String get errApiTimeoutUser =>
+      'Сервер отвечает слишком долго. Попробуйте позже.';
+
+  @override
+  String errApiUnreachableDebug(String origin, int port) {
+    return 'Нет доступа к MemeOps API ($origin). В корне: ./run_telegram_api.sh (Python, порт $port; в .env нужны TELEGRAM_* + OPENAI_*). Или: MEMEOPS_USE_PYTHON_API=1 ./run_dev.sh — тот же API. Без OpenAI/Telegram можно Dart-заглушку: dart run tool/memeops_dev_server.dart --port $port.';
+  }
+
+  @override
+  String get errApiUnreachableUser =>
+      'Не удаётся связаться с сервером MemeOps. Проверьте сеть.';
+
+  @override
+  String debugApiNotRunning(String base) {
+    return 'MemeOps: $base не отвечает. Встроенная заглушка НЕ запускается (MEMEOPS_USE_PYTHON_API=1). Сначала ./run_telegram_api.sh, затем откройте приложение снова.';
+  }
+
+  @override
+  String archiveDebugSkip(String error) {
+    return 'Запись в архив пропущена: $error';
+  }
+
+  @override
+  String get stubDefaultTopic => 'тема';
+
+  @override
+  String stubProfessionIdea1(String topic) {
+    return 'Мем-контраст: ожидание vs реальность в «$topic»';
+  }
+
+  @override
+  String stubProfessionIdea2(String topic) {
+    return 'Реакция аудитории на пост про «$topic»';
+  }
+
+  @override
+  String stubProfessionIdea3(String topic) {
+    return 'Ирония над спором в нише «$topic»';
+  }
+
+  @override
+  String stubProfessionIdea4(String topic) {
+    return 'До/после: осознание про «$topic»';
+  }
+
+  @override
+  String stubProfessionIdea5(String topic) {
+    return 'Внутренний жаргон аудитории «$topic»';
+  }
+}

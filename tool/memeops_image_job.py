@@ -37,7 +37,12 @@ async def run_meme_image_job(jwt: str, meme_brief_id: str) -> dict[str, Any]:
 
     job_timeout = meme_image_job_max_wait_seconds()
     async with httpx.AsyncClient(
-        timeout=httpx.Timeout(job_timeout, connect=45.0)
+        timeout=httpx.Timeout(
+            connect=120.0,
+            read=job_timeout,
+            write=job_timeout,
+            pool=job_timeout,
+        )
     ) as client:
         br = await client.get(
             f"{url}/rest/v1/meme_briefs?id=eq.{meme_brief_id}"

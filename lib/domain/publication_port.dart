@@ -20,9 +20,6 @@ class StubPublicationPort implements PublicationPort {
     required String? imageUrl,
     required MemeBriefListItem? brief,
   }) async {
-    return const PublicationResult(
-      comingSoon: true,
-      message: 'Publication pipeline not wired yet.',
-    );
+    return const PublicationResult(comingSoon: true);
   }
 }

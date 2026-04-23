@@ -1,7 +1,10 @@
 import 'dart:convert';
 
-/// Offline preview when no API is listening (embedded Dart stub). No Telegram calls.
-Map<String, dynamic> stubChannelInsightsData(String channelUrl) {
+/// `languageCode`: `tr` veya `ru` — CLI aracı Flutter içe aktarmadan kullanabilir.
+Map<String, dynamic> stubChannelInsightsData(
+  String channelUrl, [
+  String languageCode = 'tr',
+]) {
   var label = channelUrl.trim();
   if (label.isEmpty) {
     label = 'unknown';
@@ -15,37 +18,48 @@ Map<String, dynamic> stubChannelInsightsData(String channelUrl) {
       } else if (u.host.isNotEmpty) {
         label = u.host;
       }
-    } catch (_) {
-      // keep label as raw
-    }
+    } catch (_) {}
   }
 
+  final ru = languageCode == 'ru';
   return {
     'channelUrl': channelUrl,
     'channelTitle': label,
-    'mainTopic':
-        'OFFLINE STUB — not from Telegram. Run ./run_telegram_api.sh with valid TELEGRAM_* session.',
+    'mainTopic': ru
+        ? 'ОФЛАЙН STUB — не из Telegram. Запустите ./run_telegram_api.sh с действующей сессией TELEGRAM_*.'
+        : 'ÇEVRİMDIŞI STUB — Telegram’dan değil. Geçerli TELEGRAM_* oturumu ile ./run_telegram_api.sh çalıştırın.',
     'recurringThemes': [
       '(stub)',
-      'Not loaded from channel',
+      ru ? 'Не загружено из канала' : 'Kanaldan yüklenmedi',
     ],
-    'tone': 'offline_stub',
-    'toneProfile': 'offline_stub',
+    'tone': ru ? 'offline_stub' : 'çevrimdışı_stub',
+    'toneProfile': ru ? 'offline_stub' : 'stub_önizleme',
     'mediaTypes': ['stub'],
     'mediaInsights': [
-      'No Telegram fetch in stub mode.',
+      ru
+          ? 'В режиме заглушки нет выборки Telegram.'
+          : 'Stub modunda Telegram çekimi yok.',
     ],
-    'postTypes': ['stub / not connected'],
-    'recentHighlights': [],
+    'postTypes': [
+      ru ? 'stub / не подключено' : 'stub / bağlı değil',
+    ],
+    'recentHighlights': <String>[],
     'memeableAngles': [
-      'Connect the local Python API for real meme angles.',
+      ru
+          ? 'Подключите локальный Python API для реальных углов мемов.'
+          : 'Gerçek meme açıları için yerel Python API’yi bağlayın.',
     ],
     'analysisSource': 'offline_stub',
   };
 }
 
-String stubChannelInsightsSuccessBody(String channelUrl) {
-  return jsonEncode({'data': stubChannelInsightsData(channelUrl)});
+String stubChannelInsightsSuccessBody(
+  String channelUrl, [
+  String languageCode = 'tr',
+]) {
+  return jsonEncode({
+    'data': stubChannelInsightsData(channelUrl, languageCode),
+  });
 }
 
 String stubNotFoundBody(String message) {

@@ -1,10 +1,20 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
+import 'package:hakaton_moskova_app/core/locale/app_locale_controller.dart';
 import 'package:hakaton_moskova_app/data/api/memeops_api_client.dart';
+import 'package:hakaton_moskova_app/data/local/meme_local_archive_repository.dart';
 import 'package:hakaton_moskova_app/data/models/meme_brief_list_item.dart';
 import 'package:hakaton_moskova_app/data/repository/meme_briefs_repository.dart';
 import 'package:hakaton_moskova_app/domain/pipeline_stage.dart';
 import 'package:hakaton_moskova_app/domain/publication_port.dart';
+import 'package:hakaton_moskova_app/l10n/app_localizations.dart';
+import 'package:hakaton_moskova_app/presentation/layout/home_tab_scroll_padding.dart';
+import 'package:hakaton_moskova_app/presentation/theme/memeops_design_tokens.dart';
 import 'package:hakaton_moskova_app/presentation/widgets/error_retry_card.dart';
+import 'package:hakaton_moskova_app/presentation/widgets/memeops_glass_surface.dart';
+import 'package:hakaton_moskova_app/presentation/widgets/memeops_step_section.dart';
+import 'package:hakaton_moskova_app/presentation/widgets/memeops_variant_pick_tile.dart';
 import 'package:hakaton_moskova_app/presentation/widgets/pipeline_progress_bar.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -52,16 +62,16 @@ class _ProfessionFlowScreenState extends State<ProfessionFlowScreen> {
     }
   }
 
-  String? _message(ProfessionPipelineStage s) {
+  String? _message(AppLocalizations l10n, ProfessionPipelineStage s) {
     switch (s) {
       case ProfessionPipelineStage.creatingProfession:
-        return 'Creating profession…';
+        return l10n.profProgressCreating;
       case ProfessionPipelineStage.generatingSituations:
-        return 'Generating 7–10 situation ideas (OpenAI on API server)…';
+        return l10n.profProgressSituations;
       case ProfessionPipelineStage.generatingImage:
-        return 'Generating meme image…';
+        return l10n.profProgressImage;
       case ProfessionPipelineStage.savingResult:
-        return 'Persisting result…';
+        return l10n.profProgressSaving;
       default:
         return null;
     }
@@ -75,6 +85,7 @@ class _ProfessionFlowScreenState extends State<ProfessionFlowScreen> {
   }
 
   Future<void> _runIdeas() async {
+    final l10n = AppLocalizations.of(context);
     setState(() {
       _err = null;
       _fileUrl = null;
@@ -84,7 +95,7 @@ class _ProfessionFlowScreenState extends State<ProfessionFlowScreen> {
     final title = _professionCtrl.text.trim();
     if (title.length < 3) {
       setState(() {
-        _err = 'Enter a profession name (at least 3 characters).';
+        _err = l10n.professionErrShortName;
         _stage = ProfessionPipelineStage.error;
       });
       return;
@@ -99,7 +110,7 @@ class _ProfessionFlowScreenState extends State<ProfessionFlowScreen> {
       final list = await _briefs.listForProfession(pid);
       if (list.isEmpty) {
         setState(() {
-          _err = 'No variants were returned. Check backend logs / mock mode.';
+          _err = l10n.professionErrNoVariants;
           _stage = ProfessionPipelineStage.error;
         });
         return;
@@ -122,6 +133,7 @@ class _ProfessionFlowScreenState extends State<ProfessionFlowScreen> {
   }
 
   Future<void> _runImage() async {
+    final l10n = AppLocalizations.of(context);
     if (_selected == null) {
       return;
     }
@@ -133,11 +145,11 @@ class _ProfessionFlowScreenState extends State<ProfessionFlowScreen> {
       final r = await _api.generateImage(_selected!.id);
       setState(() {
         _fileUrl = r.fileUrl;
-        _lastJobInfo =
-            r.jobId != null ? 'job ${r.jobId} · version ${r.assetVersionId ?? "—"}' : null;
+        _lastJobInfo = r.jobId != null
+            ? 'job ${r.jobId} · version ${r.assetVersionId ?? "—"}'
+            : null;
         _stage = ProfessionPipelineStage.savingResult;
       });
-      // Short beat so the bar shows "save" before "done" (persistence is server-side).
       await Future<void>.delayed(const Duration(milliseconds: 200));
       if (!mounted) {
         return;
@@ -148,12 +160,28 @@ class _ProfessionFlowScreenState extends State<ProfessionFlowScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-            'Görsel üretildi ve Supabase’e kaydedildi (Storage: meme-assets, tablolar: meme_assets / meme_asset_versions).',
-            style: TextStyle(color: Theme.of(context).colorScheme.onInverseSurface),
+            l10n.professionSnackSaved,
+            style: TextStyle(
+              color: Theme.of(context).colorScheme.onInverseSurface,
+            ),
           ),
           backgroundColor: Theme.of(context).colorScheme.inverseSurface,
           duration: const Duration(seconds: 4),
         ),
+      );
+      final archiveUrl = r.fileUrl!;
+      final archiveCaption = _selected?.displayLine;
+      final loc = lookupAppLocalizations(AppLocaleController.instance.locale);
+      unawaited(
+        MemeLocalArchiveRepository.instance
+            .addFromNetworkUrl(
+              imageUrl: archiveUrl,
+              caption: archiveCaption,
+              sourceLabel: loc.professionSourceLabel,
+            )
+            .catchError((Object e, StackTrace st) {
+              debugPrint(loc.archiveDebugSkip(e.toString()));
+            }),
       );
     } on MemeopsApiException catch (e) {
       setState(() {
@@ -169,22 +197,20 @@ class _ProfessionFlowScreenState extends State<ProfessionFlowScreen> {
   }
 
   void _openPublish() {
-    final f = _publish.publishMeme(
-      imageUrl: _fileUrl,
-      brief: _selected,
-    );
-    f.then(
-      (r) {
-        if (!mounted) {
-          return;
-        }
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(r.comingSoon ? (r.message ?? 'Coming soon') : 'Done'),
+    final l10n = AppLocalizations.of(context);
+    final f = _publish.publishMeme(imageUrl: _fileUrl, brief: _selected);
+    f.then((r) {
+      if (!mounted) {
+        return;
+      }
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            r.comingSoon ? l10n.publicationComingSoon : l10n.publicationDone,
           ),
-        );
-      },
-    );
+        ),
+      );
+    });
   }
 
   @override
@@ -195,127 +221,156 @@ class _ProfessionFlowScreenState extends State<ProfessionFlowScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return SafeArea(
-      child: ListView(
-        padding: const EdgeInsets.all(16),
-        children: [
-          const Text('Profession flow', style: TextStyle(fontSize: 20, fontWeight: FontWeight.w600)),
-          const SizedBox(height: 8),
-          const Text(
-            'Agent 1: profession → funny situations (GPT) · Agent 2: meme image (gpt-image-1) · Agent 3: publish (stub)',
-          ),
-          const SizedBox(height: 16),
-          TextField(
-            controller: _professionCtrl,
-            onChanged: (_) {
-              if (_stage == ProfessionPipelineStage.idle) {
-                setState(() => _stage = ProfessionPipelineStage.inputReady);
-              }
-            },
-            textInputAction: TextInputAction.done,
-            decoration: const InputDecoration(
-              labelText: 'Profession name',
-              hintText: 'e.g. architect, nurse, wizard',
-              border: OutlineInputBorder(),
-            ),
-          ),
-          const SizedBox(height: 12),
-          FilledButton(
-            onPressed: _busy
-                ? null
-                : () {
-                    if (_fileUrl != null) {
-                      setState(() {
-                        _fileUrl = null;
-                        _selected = null;
-                        _variants = const [];
-                        _stage = ProfessionPipelineStage.idle;
-                      });
-                    } else {
-                      _runIdeas();
+    final l10n = AppLocalizations.of(context);
+    return ListView(
+      padding: homeTabScrollPadding(),
+      children: [
+        MemeopsGlassSurface(
+          padding: const EdgeInsets.all(20),
+          child: MemeopsStepSection(
+            step: 1,
+            title: l10n.professionStep1Title,
+            subtitle: l10n.professionStep1Subtitle,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Text(
+                  l10n.professionFlowCaption,
+                  style: MemeopsTextStyles.caption(context),
+                ),
+                const SizedBox(height: 14),
+                TextField(
+                  controller: _professionCtrl,
+                  onChanged: (_) {
+                    if (_stage == ProfessionPipelineStage.idle) {
+                      setState(
+                        () => _stage = ProfessionPipelineStage.inputReady,
+                      );
                     }
                   },
-            child: Text(_fileUrl != null ? 'Start over' : 'Generate situation ideas'),
+                  textInputAction: TextInputAction.done,
+                  style: const TextStyle(color: Colors.white),
+                  decoration: InputDecoration(
+                    labelText: l10n.professionNameLabel,
+                    hintText: l10n.professionNameHint,
+                  ),
+                ),
+                const SizedBox(height: 14),
+                FilledButton(
+                  onPressed: _busy
+                      ? null
+                      : () {
+                          if (_fileUrl != null) {
+                            setState(() {
+                              _fileUrl = null;
+                              _selected = null;
+                              _variants = const [];
+                              _stage = ProfessionPipelineStage.idle;
+                            });
+                          } else {
+                            _runIdeas();
+                          }
+                        },
+                  child: Text(
+                    _fileUrl != null
+                        ? l10n.professionStartOver
+                        : l10n.professionGenerateIdeas,
+                  ),
+                ),
+              ],
+            ),
           ),
-          if (_err != null) ...[
-            const SizedBox(height: 12),
-            ErrorRetryCard(
-              message: _err!,
-              onRetry: _stage == ProfessionPipelineStage.error ? _runIdeas : null,
-            ),
-          ],
-          if (_stage != ProfessionPipelineStage.idle && _stage != ProfessionPipelineStage.error) ...[
-            const SizedBox(height: 16),
-            PipelineProgressBar(
-              value: _t(_stage),
-              message: _message(_stage),
-            ),
-          ],
-          if (_variants.isNotEmpty && _fileUrl == null) ...[
-            const SizedBox(height: 16),
-            const Text(
-              'Pick one line (7–10 AI situations):',
-              style: TextStyle(fontWeight: FontWeight.w500),
-            ),
-            ..._variants.map(
-              (b) => ListTile(
-                title: Text(b.displayLine, maxLines: 3, overflow: TextOverflow.ellipsis),
-                selected: _selected?.id == b.id,
-                onTap: _busy
-                    ? null
-                    : () {
+        ),
+        if (_err != null) ...[
+          const SizedBox(height: 12),
+          ErrorRetryCard(
+            message: _err!,
+            onRetry: _stage == ProfessionPipelineStage.error ? _runIdeas : null,
+          ),
+        ],
+        if (_stage != ProfessionPipelineStage.idle &&
+            _stage != ProfessionPipelineStage.error) ...[
+          const SizedBox(height: 16),
+          PipelineProgressBar(
+            value: _t(_stage),
+            message: _message(l10n, _stage),
+          ),
+        ],
+        if (_variants.isNotEmpty && _fileUrl == null) ...[
+          const SizedBox(height: 16),
+          MemeopsGlassSurface(
+            padding: const EdgeInsets.all(20),
+            child: MemeopsStepSection(
+              step: 2,
+              title: l10n.professionStep2Title,
+              subtitle: l10n.professionStep2Subtitle,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  ..._variants.asMap().entries.map(
+                    (e) => MemeopsVariantPickTile(
+                      index: e.key + 1,
+                      line: e.value.displayLine,
+                      selected: _selected?.id == e.value.id,
+                      enabled: !_busy,
+                      onTap: () {
                         setState(() {
-                          _selected = b;
+                          _selected = e.value;
                         });
                       },
+                    ),
+                  ),
+                  FilledButton(
+                    onPressed: _busy || _selected == null ? null : _runImage,
+                    child: _stage == ProfessionPipelineStage.generatingImage
+                        ? Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              SizedBox(
+                                width: 22,
+                                height: 22,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  color: Theme.of(
+                                    context,
+                                  ).colorScheme.onPrimary,
+                                ),
+                              ),
+                              const SizedBox(width: 12),
+                              Text(l10n.professionGeneratingMeme),
+                            ],
+                          )
+                        : Text(l10n.professionGenerateImage),
+                  ),
+                ],
               ),
             ),
-            FilledButton(
-              onPressed: _busy || _selected == null ? null : _runImage,
-              child: _stage == ProfessionPipelineStage.generatingImage
-                  ? Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        SizedBox(
-                          width: 22,
-                          height: 22,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2,
-                            color: Theme.of(context).colorScheme.onPrimary,
-                          ),
-                        ),
-                        const SizedBox(width: 12),
-                        const Text('Генерация мема…'),
-                      ],
-                    )
-                  : const Text('Generate meme image'),
-            ),
-          ],
-          if (_fileUrl != null) ...[
-            const SizedBox(height: 16),
-            if (_lastJobInfo != null) Text('Saved: $_lastJobInfo'),
-            const SizedBox(height: 8),
-            ClipRRect(
-              borderRadius: BorderRadius.circular(8),
-              child: AspectRatio(
-                aspectRatio: 1,
-                child: Image.network(
-                  _fileUrl!,
-                  fit: BoxFit.contain,
-                  errorBuilder: (context, error, stack) => const Center(
-                    child: Text('Image URL present but could not be displayed offline.'),
-                  ),
+          ),
+        ],
+        if (_fileUrl != null) ...[
+          const SizedBox(height: 16),
+          if (_lastJobInfo != null) Text(l10n.professionSavedLine(_lastJobInfo!)),
+          const SizedBox(height: 8),
+          ClipRRect(
+            borderRadius: BorderRadius.circular(MemeopsRadii.md),
+            child: AspectRatio(
+              aspectRatio: 1,
+              child: Image.network(
+                _fileUrl!,
+                fit: BoxFit.contain,
+                errorBuilder: (context, error, stack) => Center(
+                  child: Text(l10n.imageOfflineError),
                 ),
               ),
             ),
-            const SizedBox(height: 8),
-            OutlinedButton(
-              onPressed: _openPublish,
-              child: const Text('Publication (coming soon)'),
-            ),
-          ],
+          ),
+          const SizedBox(height: 8),
+          OutlinedButton(
+            onPressed: _openPublish,
+            child: Text(l10n.professionPublication),
+          ),
         ],
-      ),
+      ],
     );
   }
 }

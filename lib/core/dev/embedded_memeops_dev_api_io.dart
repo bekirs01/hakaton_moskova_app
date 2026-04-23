@@ -4,6 +4,8 @@ import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:hakaton_moskova_app/core/config/app_env.dart';
 import 'package:hakaton_moskova_app/core/dev/memeops_workspace_bootstrap.dart';
+import 'package:hakaton_moskova_app/core/locale/app_locale_controller.dart';
+import 'package:hakaton_moskova_app/l10n/app_localizations.dart';
 import 'package:hakaton_moskova_app/data/dev/channel_insights_stub_json.dart';
 import 'package:http/http.dart' as http;
 
@@ -72,13 +74,14 @@ abstract final class EmbeddedMemeopsDevApi {
   }
 
   static List<String> _fiveIdeas(String title) {
-    final t = title.trim().isEmpty ? 'тема' : title.trim();
+    final l10n = lookupAppLocalizations(AppLocaleController.instance.locale);
+    final t = title.trim().isEmpty ? l10n.stubDefaultTopic : title.trim();
     return [
-      'Мем-контраст: ожидание vs реальность в «$t»',
-      'Реакция аудитории на пост про «$t»',
-      'Ирония над спором в нише «$t»',
-      'До/после: осознание про «$t»',
-      'Внутренний жаргон аудитории «$t»',
+      l10n.stubProfessionIdea1(t),
+      l10n.stubProfessionIdea2(t),
+      l10n.stubProfessionIdea3(t),
+      l10n.stubProfessionIdea4(t),
+      l10n.stubProfessionIdea5(t),
     ];
   }
 
@@ -168,7 +171,12 @@ abstract final class EmbeddedMemeopsDevApi {
     }
 
     request.response.statusCode = HttpStatus.ok;
-    request.response.write(stubChannelInsightsSuccessBody(channelUrl));
+    request.response.write(
+      stubChannelInsightsSuccessBody(
+        channelUrl,
+        AppLocaleController.instance.locale.languageCode,
+      ),
+    );
     await request.response.close();
   }
 
