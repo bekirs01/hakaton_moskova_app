@@ -49,3 +49,6 @@ app.*.map.json
 
 # Local secrets (Supabase publishable + API base)
 .env
+
+# Local Telegram API venv
+.venv-telegram/

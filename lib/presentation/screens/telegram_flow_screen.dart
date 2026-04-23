@@ -76,11 +76,11 @@ class _TelegramFlowScreenState extends State<TelegramFlowScreen> {
   String? _msg(TelegramPipelineStage s) {
     switch (s) {
       case TelegramPipelineStage.fetchingInsights:
-        return 'Fetching & summarising (server placeholder)…';
+        return 'Fetching channel messages & building summary…';
       case TelegramPipelineStage.creatingProfession:
-        return 'Creating profession from channel context…';
+        return 'Preparing context…';
       case TelegramPipelineStage.generatingSituations:
-        return 'Running same brief batch as profession flow…';
+        return 'Generating 7–10 meme ideas (AI) and saving to your workspace…';
       case TelegramPipelineStage.generatingImage:
         return 'Generating meme from selected variant…';
       case TelegramPipelineStage.savingResult:
@@ -129,7 +129,7 @@ class _TelegramFlowScreenState extends State<TelegramFlowScreen> {
       });
     } catch (e) {
       setState(() {
-        _err = e.toString();
+        _err = memeopsUnexpectedErrorMessage(e);
         _stage = TelegramPipelineStage.error;
       });
     }
@@ -140,11 +140,39 @@ class _TelegramFlowScreenState extends State<TelegramFlowScreen> {
     if (i == null) {
       return;
     }
+    if (i.isOfflineStub) {
+      setState(() {
+        _err =
+            'This is offline stub data, not your channel. Start ./run_telegram_api.sh '
+            'with TELEGRAM_* + session in .env, then try again.';
+        _stage = TelegramPipelineStage.error;
+      });
+      return;
+    }
+
     setState(() {
       _err = null;
       _stage = TelegramPipelineStage.creatingProfession;
     });
+
     try {
+      if (i.isTelethonLive) {
+        setState(() => _stage = TelegramPipelineStage.generatingSituations);
+        final list = await _api.persistTelegramVariants(i);
+        if (list.length < 5) {
+          setState(() {
+            _err = 'Too few ideas from server (${list.length}). Check OPENAI_API_KEY in API .env.';
+            _stage = TelegramPipelineStage.error;
+          });
+          return;
+        }
+        setState(() {
+          _variants = list;
+          _stage = TelegramPipelineStage.inputReady;
+        });
+        return;
+      }
+
       final ctx = i.toProfessionContext();
       final pid = await _api.createProfession(
         title: _titleFromChannelUrl(i.channelUrl),
@@ -174,7 +202,7 @@ class _TelegramFlowScreenState extends State<TelegramFlowScreen> {
       });
     } catch (e) {
       setState(() {
-        _err = e.toString();
+        _err = memeopsUnexpectedErrorMessage(e);
         _stage = TelegramPipelineStage.error;
       });
     }
@@ -195,6 +223,16 @@ class _TelegramFlowScreenState extends State<TelegramFlowScreen> {
       await Future<void>.delayed(const Duration(milliseconds: 200));
       if (mounted) {
         setState(() => _stage = TelegramPipelineStage.done);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              'Görsel üretildi ve Supabase’e kaydedildi (Storage: meme-assets).',
+              style: TextStyle(color: Theme.of(context).colorScheme.onInverseSurface),
+            ),
+            backgroundColor: Theme.of(context).colorScheme.inverseSurface,
+            duration: const Duration(seconds: 4),
+          ),
+        );
       }
     } on MemeopsApiException catch (e) {
       setState(() {
@@ -203,7 +241,7 @@ class _TelegramFlowScreenState extends State<TelegramFlowScreen> {
       });
     } catch (e) {
       setState(() {
-        _err = e.toString();
+        _err = memeopsUnexpectedErrorMessage(e);
         _stage = TelegramPipelineStage.error;
       });
     }
@@ -217,13 +255,24 @@ class _TelegramFlowScreenState extends State<TelegramFlowScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final stub = _insights?.isOfflineStub == true;
+    final live = _insights?.isTelethonLive == true;
+
     return SafeArea(
       child: ListView(
         padding: const EdgeInsets.all(16),
         children: [
-          const Text('Telegram link flow', style: TextStyle(fontSize: 20, fontWeight: FontWeight.w600)),
+          const Text(
+            'Telegram link flow',
+            style: TextStyle(fontSize: 20, fontWeight: FontWeight.w600),
+          ),
           const SizedBox(height: 8),
-          const Text('Agent 1: summary · Agent 2: image (shared pipeline) · Agent 3: stub'),
+          Text(
+            live
+                ? 'Live analysis via local Telethon API · ideas from the same summary'
+                : 'Paste a public channel link · use ./run_telegram_api.sh for real fetch',
+            style: TextStyle(fontSize: 13, color: Theme.of(context).colorScheme.onSurfaceVariant),
+          ),
           const SizedBox(height: 12),
           TextField(
             controller: _link,
@@ -242,8 +291,37 @@ class _TelegramFlowScreenState extends State<TelegramFlowScreen> {
           const SizedBox(height: 8),
           FilledButton(
             onPressed: _busy ? null : _analyze,
-            child: const Text('Analyse link'),
+            child: _stage == TelegramPipelineStage.fetchingInsights
+                ? Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      SizedBox(
+                        width: 22,
+                        height: 22,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: Theme.of(context).colorScheme.onPrimary,
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      const Text('Kanal analiz ediliyor…'),
+                    ],
+                  )
+                : const Text('Analyse link'),
           ),
+          if (stub) ...[
+            const SizedBox(height: 12),
+            Card(
+              color: Colors.orange.shade50,
+              child: const Padding(
+                padding: EdgeInsets.all(12),
+                child: Text(
+                  'Stub mode — Telegram is not being read. Run ./run_telegram_api.sh '
+                  'with TELEGRAM_* and a valid TELEGRAM_SESSION_STRING in .env.',
+                ),
+              ),
+            ),
+          ],
           if (_err != null) ...[
             const SizedBox(height: 12),
             ErrorRetryCard(message: _err!, onRetry: _analyze),
@@ -260,20 +338,91 @@ class _TelegramFlowScreenState extends State<TelegramFlowScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    const Text('Structured summary', style: TextStyle(fontWeight: FontWeight.w600)),
-                    const SizedBox(height: 6),
+                    Row(
+                      children: [
+                        const Expanded(
+                          child: Text(
+                            'Structured summary',
+                            style: TextStyle(fontWeight: FontWeight.w600),
+                          ),
+                        ),
+                        if (live)
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                            decoration: BoxDecoration(
+                              color: Colors.green.shade100,
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: Text(
+                              'Live',
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: Colors.green.shade900,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ),
+                        if (stub)
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                            decoration: BoxDecoration(
+                              color: Colors.orange.shade100,
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: Text(
+                              'Stub',
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: Colors.orange.shade900,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                    if (_insights!.channelTitle != null &&
+                        _insights!.channelTitle!.isNotEmpty)
+                      Text('Channel: ${_insights!.channelTitle}'),
                     Text('Topic: ${_insights!.mainTopic}'),
+                    if (_insights!.toneProfile != null &&
+                        _insights!.toneProfile!.isNotEmpty)
+                      Text('Style: ${_insights!.toneProfile}'),
                     Text('Tone: ${_insights!.tone}'),
                     Text('Themes: ${_insights!.recurringThemes.join(", ")}'),
+                    if (_insights!.postTypes.isNotEmpty)
+                      Text('Post mix: ${_insights!.postTypes.join("; ")}'),
+                    Text('Media types: ${_insights!.mediaTypes.join(", ")}'),
+                    if (_insights!.mediaInsights.isNotEmpty) ...[
+                      const SizedBox(height: 6),
+                      const Text('Media / images', style: TextStyle(fontWeight: FontWeight.w600)),
+                      ..._insights!.mediaInsights.map((e) => Text('· $e')),
+                    ],
+                    if (_insights!.recentHighlights.isNotEmpty) ...[
+                      const SizedBox(height: 6),
+                      const Text('Recent samples', style: TextStyle(fontWeight: FontWeight.w600)),
+                      ..._insights!.recentHighlights.map((e) => Text('· $e')),
+                    ],
+                    const SizedBox(height: 6),
                     Text('Meme angles: ${_insights!.memeableAngles.join(" · ")}'),
                   ],
                 ),
               ),
             ),
             FilledButton(
-              onPressed: _busy ? null : _runBriefBatch,
-              child: const Text('Generate 5 idea variants (server batch)'),
+              onPressed: (stub || _busy) ? null : _runBriefBatch,
+              child: Text(
+                live ? 'Generate & save 7–10 AI variants' : 'Generate 5 idea variants (hosted API)',
+              ),
             ),
+            if (live)
+              Padding(
+                padding: const EdgeInsets.only(top: 8),
+                child: Text(
+                  'Variants are saved as your meme_briefs; images use OPENAI_API_KEY on the Python API.',
+                  style: TextStyle(fontSize: 12, color: Theme.of(context).colorScheme.onSurfaceVariant),
+                ),
+              ),
           ],
           if (_variants.isNotEmpty && _fileUrl == null) ...[
             const SizedBox(height: 12),
@@ -293,7 +442,23 @@ class _TelegramFlowScreenState extends State<TelegramFlowScreen> {
             ),
             FilledButton(
               onPressed: _busy || _selected == null ? null : _image,
-              child: const Text('Generate meme from selection'),
+              child: _stage == TelegramPipelineStage.generatingImage
+                  ? Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        SizedBox(
+                          width: 22,
+                          height: 22,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: Theme.of(context).colorScheme.onPrimary,
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        const Text('Генерация мема…'),
+                      ],
+                    )
+                  : const Text('Generate meme from selection'),
             ),
           ],
           if (_fileUrl != null) ...[

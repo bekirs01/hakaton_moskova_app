@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:hakaton_moskova_app/presentation/screens/profession_flow_screen.dart';
 import 'package:hakaton_moskova_app/presentation/screens/publish_placeholder_screen.dart';
 import 'package:hakaton_moskova_app/presentation/screens/telegram_flow_screen.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 class HomeShell extends StatefulWidget {
   const HomeShell({super.key});
@@ -16,12 +17,26 @@ class _HomeShellState extends State<HomeShell> {
 
   @override
   Widget build(BuildContext context) {
+    // IndexedStack: sekmeler arası geçişte State korunur (Profession ↔ Telegram yazıları kaybolmaz).
     return Scaffold(
-      body: [
-        const ProfessionFlowScreen(),
-        const TelegramFlowScreen(),
-        const PublishPlaceholderScreen(),
-      ][_index],
+      appBar: AppBar(
+        title: const Text('MemeOps'),
+        actions: [
+          IconButton(
+            tooltip: 'Çıkış yap (giriş ekranına dön)',
+            icon: const Icon(Icons.logout),
+            onPressed: () => Supabase.instance.client.auth.signOut(),
+          ),
+        ],
+      ),
+      body: IndexedStack(
+        index: _index,
+        children: const [
+          ProfessionFlowScreen(),
+          TelegramFlowScreen(),
+          PublishPlaceholderScreen(),
+        ],
+      ),
       bottomNavigationBar: NavigationBar(
         selectedIndex: _index,
         onDestinationSelected: (i) => setState(() => _index = i),

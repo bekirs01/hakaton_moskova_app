@@ -1,0 +1,439 @@
+#!/usr/bin/env python3
+"""
+Local MemeOps Telegram API: real channel fetch + structured summary + 5 meme variants.
+"""
+
+from __future__ import annotations
+
+import asyncio
+import json
+import os
+import sys
+from contextlib import asynccontextmanager
+from pathlib import Path
+from typing import Any, Optional
+
+from dotenv import load_dotenv
+from fastapi import FastAPI, Request
+from fastapi.responses import JSONResponse
+from pydantic import BaseModel, ConfigDict, Field
+from telethon import TelegramClient
+from telethon.errors import RPCError
+from telethon.sessions import StringSession
+
+_TOOL = Path(__file__).resolve().parent
+if str(_TOOL) not in sys.path:
+    sys.path.insert(0, str(_TOOL))
+
+from memeops_image_job import run_meme_image_job  # noqa: E402
+from memeops_profession_supabase import (  # noqa: E402
+    create_profession_row,
+    insert_five_briefs,
+    persist_telegram_channel_briefs,
+)
+from telegram_channel_analyzer import (  # noqa: E402
+    analyze_channel_batch,
+    build_meme_variants,
+    classify_post_row,
+)
+
+load_dotenv()
+
+_client: Optional[TelegramClient] = None
+
+
+def _parse_channel_handle(url: str) -> str:
+    from urllib.parse import urlparse
+
+    s = url.strip()
+    if s.startswith("@"):
+        return s[1:].split("/")[0].split("?")[0]
+    if "://" not in s:
+        s = "https://" + s
+    u = urlparse(s)
+    host = (u.netloc or "").lower()
+    parts = [p for p in u.path.strip("/").split("/") if p]
+    if "t.me" in host or host == "telegram.me":
+        if not parts:
+            raise ValueError("Channel username missing in URL")
+        if parts[0] == "s" and len(parts) > 1:
+            return parts[1].replace("@", "").split("?")[0]
+        if parts[0] in ("joinchat", "c", "+") or parts[0].startswith("+"):
+            raise ValueError("Private / invite links need a public @username for this MVP")
+        return parts[0].replace("@", "").split("?")[0]
+    raise ValueError("Use a t.me or @username link")
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    global _client
+    api_id = os.environ.get("TELEGRAM_API_ID", "").strip()
+    api_hash = os.environ.get("TELEGRAM_API_HASH", "").strip()
+    session_s = os.environ.get("TELEGRAM_SESSION_STRING", "").strip()
+    if api_id and api_hash and session_s:
+        _client = TelegramClient(StringSession(session_s), int(api_id), api_hash)
+        await _client.connect()
+        ok = await _client.is_user_authorized()
+        print(
+            "telegram_insights_server: Telethon "
+            + ("connected." if ok else "not authorized — check TELEGRAM_SESSION_STRING.")
+        )
+    else:
+        print(
+            "telegram_insights_server: missing TELEGRAM_* — configure .env "
+            "for live analysis."
+        )
+    yield
+    if _client is not None:
+        await _client.disconnect()
+        _client = None
+
+
+app = FastAPI(title="MemeOps Telegram (local)", lifespan=lifespan)
+
+
+class ChannelInsightsBody(BaseModel):
+    channelUrl: str
+
+
+class MemeVariantsBody(BaseModel):
+    insights: dict[str, Any]
+
+
+class ProfessionCreateBody(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
+
+    title: str
+    description: Optional[str] = None
+    future_context: Optional[str] = Field(None, alias="futureContext")
+
+
+class BriefGenerateBody(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
+
+    profession_id: str = Field(..., alias="professionId")
+
+
+class ImageJobBody(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
+
+    meme_brief_id: str = Field(..., alias="memeBriefId")
+
+
+class PersistVariantsBody(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
+
+    channel_url: str = Field(..., alias="channelUrl")
+    insights: dict[str, Any]
+
+
+def _auth_jwt(request: Request) -> Optional[str]:
+    h = request.headers.get("authorization") or request.headers.get("Authorization")
+    if not h or not h.lower().startswith("bearer "):
+        return None
+    return h[7:].strip()
+
+
+@app.post("/api/v1/professions")
+async def create_profession_api(request: Request, body: ProfessionCreateBody):
+    jwt = _auth_jwt(request)
+    if not jwt:
+        return JSONResponse(
+            status_code=401,
+            content={"error": {"code": "unauthorized", "message": "Sign in in the app first."}},
+        )
+    try:
+        row = await create_profession_row(
+            jwt, body.title, body.description, body.future_context
+        )
+    except RuntimeError as e:
+        msg = str(e)
+        if msg == "missing_supabase_env":
+            return JSONResponse(
+                status_code=503,
+                content={
+                    "error": {
+                        "code": "config",
+                        "message": "Add SUPABASE_URL and SUPABASE_ANON_KEY to .env for the local API.",
+                    }
+                },
+            )
+        return JSONResponse(
+            status_code=502,
+            content={"error": {"code": "supabase", "message": msg[:500]}},
+        )
+    return {"data": {"id": row["id"]}}
+
+
+@app.post("/api/v1/ai/briefs/generate")
+async def generate_briefs_api(request: Request, body: BriefGenerateBody):
+    jwt = _auth_jwt(request)
+    if not jwt:
+        return JSONResponse(
+            status_code=401,
+            content={"error": {"code": "unauthorized", "message": "Sign in in the app first."}},
+        )
+    try:
+        job_id, brief_ids = await insert_five_briefs(jwt, body.profession_id)
+    except RuntimeError as e:
+        msg = str(e)
+        if msg == "missing_supabase_env":
+            return JSONResponse(
+                status_code=503,
+                content={
+                    "error": {
+                        "code": "config",
+                        "message": "Add SUPABASE_URL and SUPABASE_ANON_KEY to .env for the local API.",
+                    }
+                },
+            )
+        return JSONResponse(
+            status_code=502,
+            content={"error": {"code": "supabase", "message": msg[:500]}},
+        )
+    return {"data": {"jobId": job_id, "briefIds": brief_ids}}
+
+
+@app.post("/api/v1/ai/jobs/image")
+async def image_job_api(request: Request, body: ImageJobBody):
+    jwt = _auth_jwt(request)
+    if not jwt:
+        return JSONResponse(
+            status_code=401,
+            content={"error": {"code": "unauthorized", "message": "Sign in in the app first."}},
+        )
+    try:
+        data = await run_meme_image_job(jwt, body.meme_brief_id)
+    except RuntimeError as e:
+        msg = str(e)
+        if msg == "missing_supabase_env":
+            return JSONResponse(
+                status_code=503,
+                content={
+                    "error": {
+                        "code": "config",
+                        "message": "Add SUPABASE_URL and SUPABASE_ANON_KEY to .env for the local API.",
+                    }
+                },
+            )
+        if msg == "missing_openai_key":
+            return JSONResponse(
+                status_code=503,
+                content={
+                    "error": {
+                        "code": "openai_required",
+                        "message": "Add OPENAI_API_KEY to .env for meme image generation.",
+                    }
+                },
+            )
+        return JSONResponse(
+            status_code=502,
+            content={"error": {"code": "image_job", "message": msg[:500]}},
+        )
+    return {"data": data}
+
+
+@app.post("/api/v1/telegram/persist-variants")
+async def persist_variants_api(request: Request, body: PersistVariantsBody):
+    jwt = _auth_jwt(request)
+    if not jwt:
+        return JSONResponse(
+            status_code=401,
+            content={"error": {"code": "unauthorized", "message": "Sign in in the app first."}},
+        )
+    src = body.insights.get("analysisSource")
+    if src != "telethon_live":
+        return JSONResponse(
+            status_code=400,
+            content={
+                "error": {
+                    "code": "invalid_insights",
+                    "message": "Need live Telethon analysis first (not stub).",
+                }
+            },
+        )
+    variants = await asyncio.to_thread(build_meme_variants, body.insights)
+    lines = [
+        (v.get("memotype_idea") or v.get("brief_title") or "").strip()
+        for v in variants
+    ]
+    lines = [x for x in lines if x]
+    if len(lines) < 5:
+        return JSONResponse(
+            status_code=422,
+            content={
+                "error": {
+                    "code": "few_ideas",
+                    "message": "Not enough meme lines — set OPENAI_API_KEY for richer ideas.",
+                }
+            },
+        )
+    try:
+        data = await persist_telegram_channel_briefs(
+            jwt, body.channel_url, body.insights, lines
+        )
+    except RuntimeError as e:
+        msg = str(e)
+        if msg == "missing_supabase_env":
+            return JSONResponse(
+                status_code=503,
+                content={
+                    "error": {
+                        "code": "config",
+                        "message": "Add SUPABASE_URL and SUPABASE_ANON_KEY to .env for the local API.",
+                    }
+                },
+            )
+        return JSONResponse(
+            status_code=502,
+            content={"error": {"code": "supabase", "message": msg[:500]}},
+        )
+    return {"data": data}
+
+
+@app.get("/health")
+async def health():
+    ok = _client is not None and await _client.is_user_authorized()
+    has_oai = bool(os.environ.get("OPENAI_API_KEY", "").strip())
+    return {"ok": True, "telegram": ok, "stub": False, "openai": has_oai}
+
+
+@app.post("/api/v1/telegram/meme-variants")
+async def meme_variants(body: MemeVariantsBody):
+    src = body.insights.get("analysisSource")
+    if src != "telethon_live":
+        return JSONResponse(
+            status_code=400,
+            content={
+                "error": {
+                    "code": "invalid_insights",
+                    "message": "Run channel analysis first (live Telethon). Stubs cannot generate grounded variants.",
+                }
+            },
+        )
+    variants = await asyncio.to_thread(build_meme_variants, body.insights)
+    return {"data": {"variants": variants}}
+
+
+@app.post("/api/v1/telegram/channel-insights")
+async def channel_insights(body: ChannelInsightsBody):
+    if _client is None or not await _client.is_user_authorized():
+        return JSONResponse(
+            status_code=503,
+            content={
+                "error": {
+                    "code": "telegram_not_configured",
+                    "message": (
+                        "Telegram not configured. Add TELEGRAM_API_ID, TELEGRAM_API_HASH, "
+                        "TELEGRAM_SESSION_STRING to .env and run ./run_telegram_api.sh"
+                    ),
+                }
+            },
+        )
+
+    try:
+        handle = _parse_channel_handle(body.channelUrl)
+    except ValueError as e:
+        return JSONResponse(
+            status_code=400,
+            content={"error": {"code": "bad_channel_url", "message": str(e)}},
+        )
+
+    try:
+        entity = await _client.get_entity(handle)
+    except RPCError as e:
+        return JSONResponse(
+            status_code=502,
+            content={
+                "error": {
+                    "code": "telegram_rpc",
+                    "message": f"Telegram error: {e.__class__.__name__}",
+                }
+            },
+        )
+    except Exception as e:
+        return JSONResponse(
+            status_code=502,
+            content={
+                "error": {
+                    "code": "telegram_entity",
+                    "message": f"Could not open channel: {e}",
+                }
+            },
+        )
+
+    title = getattr(entity, "title", None) or handle
+
+    texts: list[str] = []
+    captions: list[str] = []
+    post_types: list[str] = []
+    photo_n = video_n = doc_n = 0
+    image_bytes: list[bytes] = []
+
+    try:
+        async for msg in _client.iter_messages(entity, limit=150):
+            is_fwd = msg.forward is not None
+            t = (msg.text or "").strip()
+            has_p = bool(msg.photo)
+            has_v = bool(msg.video)
+            post_types.append(classify_post_row(t if t else None, has_p, has_v, is_fwd))
+
+            if t:
+                texts.append(msg.text or "")
+            if msg.photo and t:
+                captions.append(t)
+
+            if msg.photo:
+                photo_n += 1
+                if len(image_bytes) < 5:
+                    try:
+                        b = await _client.download_media(msg.photo, file=bytes)
+                        if isinstance(b, bytes) and 0 < len(b) < 2_500_000:
+                            image_bytes.append(b)
+                    except Exception:
+                        pass
+            if msg.video:
+                video_n += 1
+            if msg.document and not (msg.photo or msg.video):
+                doc_n += 1
+    except RPCError as e:
+        return JSONResponse(
+            status_code=502,
+            content={
+                "error": {
+                    "code": "telegram_fetch",
+                    "message": f"Could not read messages: {e.__class__.__name__}",
+                }
+            },
+        )
+
+    if not texts and photo_n == 0 and video_n == 0:
+        return JSONResponse(
+            status_code=422,
+            content={
+                "error": {
+                    "code": "no_content",
+                    "message": "No messages found in this window — channel may be empty or inaccessible.",
+                }
+            },
+        )
+
+    data = analyze_channel_batch(
+        body.channelUrl,
+        title,
+        texts,
+        captions,
+        post_types,
+        photo_n,
+        video_n,
+        doc_n,
+        image_bytes,
+    )
+    return {"data": data}
+
+
+if __name__ == "__main__":
+    import uvicorn
+
+    port = int(os.environ.get("TELEGRAM_INSIGHTS_PORT", "3000"))
+    uvicorn.run(app, host="127.0.0.1", port=port)

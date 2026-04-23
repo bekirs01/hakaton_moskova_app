@@ -1,13 +1,32 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:hakaton_moskova_app/core/config/app_config_loader.dart';
 import 'package:hakaton_moskova_app/core/config/app_env.dart';
+import 'package:hakaton_moskova_app/core/dev/embedded_memeops_dev_api.dart';
+import 'package:hakaton_moskova_app/core/dev/memeops_local_probe.dart';
 import 'package:hakaton_moskova_app/memeops_app.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await AppConfigLoader.ensureLoaded();
+  if (kDebugMode) {
+    if (AppEnv.skipEmbeddedMemeopsStub) {
+      final apiUp = await memeopsLocalHealthOk();
+      if (!apiUp && kDebugMode) {
+        // ignore: avoid_print
+        print(
+          'MemeOps: ${AppEnv.memeopsApiBase} yanıt vermiyor. '
+          'Gömülü stub BAŞLATILMIYOR (MEMEOPS_USE_PYTHON_API=1). '
+          'Önce ./run_telegram_api.sh çalıştır, sonra uygulamayı yeniden aç.',
+        );
+      }
+      // Python API yokken sahte Telegram + şablon fikirler üretme — bağlantı hatası gösterilir.
+    } else {
+      await EmbeddedMemeopsDevApi.tryStart();
+    }
+  }
   if (AppEnv.isSupabaseConfigured) {
     await Supabase.initialize(
       url: AppEnv.supabaseUrl,

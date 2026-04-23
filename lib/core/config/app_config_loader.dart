@@ -15,6 +15,14 @@ class AppConfigLoader {
     } catch (_) {
       // Root `.env` may be absent from the asset bundle in some builds; defines still apply.
     }
+    // Never keep Telegram user/API secrets in the mobile process memory.
+    for (final k in const [
+      'TELEGRAM_API_ID',
+      'TELEGRAM_API_HASH',
+      'TELEGRAM_SESSION_STRING',
+    ]) {
+      dotenv.env.remove(k);
+    }
     _didLoad = true;
   }
 }

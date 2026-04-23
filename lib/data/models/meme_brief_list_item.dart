@@ -20,11 +20,15 @@ class MemeBriefListItem {
       id;
 
   factory MemeBriefListItem.fromMap(Map<String, dynamic> m) {
+    final id = m['id']?.toString() ?? '';
     return MemeBriefListItem(
-      id: m['id'] as String,
-      briefTitle: m['brief_title'] as String?,
-      suggestedCaption: m['suggested_caption_ru'] as String?,
-      memotypeIdea: m['memotype_idea'] as String?,
+      id: id,
+      briefTitle: (m['brief_title'] ?? m['briefTitle']) as String?,
+      suggestedCaption: (m['suggested_caption_ru'] ?? m['suggestedCaption']) as String?,
+      memotypeIdea: (m['memotype_idea'] ?? m['memotypeIdea']) as String?,
     );
   }
+
+  /// Local Python API variants cannot drive hosted image jobs.
+  bool get isLocalPythonVariant => id.startsWith('local-mv-');
 }

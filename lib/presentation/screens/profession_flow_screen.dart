@@ -57,7 +57,7 @@ class _ProfessionFlowScreenState extends State<ProfessionFlowScreen> {
       case ProfessionPipelineStage.creatingProfession:
         return 'Creating profession…';
       case ProfessionPipelineStage.generatingSituations:
-        return 'Generating 5 situation variants (server pipeline)…';
+        return 'Generating 7–10 situation ideas (OpenAI on API server)…';
       case ProfessionPipelineStage.generatingImage:
         return 'Generating meme image…';
       case ProfessionPipelineStage.savingResult:
@@ -115,7 +115,7 @@ class _ProfessionFlowScreenState extends State<ProfessionFlowScreen> {
       });
     } catch (e) {
       setState(() {
-        _err = e.toString();
+        _err = memeopsUnexpectedErrorMessage(e);
         _stage = ProfessionPipelineStage.error;
       });
     }
@@ -145,6 +145,16 @@ class _ProfessionFlowScreenState extends State<ProfessionFlowScreen> {
       setState(() {
         _stage = ProfessionPipelineStage.done;
       });
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'Görsel üretildi ve Supabase’e kaydedildi (Storage: meme-assets, tablolar: meme_assets / meme_asset_versions).',
+            style: TextStyle(color: Theme.of(context).colorScheme.onInverseSurface),
+          ),
+          backgroundColor: Theme.of(context).colorScheme.inverseSurface,
+          duration: const Duration(seconds: 4),
+        ),
+      );
     } on MemeopsApiException catch (e) {
       setState(() {
         _err = e.message;
@@ -152,7 +162,7 @@ class _ProfessionFlowScreenState extends State<ProfessionFlowScreen> {
       });
     } catch (e) {
       setState(() {
-        _err = e.toString();
+        _err = memeopsUnexpectedErrorMessage(e);
         _stage = ProfessionPipelineStage.error;
       });
     }
@@ -191,7 +201,9 @@ class _ProfessionFlowScreenState extends State<ProfessionFlowScreen> {
         children: [
           const Text('Profession flow', style: TextStyle(fontSize: 20, fontWeight: FontWeight.w600)),
           const SizedBox(height: 8),
-          const Text('Agent 1: situation variants · Agent 2: image · Agent 3: publish (stub)'),
+          const Text(
+            'Agent 1: profession → funny situations (GPT) · Agent 2: meme image (gpt-image-1) · Agent 3: publish (stub)',
+          ),
           const SizedBox(height: 16),
           TextField(
             controller: _professionCtrl,
@@ -241,7 +253,10 @@ class _ProfessionFlowScreenState extends State<ProfessionFlowScreen> {
           ],
           if (_variants.isNotEmpty && _fileUrl == null) ...[
             const SizedBox(height: 16),
-            const Text('Pick one line (5 server directions):', style: TextStyle(fontWeight: FontWeight.w500)),
+            const Text(
+              'Pick one line (7–10 AI situations):',
+              style: TextStyle(fontWeight: FontWeight.w500),
+            ),
             ..._variants.map(
               (b) => ListTile(
                 title: Text(b.displayLine, maxLines: 3, overflow: TextOverflow.ellipsis),
@@ -257,7 +272,23 @@ class _ProfessionFlowScreenState extends State<ProfessionFlowScreen> {
             ),
             FilledButton(
               onPressed: _busy || _selected == null ? null : _runImage,
-              child: const Text('Generate meme image'),
+              child: _stage == ProfessionPipelineStage.generatingImage
+                  ? Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        SizedBox(
+                          width: 22,
+                          height: 22,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: Theme.of(context).colorScheme.onPrimary,
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        const Text('Генерация мема…'),
+                      ],
+                    )
+                  : const Text('Generate meme image'),
             ),
           ],
           if (_fileUrl != null) ...[
