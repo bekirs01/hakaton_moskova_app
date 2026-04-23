@@ -26,6 +26,7 @@ if str(_TOOL) not in sys.path:
     sys.path.insert(0, str(_TOOL))
 
 from memeops_image_job import run_meme_image_job  # noqa: E402
+from memeops_video_job import run_meme_video_job  # noqa: E402
 from memeops_profession_supabase import (  # noqa: E402
     create_profession_row,
     insert_five_briefs,
@@ -129,6 +130,13 @@ class ImageJobBody(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
 
     meme_brief_id: str = Field(..., alias="memeBriefId")
+
+
+class VideoJobBody(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
+
+    meme_brief_id: str = Field(..., alias="memeBriefId")
+    seconds: str = Field("4", alias="seconds")
 
 
 class PersistVariantsBody(BaseModel):
@@ -240,6 +248,45 @@ async def image_job_api(request: Request, body: ImageJobBody):
         return JSONResponse(
             status_code=502,
             content={"error": {"code": "image_job", "message": msg[:500]}},
+        )
+    return {"data": data}
+
+
+@app.post("/api/v1/ai/jobs/video")
+async def video_job_api(request: Request, body: VideoJobBody):
+    jwt = _auth_jwt(request)
+    if not jwt:
+        return JSONResponse(
+            status_code=401,
+            content={"error": {"code": "unauthorized", "message": "Sign in in the app first."}},
+        )
+    try:
+        data = await run_meme_video_job(jwt, body.meme_brief_id, body.seconds)
+    except RuntimeError as e:
+        msg = str(e)
+        if msg == "missing_supabase_env":
+            return JSONResponse(
+                status_code=503,
+                content={
+                    "error": {
+                        "code": "config",
+                        "message": "Add SUPABASE_URL and SUPABASE_ANON_KEY to .env for the local API.",
+                    }
+                },
+            )
+        if msg == "missing_openai_key":
+            return JSONResponse(
+                status_code=503,
+                content={
+                    "error": {
+                        "code": "openai_required",
+                        "message": "Add OPENAI_API_KEY to .env for Sora video generation.",
+                    }
+                },
+            )
+        return JSONResponse(
+            status_code=502,
+            content={"error": {"code": "video_job", "message": msg[:500]}},
         )
     return {"data": data}
 

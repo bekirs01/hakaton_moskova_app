@@ -8,7 +8,10 @@ import 'package:http/http.dart' as http;
 import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
 
-/// Cihazda saklanan tek bir meme görseli kaydı (indirilmiş dosya).
+/// Arşiv kaydının türü (görsel veya video).
+enum MemeArchiveKind { image, video }
+
+/// Cihazda saklanan tek bir meme kaydı (indirilmiş dosya; görsel veya video).
 class MemeArchiveEntry {
   const MemeArchiveEntry({
     required this.id,
@@ -16,6 +19,8 @@ class MemeArchiveEntry {
     required this.createdAt,
     this.caption,
     required this.sourceLabel,
+    this.kind = MemeArchiveKind.image,
+    this.durationSeconds,
   });
 
   final String id;
@@ -23,6 +28,8 @@ class MemeArchiveEntry {
   final DateTime createdAt;
   final String? caption;
   final String sourceLabel;
+  final MemeArchiveKind kind;
+  final int? durationSeconds;
 
   Map<String, dynamic> toJson() => {
         'id': id,
@@ -30,15 +37,21 @@ class MemeArchiveEntry {
         'createdAt': createdAt.toIso8601String(),
         'caption': caption,
         'sourceLabel': sourceLabel,
+        'kind': kind.name,
+        'durationSeconds': durationSeconds,
       };
 
   factory MemeArchiveEntry.fromJson(Map<String, dynamic> j) {
+    final kindRaw = (j['kind'] as String?)?.toLowerCase();
+    final kind = kindRaw == 'video' ? MemeArchiveKind.video : MemeArchiveKind.image;
     return MemeArchiveEntry(
       id: j['id'] as String,
       localFileName: j['localFileName'] as String,
       createdAt: DateTime.parse(j['createdAt'] as String),
       caption: j['caption'] as String?,
       sourceLabel: (j['sourceLabel'] as String?) ?? '',
+      kind: kind,
+      durationSeconds: (j['durationSeconds'] as num?)?.toInt(),
     );
   }
 }
@@ -105,6 +118,12 @@ class MemeLocalArchiveRepository {
     if (path.endsWith('.webp')) {
       return '.webp';
     }
+    if (path.endsWith('.mp4')) {
+      return '.mp4';
+    }
+    if (path.endsWith('.gif')) {
+      return '.gif';
+    }
     return '.img';
   }
 
@@ -117,9 +136,15 @@ class MemeLocalArchiveRepository {
     required String imageUrl,
     String? caption,
     required String sourceLabel,
+    MemeArchiveKind kind = MemeArchiveKind.image,
+    int? durationSeconds,
   }) async {
     final uri = Uri.parse(imageUrl);
-    final resp = await http.get(uri).timeout(const Duration(minutes: 2));
+    // Video dosyaları için daha geniş timeout.
+    final timeout = kind == MemeArchiveKind.video
+        ? const Duration(minutes: 5)
+        : const Duration(minutes: 2);
+    final resp = await http.get(uri).timeout(timeout);
     if (resp.statusCode != 200) {
       throw StateError(
         lookupAppLocalizations(AppLocaleController.instance.locale)
@@ -139,6 +164,8 @@ class MemeLocalArchiveRepository {
       createdAt: DateTime.now(),
       caption: caption,
       sourceLabel: sourceLabel,
+      kind: kind,
+      durationSeconds: durationSeconds,
     );
     final existing = await loadEntries();
     existing.insert(0, entry);

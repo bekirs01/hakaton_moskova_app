@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:hakaton_moskova_app/data/local/meme_local_archive_repository.dart';
 import 'package:hakaton_moskova_app/l10n/app_localizations.dart';
 import 'package:hakaton_moskova_app/presentation/layout/home_tab_scroll_padding.dart';
+import 'package:hakaton_moskova_app/presentation/screens/archive_video_player_screen.dart';
 import 'package:hakaton_moskova_app/presentation/theme/memeops_design_tokens.dart';
 import 'package:hakaton_moskova_app/presentation/theme/memeops_theme.dart';
 import 'package:hakaton_moskova_app/presentation/widgets/memeops_glass_surface.dart';
@@ -67,6 +68,18 @@ class _MemeArchiveScreenState extends State<MemeArchiveScreen> {
       return;
     }
     if (!mounted) {
+      return;
+    }
+    if (e.kind == MemeArchiveKind.video) {
+      await Navigator.of(context).push<void>(
+        MaterialPageRoute<void>(
+          builder: (_) => ArchiveVideoPlayerScreen(
+            file: file,
+            title: e.sourceLabel,
+            caption: e.caption,
+          ),
+        ),
+      );
       return;
     }
     await Navigator.of(context).push<void>(
@@ -194,6 +207,75 @@ class _MemeArchiveScreenState extends State<MemeArchiveScreen> {
                                                 ),
                                                 child: const Icon(
                                                   Icons.broken_image_outlined,
+                                                ),
+                                              );
+                                            }
+                                            if (e.kind ==
+                                                MemeArchiveKind.video) {
+                                              return Container(
+                                                width: 72,
+                                                height: 72,
+                                                decoration: BoxDecoration(
+                                                  gradient: LinearGradient(
+                                                    begin: Alignment.topLeft,
+                                                    end: Alignment.bottomRight,
+                                                    colors: [
+                                                      MemeopsColors.iosBlue
+                                                          .withValues(
+                                                            alpha: 0.55,
+                                                          ),
+                                                      Colors.black.withValues(
+                                                        alpha: 0.55,
+                                                      ),
+                                                    ],
+                                                  ),
+                                                ),
+                                                alignment: Alignment.center,
+                                                child: Stack(
+                                                  alignment: Alignment.center,
+                                                  children: [
+                                                    const Icon(
+                                                      Icons
+                                                          .play_circle_fill_rounded,
+                                                      color: Colors.white,
+                                                      size: 36,
+                                                    ),
+                                                    if (e.durationSeconds !=
+                                                        null)
+                                                      Positioned(
+                                                        right: 4,
+                                                        bottom: 4,
+                                                        child: Container(
+                                                          padding:
+                                                              const EdgeInsets.symmetric(
+                                                                horizontal: 6,
+                                                                vertical: 2,
+                                                              ),
+                                                          decoration: BoxDecoration(
+                                                            color: Colors.black
+                                                                .withValues(
+                                                                  alpha: 0.6,
+                                                                ),
+                                                            borderRadius:
+                                                                BorderRadius.circular(
+                                                                  6,
+                                                                ),
+                                                          ),
+                                                          child: Text(
+                                                            '${e.durationSeconds}s',
+                                                            style:
+                                                                const TextStyle(
+                                                                  color: Colors
+                                                                      .white,
+                                                                  fontSize: 10,
+                                                                  fontWeight:
+                                                                      FontWeight
+                                                                          .w600,
+                                                                ),
+                                                          ),
+                                                        ),
+                                                      ),
+                                                  ],
                                                 ),
                                               );
                                             }

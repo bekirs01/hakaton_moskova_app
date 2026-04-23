@@ -61,4 +61,21 @@ class AppEnv {
     final f = _envLine('MEMEOPS_USE_PYTHON_API').toLowerCase();
     return f == '1' || f == 'true' || f == 'yes';
   }
+
+  /// @BotFather bot token — yalnızca kanala paylaşım için; repoya yazmayın.
+  static String get telegramPublishBotToken {
+    const fromDefine = String.fromEnvironment('TELEGRAM_PUBLISH_BOT_TOKEN');
+    if (fromDefine.isNotEmpty) return fromDefine.trim();
+    return _envLine('TELEGRAM_PUBLISH_BOT_TOKEN');
+  }
+
+  /// Kanal kullanıcı adı (`@memasicspace`) veya sayısal `chat_id` (`-100...`).
+  static String get telegramPublishChannel {
+    const fromDefine = String.fromEnvironment('TELEGRAM_PUBLISH_CHANNEL');
+    if (fromDefine.isNotEmpty) return fromDefine.trim();
+    return _envLine('TELEGRAM_PUBLISH_CHANNEL');
+  }
+
+  static bool get isTelegramPublishConfigured =>
+      telegramPublishBotToken.isNotEmpty && telegramPublishChannel.isNotEmpty;
 }

@@ -7,7 +7,9 @@ import 'package:hakaton_moskova_app/data/local/meme_local_archive_repository.dar
 import 'package:hakaton_moskova_app/data/models/channel_insights.dart';
 import 'package:hakaton_moskova_app/data/models/meme_brief_list_item.dart';
 import 'package:hakaton_moskova_app/data/repository/meme_briefs_repository.dart';
+import 'package:hakaton_moskova_app/data/publication/publication_port_provider.dart';
 import 'package:hakaton_moskova_app/domain/pipeline_stage.dart';
+import 'package:hakaton_moskova_app/domain/publication_port.dart';
 import 'package:hakaton_moskova_app/l10n/app_localizations.dart';
 import 'package:hakaton_moskova_app/presentation/layout/home_tab_scroll_padding.dart';
 import 'package:hakaton_moskova_app/presentation/theme/memeops_design_tokens.dart';
@@ -16,6 +18,7 @@ import 'package:hakaton_moskova_app/presentation/widgets/memeops_glass_surface.d
 import 'package:hakaton_moskova_app/presentation/widgets/memeops_step_section.dart';
 import 'package:hakaton_moskova_app/presentation/widgets/memeops_variant_pick_tile.dart';
 import 'package:hakaton_moskova_app/presentation/widgets/pipeline_progress_bar.dart';
+import 'package:hakaton_moskova_app/presentation/widgets/video_generate_section.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 class TelegramFlowScreen extends StatefulWidget {
@@ -50,6 +53,7 @@ class _TelegramFlowScreenState extends State<TelegramFlowScreen> {
   final _link = TextEditingController();
   final _api = MemeopsApiClient(Supabase.instance.client);
   final _briefs = MemeBriefsRepository(Supabase.instance.client);
+  late final PublicationPort _publish = createPublicationPort();
 
   TelegramPipelineStage _stage = TelegramPipelineStage.idle;
   String? _err;
@@ -271,6 +275,25 @@ class _TelegramFlowScreenState extends State<TelegramFlowScreen> {
         _stage = TelegramPipelineStage.error;
       });
     }
+  }
+
+  void _openPublish() {
+    final l10n = AppLocalizations.of(context);
+    final f = _publish.publishMeme(imageUrl: _fileUrl, brief: _selected);
+    f.then((r) {
+      if (!mounted) {
+        return;
+      }
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            r.comingSoon
+                ? l10n.publicationComingSoon
+                : (r.message?.isNotEmpty == true ? r.message! : l10n.publicationDone),
+          ),
+        ),
+      );
+    });
   }
 
   @override
@@ -645,6 +668,20 @@ class _TelegramFlowScreenState extends State<TelegramFlowScreen> {
                   Center(child: Text(l10n.imageLoadError)),
             ),
           ),
+          const SizedBox(height: 8),
+          OutlinedButton(
+            onPressed: _openPublish,
+            child: Text(l10n.publishTitle),
+          ),
+          if (_selected != null) ...[
+            const SizedBox(height: 16),
+            VideoGenerateSection(
+              memeBriefId: _selected!.id,
+              caption: _selected?.displayLine,
+              sourceLabel: 'Telegram',
+              stepNumber: 4,
+            ),
+          ],
         ],
       ],
     );

@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:hakaton_moskova_app/domain/publication_port.dart';
+import 'package:hakaton_moskova_app/data/publication/publication_port_provider.dart';
 import 'package:hakaton_moskova_app/l10n/app_localizations.dart';
 import 'package:hakaton_moskova_app/presentation/layout/home_tab_scroll_padding.dart';
 import 'package:hakaton_moskova_app/presentation/theme/memeops_design_tokens.dart';
@@ -12,7 +12,7 @@ class PublishPlaceholderScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    final port = StubPublicationPort();
+    final port = createPublicationPort();
     return ListView(
       padding: homeTabScrollPadding(),
       children: [
@@ -50,7 +50,9 @@ class PublishPlaceholderScreen extends StatelessWidget {
                         content: Text(
                           r.comingSoon
                               ? l10n.publicationComingSoon
-                              : l10n.publicationDone,
+                              : (r.message?.isNotEmpty == true
+                                  ? r.message!
+                                  : l10n.publicationDone),
                         ),
                       ),
                     );

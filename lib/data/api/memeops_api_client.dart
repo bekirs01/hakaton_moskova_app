@@ -186,6 +186,27 @@ class MemeopsApiClient {
     );
   }
 
+  /// POST `/api/v1/ai/jobs/video` — Sora 2 video (image → animated mp4).
+  /// `seconds` yalnızca "4", "8" veya "12" olabilir (Sora kısıtı).
+  Future<({String? fileUrl, String? assetVersionId, String? jobId, String? seconds})>
+      generateVideo(String memeBriefId, {String seconds = '4'}) async {
+    final t = await _token();
+    final res = await _post(
+      '/api/v1/ai/jobs/video',
+      token: t,
+      body: jsonEncode({'memeBriefId': memeBriefId, 'seconds': seconds}),
+      timeout: _imageJobTimeout,
+    );
+    final m = _jsonOrThrow(res, 'video');
+    final data = m['data'] as Map<String, dynamic>? ?? m;
+    return (
+      fileUrl: data['fileUrl'] as String?,
+      assetVersionId: data['assetVersionId'] as String?,
+      jobId: data['jobId'] as String?,
+      seconds: data['seconds'] as String?,
+    );
+  }
+
   /// POST `/api/v1/telegram/channel-insights` — server parses / summarizes channel.
   Future<ChannelInsights> channelInsights(String channelUrl) async {
     final t = await _token();
