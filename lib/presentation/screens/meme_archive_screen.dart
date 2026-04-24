@@ -102,6 +102,7 @@ class _MemeArchiveScreenState extends State<MemeArchiveScreen> {
                   ctx,
                   file: file,
                   sourceLabel: e.sourceLabel,
+                  kind: e.kind,
                   caption: e.caption,
                 ),
                 icon: const Icon(Icons.share_rounded),
@@ -146,6 +147,7 @@ class _MemeArchiveScreenState extends State<MemeArchiveScreen> {
       context,
       file: file,
       sourceLabel: e.sourceLabel,
+      kind: e.kind,
       caption: e.caption,
     );
   }

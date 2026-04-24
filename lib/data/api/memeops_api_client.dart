@@ -50,12 +50,16 @@ class MemeopsApiClient {
     return Uri.parse('$base$path');
   }
 
-  Future<String?> _token({Duration? minValidity}) async {
+  Future<String?> _token({Duration? minValidity, bool forceRefresh = false}) async {
     final session = _supabase.auth.currentSession;
     if (session == null) {
       return null;
     }
     final min = minValidity ?? Duration.zero;
+    if (forceRefresh) {
+      final refreshed = await _supabase.auth.refreshSession();
+      return refreshed.session?.accessToken ?? _supabase.auth.currentSession?.accessToken;
+    }
     final expiresAt = session.expiresAt;
     if (expiresAt != null) {
       final expiry = DateTime.fromMillisecondsSinceEpoch(
@@ -216,7 +220,10 @@ class MemeopsApiClient {
   /// `seconds` yalnızca "4", "8" veya "12" olabilir (Sora kısıtı).
   Future<({String? fileUrl, String? assetVersionId, String? jobId, String? seconds})>
       generateVideo(String memeBriefId, {String seconds = '4'}) async {
-    var t = await _token(minValidity: _videoTokenMinValidity);
+    var t = await _token(
+      minValidity: _videoTokenMinValidity,
+      forceRefresh: true,
+    );
     var res = await _post(
       '/api/v1/ai/jobs/video',
       token: t,
@@ -224,7 +231,10 @@ class MemeopsApiClient {
       timeout: _imageJobTimeout,
     );
     if (_isExpiredJwtResponse(res)) {
-      t = await _token(minValidity: _videoTokenMinValidity);
+      t = await _token(
+        minValidity: _videoTokenMinValidity,
+        forceRefresh: true,
+      );
       res = await _post(
         '/api/v1/ai/jobs/video',
         token: t,

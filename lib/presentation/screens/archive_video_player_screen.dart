@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:hakaton_moskova_app/data/local/meme_local_archive_repository.dart';
 import 'package:hakaton_moskova_app/l10n/app_localizations.dart';
 import 'package:hakaton_moskova_app/presentation/theme/memeops_design_tokens.dart';
 import 'package:hakaton_moskova_app/presentation/theme/memeops_theme.dart';
@@ -67,6 +68,7 @@ class _ArchiveVideoPlayerScreenState extends State<ArchiveVideoPlayerScreen> {
       context,
       file: widget.file,
       sourceLabel: widget.title,
+      kind: MemeArchiveKind.video,
       caption: widget.caption,
     );
   }

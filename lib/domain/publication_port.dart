@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:hakaton_moskova_app/data/models/meme_brief_list_item.dart';
 
 /// Future: push saved memes to connected channels. Stub only.
@@ -5,6 +7,9 @@ abstract class PublicationPort {
   Future<PublicationResult> publishMeme({
     required String? imageUrl,
     required MemeBriefListItem? brief,
+    File? localFile,
+    bool isVideo = false,
+    String? captionOverride,
   });
 }
 
@@ -19,6 +24,9 @@ class StubPublicationPort implements PublicationPort {
   Future<PublicationResult> publishMeme({
     required String? imageUrl,
     required MemeBriefListItem? brief,
+    File? localFile,
+    bool isVideo = false,
+    String? captionOverride,
   }) async {
     return const PublicationResult(comingSoon: true);
   }
