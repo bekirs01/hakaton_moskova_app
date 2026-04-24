@@ -55,24 +55,34 @@ class MemeSupabaseAssetsRepository {
         .order('created_at', ascending: false)
         .limit(300) as List<dynamic>;
 
-    final rows = <Map<String, dynamic>>[];
+    final rowMaps = <Map<String, dynamic>>[];
     for (final e in raw) {
       if (e is! Map) {
         continue;
       }
-      final m = Map<String, dynamic>.from(e);
-      final sp = m['storage_path'] as String?;
-      final rawUrl = m['file_url'] as String?;
-      final url = await resolveMemeAssetPlayableUrl(
-        _client,
-        rawUrl,
-        sp,
-      );
-      m['_resolved_file_url'] = url;
-      if (url.isEmpty) {
+      rowMaps.add(Map<String, dynamic>.from(e));
+    }
+
+    await Future.wait<void>(
+      rowMaps.map((m) async {
+        final sp = m['storage_path'] as String?;
+        final rawUrl = m['file_url'] as String?;
+        final url = await resolveMemeAssetPlayableUrl(
+          _client,
+          rawUrl,
+          sp,
+        );
+        m['_resolved_file_url'] = url;
+      }),
+    );
+
+    final rows = <Map<String, dynamic>>[];
+    for (final m in rowMaps) {
+      final u = (m['_resolved_file_url'] as String?)?.trim() ?? '';
+      if (u.isEmpty) {
         continue;
       }
-      if (!_isImageUrl(url) && !_isVideoUrl(url)) {
+      if (!_isImageUrl(u) && !_isVideoUrl(u)) {
         continue;
       }
       rows.add(m);

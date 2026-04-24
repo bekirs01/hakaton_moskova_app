@@ -8,7 +8,8 @@ import 'package:hakaton_moskova_app/data/local/meme_local_archive_repository.dar
 import 'package:hakaton_moskova_app/data/models/supabase_meme_asset_entry.dart';
 import 'package:hakaton_moskova_app/data/repository/meme_supabase_assets_repository.dart';
 import 'package:hakaton_moskova_app/l10n/app_localizations.dart';
-import 'package:hakaton_moskova_app/presentation/feed/meme_unified_feed.dart';
+import 'package:hakaton_moskova_app/presentation/feed/meme_unified_feed.dart'
+    show MemeFeedRow, buildMemeFeedLoad;
 import 'package:hakaton_moskova_app/presentation/screens/archive_video_player_screen.dart';
 import 'package:hakaton_moskova_app/presentation/theme/memeops_design_tokens.dart';
 import 'package:hakaton_moskova_app/presentation/theme/memeops_theme.dart';
@@ -18,6 +19,95 @@ import 'package:hakaton_moskova_app/presentation/widgets/memeops_glass_surface.d
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 const double _kThumb = 48;
+
+class _LocalArchiveThumb extends StatefulWidget {
+  const _LocalArchiveThumb({required this.entry});
+
+  final MemeArchiveEntry entry;
+
+  @override
+  State<_LocalArchiveThumb> createState() => _LocalArchiveThumbState();
+}
+
+class _LocalArchiveThumbState extends State<_LocalArchiveThumb> {
+  static final _repo = MemeLocalArchiveRepository.instance;
+  late Future<File> _fileFuture;
+
+  @override
+  void initState() {
+    super.initState();
+    _fileFuture = _repo.fileFor(widget.entry);
+  }
+
+  @override
+  void didUpdateWidget(covariant _LocalArchiveThumb oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.entry.id != widget.entry.id) {
+      _fileFuture = _repo.fileFor(widget.entry);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final dpr = MediaQuery.devicePixelRatioOf(context);
+    final cacheSide = (_kThumb * dpr).round();
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(10),
+      child: FutureBuilder<File>(
+        future: _fileFuture,
+        builder: (context, snap) {
+          if (snap.connectionState != ConnectionState.done) {
+            return Container(
+              width: _kThumb,
+              height: _kThumb,
+              color: Colors.white.withValues(alpha: 0.06),
+            );
+          }
+          final f = snap.data;
+          if (f == null || !f.existsSync()) {
+            return Container(
+              width: _kThumb,
+              height: _kThumb,
+              color: Colors.white.withValues(alpha: 0.06),
+              child: const Icon(Icons.broken_image_outlined, size: 20),
+            );
+          }
+          if (widget.entry.kind == MemeArchiveKind.video) {
+            return Container(
+              width: _kThumb,
+              height: _kThumb,
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(10),
+                gradient: LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [
+                    MemeopsColors.iosBlue.withValues(alpha: 0.55),
+                    Colors.black.withValues(alpha: 0.55),
+                  ],
+                ),
+              ),
+              alignment: Alignment.center,
+              child: const Icon(
+                Icons.play_circle_fill_rounded,
+                color: Colors.white,
+                size: 26,
+              ),
+            );
+          }
+          return Image.file(
+            f,
+            width: _kThumb,
+            height: _kThumb,
+            fit: BoxFit.cover,
+            cacheWidth: cacheSide,
+            filterQuality: FilterQuality.medium,
+          );
+        },
+      ),
+    );
+  }
+}
 
 class MemeArchiveScreen extends StatefulWidget {
   const MemeArchiveScreen({super.key});
@@ -63,22 +153,61 @@ class _MemeArchiveScreenState extends State<MemeArchiveScreen> {
       _showLoadTimeoutHint = false;
       _supabaseFailed = false;
     });
-    MemeFeedLoad? load;
+
+    var localList = const <MemeArchiveEntry>[];
+    var loadTimedOut = false;
     try {
-      load = await loadMemeUnifiedFeed();
+      final r = await _repo.loadEntries();
+      localList = r.entries;
+      loadTimedOut = r.loadEntriesTimedOut;
     } catch (e, st) {
-      debugPrint('MemeArchiveScreen._reload: $e\n$st');
+      debugPrint('MemeArchiveScreen._reload local: $e\n$st');
     }
 
     if (!mounted) {
       return;
     }
-
     setState(() {
-      _allRows = load?.rows ?? const [];
+      _allRows = buildMemeFeedLoad(
+        localList: localList,
+        cloudList: const [],
+        loadEntriesTimedOut: loadTimedOut,
+        supabaseFailed: false,
+      ).rows;
       _loading = false;
-      _showLoadTimeoutHint = load?.loadEntriesTimedOut ?? false;
-      _supabaseFailed = load?.supabaseFailed ?? true;
+      _showLoadTimeoutHint = loadTimedOut;
+      _supabaseFailed = false;
+    });
+
+    var cloud = const <SupabaseMemeAssetEntry>[];
+    var supabaseFailed = false;
+    try {
+      cloud = await _cloudRepo.listAccountAssets();
+    } catch (e, st) {
+      debugPrint('MemeArchiveScreen._reload cloud: $e\n$st');
+      supabaseFailed = true;
+    }
+
+    try {
+      final r2 = await _repo.loadEntries();
+      localList = r2.entries;
+      loadTimedOut = r2.loadEntriesTimedOut;
+    } catch (e, st) {
+      debugPrint('MemeArchiveScreen._reload local refresh: $e\n$st');
+    }
+
+    if (!mounted) {
+      return;
+    }
+    setState(() {
+      _allRows = buildMemeFeedLoad(
+        localList: localList,
+        cloudList: cloud,
+        loadEntriesTimedOut: loadTimedOut,
+        supabaseFailed: supabaseFailed,
+      ).rows;
+      _showLoadTimeoutHint = loadTimedOut;
+      _supabaseFailed = supabaseFailed;
     });
   }
 
@@ -329,55 +458,7 @@ class _MemeArchiveScreenState extends State<MemeArchiveScreen> {
     }
   }
 
-  Widget _thumbLocal(MemeArchiveEntry e) {
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(10),
-      child: FutureBuilder<File>(
-        future: _repo.fileFor(e),
-        builder: (context, snap) {
-          final f = snap.data;
-          if (f == null || !f.existsSync()) {
-            return Container(
-              width: _kThumb,
-              height: _kThumb,
-              color: Colors.white.withValues(alpha: 0.06),
-              child: const Icon(Icons.broken_image_outlined, size: 20),
-            );
-          }
-          if (e.kind == MemeArchiveKind.video) {
-            return Container(
-              width: _kThumb,
-              height: _kThumb,
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                  colors: [
-                    MemeopsColors.iosBlue.withValues(alpha: 0.55),
-                    Colors.black.withValues(alpha: 0.55),
-                  ],
-                ),
-              ),
-              alignment: Alignment.center,
-              child: const Icon(
-                Icons.play_circle_fill_rounded,
-                color: Colors.white,
-                size: 26,
-              ),
-            );
-          }
-          return Image.file(
-            f,
-            width: _kThumb,
-            height: _kThumb,
-            fit: BoxFit.cover,
-          );
-        },
-      ),
-    );
-  }
-
-  Widget _thumbCloud(SupabaseMemeAssetEntry a) {
+  Widget _thumbCloud(BuildContext context, SupabaseMemeAssetEntry a) {
     if (a.isVideo) {
       return Container(
         width: _kThumb,
@@ -401,6 +482,8 @@ class _MemeArchiveScreenState extends State<MemeArchiveScreen> {
         ),
       );
     }
+    final dpr = MediaQuery.devicePixelRatioOf(context);
+    final cacheSide = (_kThumb * dpr).round();
     return ClipRRect(
       borderRadius: BorderRadius.circular(10),
       child: Image.network(
@@ -408,6 +491,9 @@ class _MemeArchiveScreenState extends State<MemeArchiveScreen> {
         width: _kThumb,
         height: _kThumb,
         fit: BoxFit.cover,
+        cacheWidth: cacheSide,
+        filterQuality: FilterQuality.medium,
+        gaplessPlayback: true,
         errorBuilder: (c, e, st) => Container(
           width: _kThumb,
           height: _kThumb,
@@ -498,7 +584,7 @@ class _MemeArchiveScreenState extends State<MemeArchiveScreen> {
                                     ),
                                     child: Row(
                                       children: [
-                                        _thumbCloud(v),
+                                        _thumbCloud(context, v),
                                         const SizedBox(width: 10),
                                         Expanded(
                                           child: Column(
@@ -586,7 +672,7 @@ class _MemeArchiveScreenState extends State<MemeArchiveScreen> {
                                   ),
                                   child: Row(
                                     children: [
-                                      _thumbLocal(e),
+                                      _LocalArchiveThumb(entry: e),
                                       const SizedBox(width: 10),
                                       Expanded(
                                         child: Column(

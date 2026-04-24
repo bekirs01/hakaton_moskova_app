@@ -40,7 +40,6 @@ class _ProfessionFlowScreenState extends State<ProfessionFlowScreen> {
   List<MemeBriefListItem> _variants = const [];
   MemeBriefListItem? _selected;
   String? _fileUrl;
-  String? _lastJobInfo;
 
   double _t(ProfessionPipelineStage s) {
     const steps = 6;
@@ -149,9 +148,6 @@ class _ProfessionFlowScreenState extends State<ProfessionFlowScreen> {
       final r = await _api.generateImage(_selected!.id);
       setState(() {
         _fileUrl = r.fileUrl;
-        _lastJobInfo = r.jobId != null
-            ? 'job ${r.jobId} · version ${r.assetVersionId ?? "—"}'
-            : null;
         _stage = ProfessionPipelineStage.savingResult;
       });
       await Future<void>.delayed(const Duration(milliseconds: 200));
@@ -386,8 +382,6 @@ class _ProfessionFlowScreenState extends State<ProfessionFlowScreen> {
         ],
         if (_fileUrl != null) ...[
           const SizedBox(height: 16),
-          if (_lastJobInfo != null) Text(l10n.professionSavedLine(_lastJobInfo!)),
-          const SizedBox(height: 8),
           ClipRRect(
             borderRadius: BorderRadius.circular(MemeopsRadii.md),
             child: AspectRatio(

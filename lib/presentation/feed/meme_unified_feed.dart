@@ -38,33 +38,13 @@ String _normAssetUrl(String url) {
   return q < 0 ? t : t.substring(0, q);
 }
 
-/// Yerel [meme_archive] + [meme_asset_versions] sorgusu; sonuçlar en yeni üstte.
-Future<MemeFeedLoad> loadMemeUnifiedFeed() async {
-  final repo = MemeLocalArchiveRepository.instance;
-  final cloudRepo = MemeSupabaseAssetsRepository(Supabase.instance.client);
-
-  var localList = const <MemeArchiveEntry>[];
-  var loadTimedOut = false;
-  var cloudList = const <SupabaseMemeAssetEntry>[];
-  var supabaseFailed = false;
-
-  try {
-    final r = await repo.loadEntries();
-    localList = r.entries;
-    loadTimedOut = r.loadEntriesTimedOut;
-  } catch (e, st) {
-    debugPrint('loadMemeUnifiedFeed local: $e\n$st');
-  }
-
-  try {
-    cloudList = await cloudRepo.listAccountAssets();
-  } catch (e, st) {
-    debugPrint('loadMemeUnifiedFeed cloud: $e\n$st');
-    supabaseFailed = true;
-  }
-
-  // Aynı üretim hem Supabase’de hem yerel indekste (sourceUrl) olunca liste iki satır
-  // gösteriyordu; tek görsel = tek satır (yerel öncelikli, eş bulut satırı düşer).
+/// Yerel + bulut girdilerini birleştirir; arşiv ekranı aşamalı yükleme için dışa açık.
+MemeFeedLoad buildMemeFeedLoad({
+  required List<MemeArchiveEntry> localList,
+  required List<SupabaseMemeAssetEntry> cloudList,
+  required bool loadEntriesTimedOut,
+  required bool supabaseFailed,
+}) {
   final localAssetKeys = <String>{
     for (final e in localList)
       if (e.sourceUrl != null && e.sourceUrl!.trim().isNotEmpty)
@@ -89,6 +69,45 @@ Future<MemeFeedLoad> loadMemeUnifiedFeed() async {
 
   return MemeFeedLoad(
     rows: merged,
+    loadEntriesTimedOut: loadEntriesTimedOut,
+    supabaseFailed: supabaseFailed,
+  );
+}
+
+/// Yerel [meme_archive] + [meme_asset_versions] sorgusu; sonuçlar en yeni üstte.
+/// Yerel ve bulut listeleri paralel çekilir (bekleme süresi kısalır).
+Future<MemeFeedLoad> loadMemeUnifiedFeed() async {
+  final repo = MemeLocalArchiveRepository.instance;
+  final cloudRepo = MemeSupabaseAssetsRepository(Supabase.instance.client);
+
+  var localList = const <MemeArchiveEntry>[];
+  var loadTimedOut = false;
+  var cloudList = const <SupabaseMemeAssetEntry>[];
+  var supabaseFailed = false;
+
+  await Future.wait<void>([
+    () async {
+      try {
+        final r = await repo.loadEntries();
+        localList = r.entries;
+        loadTimedOut = r.loadEntriesTimedOut;
+      } catch (e, st) {
+        debugPrint('loadMemeUnifiedFeed local: $e\n$st');
+      }
+    }(),
+    () async {
+      try {
+        cloudList = await cloudRepo.listAccountAssets();
+      } catch (e, st) {
+        debugPrint('loadMemeUnifiedFeed cloud: $e\n$st');
+        supabaseFailed = true;
+      }
+    }(),
+  ]);
+
+  return buildMemeFeedLoad(
+    localList: localList,
+    cloudList: cloudList,
     loadEntriesTimedOut: loadTimedOut,
     supabaseFailed: supabaseFailed,
   );

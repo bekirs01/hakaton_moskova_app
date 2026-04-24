@@ -14,6 +14,11 @@ import 'package:hakaton_moskova_app/presentation/widgets/memeops_glass_surface.d
 import 'package:hakaton_moskova_app/presentation/screens/my_publications_analytics_full_screen.dart';
 import 'package:hakaton_moskova_app/l10n/app_localizations.dart';
 
+/// Son başarılı feed; sekme değişiminde anında göster (Supabase bekleme yok).
+List<MemeFeedRow> _analysisFeedRowCache = const [];
+bool _analysisFeedCacheTimeout = false;
+bool _analysisFeedCacheSupabaseFailed = false;
+
 /// Arşiv ile aynı medya seti; tıklanınca paylaşım metrik analizi.
 class TelegramAnalysisScreen extends StatefulWidget {
   const TelegramAnalysisScreen({super.key});
@@ -26,13 +31,19 @@ class _TelegramAnalysisScreenState extends State<TelegramAnalysisScreen> {
   final _repo = MemeLocalArchiveRepository.instance;
 
   List<MemeFeedRow> _rows = const [];
-  bool _loading = true;
+  /// Arka planda tazelenecek; tam ekran spinner yok, üstte ince progress.
+  bool _feedRefreshing = false;
   bool _loadTimeout = false;
   bool _supabaseFailed = false;
 
   @override
   void initState() {
     super.initState();
+    if (_analysisFeedRowCache.isNotEmpty) {
+      _rows = List<MemeFeedRow>.from(_analysisFeedRowCache);
+      _loadTimeout = _analysisFeedCacheTimeout;
+      _supabaseFailed = _analysisFeedCacheSupabaseFailed;
+    }
     _repo.onChanged.addListener(_reload);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) {
@@ -59,9 +70,8 @@ class _TelegramAnalysisScreenState extends State<TelegramAnalysisScreen> {
       return;
     }
     setState(() {
-      _loading = true;
-      _loadTimeout = false;
-      _supabaseFailed = false;
+      // Önbellek / liste doluysa tam ekran bekletme; sadece ilk boş açılışta üst bar.
+      _feedRefreshing = _rows.isEmpty;
     });
     MemeFeedLoad? load;
     try {
@@ -73,10 +83,15 @@ class _TelegramAnalysisScreenState extends State<TelegramAnalysisScreen> {
       return;
     }
     setState(() {
-      _rows = load?.rows ?? const [];
-      _loading = false;
-      _loadTimeout = load?.loadEntriesTimedOut ?? false;
-      _supabaseFailed = load?.supabaseFailed ?? true;
+      if (load != null) {
+        _rows = load.rows;
+        _loadTimeout = load.loadEntriesTimedOut;
+        _supabaseFailed = load.supabaseFailed;
+        _analysisFeedRowCache = List<MemeFeedRow>.from(_rows);
+        _analysisFeedCacheTimeout = _loadTimeout;
+        _analysisFeedCacheSupabaseFailed = _supabaseFailed;
+      }
+      _feedRefreshing = false;
     });
   }
 
@@ -95,19 +110,15 @@ class _TelegramAnalysisScreenState extends State<TelegramAnalysisScreen> {
         TelegramPublishedLogRepository.instance.onChanged,
       ]),
       builder: (context, _) {
-        if (_loading) {
-          return const Center(
-            child: SizedBox(
-              width: 28,
-              height: 28,
-              child: CircularProgressIndicator(strokeWidth: 2),
-            ),
-          );
-        }
-
         return Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
+            if (_feedRefreshing)
+              LinearProgressIndicator(
+                minHeight: 2,
+                backgroundColor: Colors.white.withValues(alpha: 0.08),
+                color: MemeopsColors.iosBlue,
+              ),
             if (_loadTimeout || _supabaseFailed)
               Padding(
                 padding: const EdgeInsets.fromLTRB(10, 0, 10, 4),

@@ -665,11 +665,6 @@ class AppLocalizationsTr extends AppLocalizations {
   String get professionSourceLabel => 'Meslek akışı';
 
   @override
-  String professionSavedLine(String info) {
-    return 'Kayıt: $info';
-  }
-
-  @override
   String get professionPublication => 'Yayın (yakında)';
 
   @override
@@ -821,6 +816,28 @@ class AppLocalizationsTr extends AppLocalizations {
   @override
   String telegramAssetVersion(String id) {
     return 'Varlık sürümü: $id';
+  }
+
+  @override
+  String get memeVideoTitle => 'Memeyi kısa videoya çevir';
+
+  @override
+  String get memeVideoSubtitle =>
+      '4, 8 veya 12 saniyelik klip. Video arşive kaydedilir.';
+
+  @override
+  String memeVideoGenerating(String seconds) {
+    return '$seconds sn Sora video üretiliyor; genelde 1–3 dakika sürer.';
+  }
+
+  @override
+  String memeVideoSaved(int seconds) {
+    return '$seconds sn video arşive eklendi. Arşiv sekmesinden oynatabilirsin.';
+  }
+
+  @override
+  String memeVideoSec(String n) {
+    return '$n sn';
   }
 
   @override

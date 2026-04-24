@@ -15,6 +15,7 @@ import 'package:hakaton_moskova_app/l10n/app_localizations.dart';
 import 'package:hakaton_moskova_app/presentation/layout/home_tab_scroll_padding.dart';
 import 'package:hakaton_moskova_app/presentation/state/telegram_analysis_store.dart';
 import 'package:hakaton_moskova_app/presentation/theme/memeops_design_tokens.dart';
+import 'package:hakaton_moskova_app/presentation/theme/memeops_theme.dart';
 import 'package:hakaton_moskova_app/presentation/widgets/error_retry_card.dart';
 import 'package:hakaton_moskova_app/presentation/widgets/memeops_glass_surface.dart';
 import 'package:hakaton_moskova_app/presentation/widgets/memeops_step_section.dart';
@@ -51,6 +52,62 @@ String _titleFromChannelUrl(AppLocalizations l10n, String raw) {
   return t.length > 200 ? t.substring(0, 200) : t;
 }
 
+String _tgElide(String text, int maxChars) {
+  final t = text.trim();
+  if (t.isEmpty) {
+    return t;
+  }
+  if (t.length <= maxChars) {
+    return t;
+  }
+  return '${t.substring(0, maxChars - 1)}…';
+}
+
+String _tgJoinLimited(
+  List<String> parts, {
+  int maxItems = 8,
+  int maxTotal = 160,
+  String separator = ', ',
+}) {
+  if (parts.isEmpty) {
+    return '';
+  }
+  final n = parts.length;
+  final take = n > maxItems ? parts.sublist(0, maxItems) : parts;
+  var s = take.map((e) => e.trim()).where((e) => e.isNotEmpty).join(separator);
+  if (n > maxItems) {
+    s = s.isEmpty ? '…' : '$s…';
+  }
+  return _tgElide(s, maxTotal);
+}
+
+String _tgStripParenCounts(String s) {
+  if (s.isEmpty) {
+    return s;
+  }
+  return s
+      .replaceAll(RegExp(r'\s*\(\d+\)'), ' ')
+      .replaceAll(RegExp(r'\s+'), ' ')
+      .trim();
+}
+
+String _tgCompactMemeAngles(List<String> angles) {
+  if (angles.isEmpty) {
+    return '';
+  }
+  const maxEach = 88;
+  const maxN = 3;
+  final buf = <String>[];
+  for (var j = 0; j < angles.length && buf.length < maxN; j++) {
+    buf.add(_tgElide(angles[j].trim(), maxEach));
+  }
+  var s = buf.join(' · ');
+  if (angles.length > maxN) {
+    s = '$s…';
+  }
+  return _tgElide(s, 240);
+}
+
 class _TelegramFlowScreenState extends State<TelegramFlowScreen> {
   final _link = TextEditingController();
   final _api = MemeopsApiClient(Supabase.instance.client);
@@ -63,7 +120,6 @@ class _TelegramFlowScreenState extends State<TelegramFlowScreen> {
   List<MemeBriefListItem> _variants = const [];
   MemeBriefListItem? _selected;
   String? _fileUrl;
-  String? _lastInfo;
 
   double _t(TelegramPipelineStage s) {
     const n = 6.0;
@@ -235,7 +291,6 @@ class _TelegramFlowScreenState extends State<TelegramFlowScreen> {
       final r = await _api.generateImage(_selected!.id);
       setState(() {
         _fileUrl = r.fileUrl;
-        _lastInfo = r.assetVersionId;
         _stage = TelegramPipelineStage.savingResult;
       });
       await Future<void>.delayed(const Duration(milliseconds: 200));
@@ -325,6 +380,33 @@ class _TelegramFlowScreenState extends State<TelegramFlowScreen> {
     });
   }
 
+  TextStyle _insightEmphasis() {
+    return TextStyle(
+      color: Colors.white.withValues(alpha: 0.94),
+      fontSize: 15,
+      height: 1.28,
+      fontWeight: FontWeight.w500,
+      letterSpacing: -0.22,
+    );
+  }
+
+  TextStyle _insightBody() {
+    return TextStyle(
+      color: Colors.white.withValues(alpha: 0.80),
+      fontSize: 14,
+      height: 1.3,
+      letterSpacing: -0.2,
+    );
+  }
+
+  TextStyle _insightBullet() {
+    return TextStyle(
+      color: Colors.white.withValues(alpha: 0.72),
+      fontSize: 13.5,
+      height: 1.3,
+    );
+  }
+
   @override
   void dispose() {
     _link.dispose();
@@ -341,7 +423,7 @@ class _TelegramFlowScreenState extends State<TelegramFlowScreen> {
       padding: homeTabScrollPadding(),
       children: [
         MemeopsGlassSurface(
-          padding: const EdgeInsets.all(20),
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 22),
           child: MemeopsStepSection(
             step: 1,
             title: l10n.telegramStep1Title,
@@ -437,199 +519,244 @@ class _TelegramFlowScreenState extends State<TelegramFlowScreen> {
         if (_insights != null) ...[
           const SizedBox(height: 16),
           MemeopsGlassSurface(
-            padding: const EdgeInsets.all(18),
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 22),
             child: MemeopsStepSection(
               step: 2,
               title: l10n.telegramStep2Title,
               subtitle: l10n.telegramStep2Subtitle,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  Row(
+              child: Builder(
+                builder: (context) {
+                  final ins = _insights!;
+                  final titleT = ins.channelTitle?.trim() ?? '';
+                  final postMix = ins.postTypes.isEmpty
+                      ? ''
+                      : _tgElide(
+                          _tgStripParenCounts(ins.postTypes.join('; ')),
+                          200,
+                        );
+                  return Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      const Spacer(),
-                      if (live)
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 10,
-                            vertical: 5,
-                          ),
-                          decoration: BoxDecoration(
-                            color: const Color(0xFF1B3D2F),
-                            borderRadius: BorderRadius.circular(
-                              MemeopsRadii.sm,
+                      Row(
+                        children: [
+                          const Spacer(),
+                          if (live)
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 10,
+                                vertical: 5,
+                              ),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFF1B3D2F),
+                                borderRadius: BorderRadius.circular(
+                                  MemeopsRadii.sm,
+                                ),
+                                border: Border.all(
+                                  color: const Color(
+                                    0xFF2EE59D,
+                                  ).withValues(alpha: 0.35),
+                                ),
+                              ),
+                              child: Text(
+                                l10n.telegramBadgeLive,
+                                style: const TextStyle(
+                                  fontSize: 12,
+                                  color: Color(0xFF8EEDC5),
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
                             ),
-                            border: Border.all(
-                              color: const Color(
-                                0xFF2EE59D,
-                              ).withValues(alpha: 0.35),
+                          if (stub)
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 10,
+                                vertical: 5,
+                              ),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFF2D2419),
+                                borderRadius: BorderRadius.circular(
+                                  MemeopsRadii.sm,
+                                ),
+                                border: Border.all(
+                                  color: Colors.orange.withValues(alpha: 0.4),
+                                ),
+                              ),
+                              child: Text(
+                                l10n.telegramBadgeStub,
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  color: Colors.orange.shade100,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
                             ),
+                        ],
+                      ),
+                      const SizedBox(height: 12),
+                      Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 14,
+                          vertical: 12,
+                        ),
+                        decoration: BoxDecoration(
+                          color: Colors.white.withValues(alpha: 0.07),
+                          borderRadius: BorderRadius.circular(MemeopsRadii.sm),
+                          border: Border.all(
+                            color: Colors.white.withValues(alpha: 0.10),
                           ),
-                          child: Text(
-                            l10n.telegramBadgeLive,
-                            style: const TextStyle(
-                              fontSize: 12,
-                              color: Color(0xFF8EEDC5),
-                              fontWeight: FontWeight.w600,
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            if (titleT.isNotEmpty) ...[
+                              Text(
+                                l10n.telegramInsightChannel(
+                                  _tgElide(titleT, 96),
+                                ),
+                                style: _insightEmphasis(),
+                              ),
+                              const SizedBox(height: 8),
+                            ],
+                            Text(
+                              l10n.telegramInsightTopic(
+                                _tgElide(ins.mainTopic, 240),
+                              ),
+                              style: _insightEmphasis(),
+                            ),
+                            if (ins.toneProfile != null &&
+                                ins.toneProfile!.trim().isNotEmpty) ...[
+                              const SizedBox(height: 6),
+                              Text(
+                                l10n.telegramInsightStyle(
+                                  _tgElide(ins.toneProfile!.trim(), 100),
+                                ),
+                                style: _insightBody(),
+                              ),
+                            ],
+                            const SizedBox(height: 6),
+                            Text(
+                              l10n.telegramInsightTone(
+                                _tgElide(ins.tone, 100),
+                              ),
+                              style: _insightBody(),
+                            ),
+                            const SizedBox(height: 6),
+                            Text(
+                              l10n.telegramInsightThemes(
+                                _tgJoinLimited(
+                                  ins.recurringThemes,
+                                  maxItems: 7,
+                                  maxTotal: 140,
+                                ),
+                              ),
+                              style: _insightBody(),
+                            ),
+                            if (postMix.isNotEmpty) ...[
+                              const SizedBox(height: 6),
+                              Text(
+                                l10n.telegramInsightPostMix(postMix),
+                                style: _insightBullet(),
+                              ),
+                            ],
+                            const SizedBox(height: 4),
+                            Text(
+                              l10n.telegramInsightMediaTypes(
+                                _tgElide(ins.mediaTypes.join(', '), 110),
+                              ),
+                              style: _insightBullet(),
+                            ),
+                          ],
+                        ),
+                      ),
+                      if (ins.mediaInsights.isNotEmpty) ...[
+                        const SizedBox(height: 12),
+                        Text(
+                          l10n.telegramMediaSection,
+                          style: MemeopsTextStyles.caption(context).copyWith(
+                            color: Colors.white.withValues(alpha: 0.75),
+                            fontWeight: FontWeight.w600,
+                            letterSpacing: 0.1,
+                          ),
+                        ),
+                        const SizedBox(height: 6),
+                        ...ins.mediaInsights.take(2).map(
+                          (e) => Padding(
+                            padding: const EdgeInsets.only(bottom: 4),
+                            child: Text(
+                              '· ${_tgElide(e, 120)}',
+                              style: _insightBullet(),
                             ),
                           ),
                         ),
-                      if (stub)
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 10,
-                            vertical: 5,
+                      ],
+                      if (ins.recentHighlights.isNotEmpty) ...[
+                        const SizedBox(height: 8),
+                        Text(
+                          l10n.telegramRecentSection,
+                          style: MemeopsTextStyles.caption(context).copyWith(
+                            color: Colors.white.withValues(alpha: 0.75),
+                            fontWeight: FontWeight.w600,
+                            letterSpacing: 0.1,
                           ),
-                          decoration: BoxDecoration(
-                            color: const Color(0xFF2D2419),
-                            borderRadius: BorderRadius.circular(
-                              MemeopsRadii.sm,
-                            ),
-                            border: Border.all(
-                              color: Colors.orange.withValues(alpha: 0.4),
-                            ),
-                          ),
-                          child: Text(
-                            l10n.telegramBadgeStub,
-                            style: TextStyle(
-                              fontSize: 12,
-                              color: Colors.orange.shade100,
-                              fontWeight: FontWeight.w600,
+                        ),
+                        const SizedBox(height: 6),
+                        ...ins.recentHighlights.take(2).map(
+                          (e) => Padding(
+                            padding: const EdgeInsets.only(bottom: 4),
+                            child: Text(
+                              '· ${_tgElide(e, 120)}',
+                              style: _insightBullet(),
                             ),
                           ),
                         ),
+                      ],
+                      if (ins.memeableAngles.isNotEmpty) ...[
+                        const SizedBox(height: 12),
+                        Container(
+                          width: double.infinity,
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 10,
+                          ),
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(
+                              MemeopsRadii.sm,
+                            ),
+                            color: MemeopsColors.iosBlue.withValues(alpha: 0.1),
+                            border: Border.all(
+                              color: MemeopsColors.iosBlue.withValues(
+                                alpha: 0.22,
+                              ),
+                            ),
+                          ),
+                          child: Text(
+                            l10n.telegramMemeAngles(
+                              _tgCompactMemeAngles(ins.memeableAngles),
+                            ),
+                            style: _insightBody().copyWith(
+                              color: Colors.white.withValues(alpha: 0.9),
+                            ),
+                          ),
+                        ),
+                      ],
+                      const SizedBox(height: 18),
+                      Divider(
+                        height: 1,
+                        color: Colors.white.withValues(alpha: 0.1),
+                      ),
+                      const SizedBox(height: 16),
+                      FilledButton(
+                        onPressed: (stub || _busy) ? null : _runBriefBatch,
+                        child: Text(
+                          live
+                              ? l10n.telegramGenerateLive
+                              : l10n.telegramGenerateHosted,
+                        ),
+                      ),
                     ],
-                  ),
-                  const SizedBox(height: 10),
-                  if (_insights!.channelTitle != null &&
-                      _insights!.channelTitle!.isNotEmpty)
-                    Text(
-                      l10n.telegramInsightChannel(_insights!.channelTitle!),
-                      style: TextStyle(
-                        color: Colors.white.withValues(alpha: 0.9),
-                        height: 1.35,
-                      ),
-                    ),
-                  Text(
-                    l10n.telegramInsightTopic(_insights!.mainTopic),
-                    style: TextStyle(
-                      color: Colors.white.withValues(alpha: 0.9),
-                      height: 1.35,
-                    ),
-                  ),
-                  if (_insights!.toneProfile != null &&
-                      _insights!.toneProfile!.isNotEmpty)
-                    Text(
-                      l10n.telegramInsightStyle(_insights!.toneProfile!),
-                      style: TextStyle(
-                        color: Colors.white.withValues(alpha: 0.88),
-                        height: 1.35,
-                      ),
-                    ),
-                  Text(
-                    l10n.telegramInsightTone(_insights!.tone),
-                    style: TextStyle(
-                      color: Colors.white.withValues(alpha: 0.88),
-                      height: 1.35,
-                    ),
-                  ),
-                  Text(
-                    l10n.telegramInsightThemes(
-                      _insights!.recurringThemes.join(', '),
-                    ),
-                    style: TextStyle(
-                      color: Colors.white.withValues(alpha: 0.85),
-                      height: 1.35,
-                    ),
-                  ),
-                  if (_insights!.postTypes.isNotEmpty)
-                    Text(
-                      l10n.telegramInsightPostMix(
-                        _insights!.postTypes.join('; '),
-                      ),
-                      style: TextStyle(
-                        color: Colors.white.withValues(alpha: 0.85),
-                        height: 1.35,
-                      ),
-                    ),
-                  Text(
-                    l10n.telegramInsightMediaTypes(
-                      _insights!.mediaTypes.join(', '),
-                    ),
-                    style: TextStyle(
-                      color: Colors.white.withValues(alpha: 0.82),
-                      height: 1.35,
-                    ),
-                  ),
-                  if (_insights!.mediaInsights.isNotEmpty) ...[
-                    const SizedBox(height: 8),
-                    Text(
-                      l10n.telegramMediaSection,
-                      style: MemeopsTextStyles.caption(context).copyWith(
-                        color: Colors.white,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                    ..._insights!.mediaInsights.map(
-                      (e) => Text(
-                        '· $e',
-                        style: TextStyle(
-                          color: Colors.white.withValues(alpha: 0.82),
-                          height: 1.35,
-                        ),
-                      ),
-                    ),
-                  ],
-                  if (_insights!.recentHighlights.isNotEmpty) ...[
-                    const SizedBox(height: 8),
-                    Text(
-                      l10n.telegramRecentSection,
-                      style: MemeopsTextStyles.caption(context).copyWith(
-                        color: Colors.white,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                    ..._insights!.recentHighlights.map(
-                      (e) => Text(
-                        '· $e',
-                        style: TextStyle(
-                          color: Colors.white.withValues(alpha: 0.82),
-                          height: 1.35,
-                        ),
-                      ),
-                    ),
-                  ],
-                  const SizedBox(height: 8),
-                  Text(
-                    l10n.telegramMemeAngles(
-                      _insights!.memeableAngles.join(' · '),
-                    ),
-                    style: TextStyle(
-                      color: Colors.white.withValues(alpha: 0.8),
-                      height: 1.35,
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  FilledButton(
-                    onPressed: (stub || _busy) ? null : _runBriefBatch,
-                    child: Text(
-                      live
-                          ? l10n.telegramGenerateLive
-                          : l10n.telegramGenerateHosted,
-                    ),
-                  ),
-                  if (live)
-                    Padding(
-                      padding: const EdgeInsets.only(top: 8),
-                      child: Text(
-                        l10n.telegramLiveHint,
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: Theme.of(context).colorScheme.onSurfaceVariant,
-                        ),
-                      ),
-                    ),
-                ],
+                  );
+                },
               ),
             ),
           ),
@@ -637,7 +764,7 @@ class _TelegramFlowScreenState extends State<TelegramFlowScreen> {
         if (_variants.isNotEmpty && _fileUrl == null) ...[
           const SizedBox(height: 16),
           MemeopsGlassSurface(
-            padding: const EdgeInsets.all(20),
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 22),
             child: MemeopsStepSection(
               step: 3,
               title: l10n.telegramStep3Title,
@@ -687,23 +814,30 @@ class _TelegramFlowScreenState extends State<TelegramFlowScreen> {
         ],
         if (_fileUrl != null) ...[
           const SizedBox(height: 12),
-          if (_lastInfo != null) Text(l10n.telegramAssetVersion(_lastInfo!)),
-          ClipRRect(
-            borderRadius: BorderRadius.circular(MemeopsRadii.md),
-            child: Image.network(
-              _fileUrl!,
-              fit: BoxFit.contain,
-              errorBuilder: (context, error, stack) =>
-                  Center(child: Text(l10n.imageLoadError)),
+          MemeopsGlassSurface(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 18),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(MemeopsRadii.md),
+                  child: Image.network(
+                    _fileUrl!,
+                    fit: BoxFit.contain,
+                    errorBuilder: (context, error, stack) =>
+                        Center(child: Text(l10n.imageLoadError)),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                OutlinedButton(
+                  onPressed: _openPublish,
+                  child: Text(l10n.publishTitle),
+                ),
+              ],
             ),
           ),
-          const SizedBox(height: 8),
-          OutlinedButton(
-            onPressed: _openPublish,
-            child: Text(l10n.publishTitle),
-          ),
           if (_selected != null) ...[
-            const SizedBox(height: 16),
+            const SizedBox(height: 12),
             VideoGenerateSection(
               memeBriefId: _selected!.id,
               caption: _selected?.displayLine,

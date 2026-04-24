@@ -246,7 +246,6 @@
   "professionErrNoVariants": "Сервер не вернул варианты. Проверьте бэкенд / режим mock.",
   "professionSnackSaved": "Изображение создано и сохранено в Supabase (Storage: meme-assets; таблицы: meme_assets / meme_asset_versions).",
   "professionSourceLabel": "Поток профессии",
-  "professionSavedLine": "Сохранено: {info}",
   "professionPublication": "Публикация (скоро)",
   "profProgressCreating": "Создаётся запись профессии…",
   "profProgressSituations": "Генерируются 7–10 идей ситуаций (OpenAI на API)…",
@@ -289,6 +288,26 @@
   "telegramSnackSaved": "Изображение создано и сохранено в Supabase (Storage: meme-assets).",
   "telegramSourceLabel": "Поток Telegram",
   "telegramAssetVersion": "Версия ассета: {id}",
+  "memeVideoTitle": "Короткое видео из мема",
+  "memeVideoSubtitle": "Клип 4, 8 или 12 с, сохраняется в архиве.",
+  "memeVideoGenerating": "Создаём видео {seconds} с (Sora), обычно 1–3 минуты.",
+  "@memeVideoGenerating": {
+    "placeholders": {
+      "seconds": {"type": "String"}
+    }
+  },
+  "memeVideoSaved": "Видео {seconds} с сохранено. Откройте вкладку «Архив».",
+  "@memeVideoSaved": {
+    "placeholders": {
+      "seconds": {"type": "int"}
+    }
+  },
+  "memeVideoSec": "{n} с",
+  "@memeVideoSec": {
+    "placeholders": {
+      "n": {"type": "String"}
+    }
+  },
   "telegramErrShortLink": "Вставьте полную ссылку на канал (минимум 8 символов).",
   "telegramErrStubOffline": "Это офлайн-заглушка, не ваш канал. Запустите ./run_telegram_api.sh с TELEGRAM_* и сессией в .env и попробуйте снова.",
   "telegramErrTooFewIdeas": "Слишком мало идей с сервера ({count}). Проверьте OPENAI_API_KEY в .env API.",

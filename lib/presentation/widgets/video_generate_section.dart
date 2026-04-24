@@ -92,13 +92,13 @@ class _VideoGenerateSectionState extends State<VideoGenerateSection> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     return MemeopsGlassSurface(
       padding: const EdgeInsets.all(20),
       child: MemeopsStepSection(
         step: widget.stepNumber,
-        title: 'Memeyi videoya çevir',
-        subtitle:
-            'Memeyi 4, 8 veya 12 sn’lik kısa bir klibe dönüştür. Üretilen video arşive kaydedilir.',
+        title: l10n.memeVideoTitle,
+        subtitle: l10n.memeVideoSubtitle,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
@@ -121,11 +121,11 @@ class _VideoGenerateSectionState extends State<VideoGenerateSection> {
             ],
             Row(
               children: [
-                Expanded(child: _durationBtn('4')),
+                Expanded(child: _durationBtn(context, '4')),
                 const SizedBox(width: 8),
-                Expanded(child: _durationBtn('8')),
+                Expanded(child: _durationBtn(context, '8')),
                 const SizedBox(width: 8),
-                Expanded(child: _durationBtn('12')),
+                Expanded(child: _durationBtn(context, '12')),
               ],
             ),
             if (_busy && _runningSeconds != null) ...[
@@ -140,8 +140,7 @@ class _VideoGenerateSectionState extends State<VideoGenerateSection> {
                   const SizedBox(width: 12),
                   Expanded(
                     child: Text(
-                      'Sora ile $_runningSeconds sn video üretiliyor… '
-                      'Bu işlem 1-3 dakika sürebilir.',
+                      l10n.memeVideoGenerating(_runningSeconds!),
                       style: MemeopsTextStyles.caption(context),
                     ),
                   ),
@@ -165,7 +164,7 @@ class _VideoGenerateSectionState extends State<VideoGenerateSection> {
                     const SizedBox(width: 10),
                     Expanded(
                       child: Text(
-                        '$_savedSeconds sn video arşive kaydedildi. Arşiv sekmesinden oynatabilirsin.',
+                        l10n.memeVideoSaved(_savedSeconds!),
                         style: const TextStyle(color: Colors.white),
                       ),
                     ),
@@ -179,7 +178,8 @@ class _VideoGenerateSectionState extends State<VideoGenerateSection> {
     );
   }
 
-  Widget _durationBtn(String secs) {
+  Widget _durationBtn(BuildContext context, String secs) {
+    final l10n = AppLocalizations.of(context);
     final disabled = _busy;
     final isRunning = _runningSeconds == secs;
     return FilledButton(
@@ -197,7 +197,7 @@ class _VideoGenerateSectionState extends State<VideoGenerateSection> {
         ),
       ),
       onPressed: disabled ? null : () => _run(secs),
-      child: Text('$secs sn'),
+      child: Text(l10n.memeVideoSec(secs)),
     );
   }
 }

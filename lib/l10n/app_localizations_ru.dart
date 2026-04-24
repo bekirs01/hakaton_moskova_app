@@ -668,11 +668,6 @@ class AppLocalizationsRu extends AppLocalizations {
   String get professionSourceLabel => 'Поток профессии';
 
   @override
-  String professionSavedLine(String info) {
-    return 'Сохранено: $info';
-  }
-
-  @override
   String get professionPublication => 'Публикация (скоро)';
 
   @override
@@ -825,6 +820,27 @@ class AppLocalizationsRu extends AppLocalizations {
   @override
   String telegramAssetVersion(String id) {
     return 'Версия ассета: $id';
+  }
+
+  @override
+  String get memeVideoTitle => 'Короткое видео из мема';
+
+  @override
+  String get memeVideoSubtitle => 'Клип 4, 8 или 12 с, сохраняется в архиве.';
+
+  @override
+  String memeVideoGenerating(String seconds) {
+    return 'Создаём видео $seconds с (Sora), обычно 1–3 минуты.';
+  }
+
+  @override
+  String memeVideoSaved(int seconds) {
+    return 'Видео $seconds с сохранено. Откройте вкладку «Архив».';
+  }
+
+  @override
+  String memeVideoSec(String n) {
+    return '$n с';
   }
 
   @override

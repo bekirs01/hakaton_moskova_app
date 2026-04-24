@@ -3,7 +3,6 @@ import 'dart:ui';
 
 import 'package:flutter/material.dart';
 import 'package:hakaton_moskova_app/presentation/theme/memeops_design_tokens.dart';
-import 'package:hakaton_moskova_app/presentation/theme/memeops_theme.dart';
 
 class MemeopsFloatingTabItem {
   const MemeopsFloatingTabItem({
@@ -37,7 +36,7 @@ class MemeopsFloatingTabBar extends StatelessWidget {
   Widget build(BuildContext context) {
     final width = MediaQuery.sizeOf(context).width;
     final n = items.length.clamp(1, 8);
-    final maxW = math.min(60.0 * n + 36, math.min(430.0, width * 0.94));
+    final maxW = math.min(64.0 * n + 44, math.min(440.0, width * 0.96));
 
     return RepaintBoundary(
       child: Row(
@@ -51,14 +50,9 @@ class MemeopsFloatingTabBar extends StatelessWidget {
                 borderRadius: BorderRadius.circular(MemeopsRadii.pill),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.28),
-                    blurRadius: 26,
+                    color: Colors.black.withValues(alpha: 0.3),
+                    blurRadius: 28,
                     offset: const Offset(0, 10),
-                  ),
-                  BoxShadow(
-                    color: MemeopsColors.iosBlue.withValues(alpha: 0.1),
-                    blurRadius: 22,
-                    spreadRadius: -6,
                   ),
                 ],
               ),
@@ -85,35 +79,32 @@ class MemeopsFloatingTabBar extends StatelessWidget {
                       builder: (context, constraints) {
                         final cellWidth = constraints.maxWidth / items.length;
                         return SizedBox(
-                          height: 62,
+                          height: 72,
                           child: Stack(
                             children: [
                               AnimatedPositioned(
                                 duration: _anim,
                                 curve: _curve,
-                                left: cellWidth * selectedIndex + 4,
-                                top: 4,
-                                width: cellWidth - 8,
-                                height: 54,
+                                left: cellWidth * selectedIndex + 3,
+                                top: 5,
+                                width: cellWidth - 6,
+                                height: 62,
                                 child: DecoratedBox(
                                   decoration: BoxDecoration(
-                                    borderRadius: BorderRadius.circular(20),
-                                    gradient: LinearGradient(
-                                      begin: Alignment.topLeft,
-                                      end: Alignment.bottomRight,
-                                      colors: [
-                                        const Color(0xFF62B1FF),
-                                        MemeopsColors.iosBlue,
-                                      ],
+                                    borderRadius: BorderRadius.circular(22),
+                                    color: Colors.white.withValues(alpha: 0.11),
+                                    border: Border.all(
+                                      color: Colors.white.withValues(
+                                        alpha: 0.14,
+                                      ),
                                     ),
                                     boxShadow: [
                                       BoxShadow(
-                                        color: MemeopsColors.iosBlue.withValues(
-                                          alpha: 0.35,
+                                        color: Colors.black.withValues(
+                                          alpha: 0.2,
                                         ),
-                                        blurRadius: 18,
-                                        spreadRadius: -6,
-                                        offset: const Offset(0, 8),
+                                        blurRadius: 12,
+                                        offset: const Offset(0, 4),
                                       ),
                                     ],
                                   ),
@@ -172,11 +163,11 @@ class _TabCell extends StatelessWidget {
       color: Colors.transparent,
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(20),
-        splashColor: MemeopsColors.iosBlue.withValues(alpha: 0.12),
-        highlightColor: Colors.white.withValues(alpha: 0.05),
+        borderRadius: BorderRadius.circular(22),
+        splashColor: Colors.white.withValues(alpha: 0.08),
+        highlightColor: Colors.white.withValues(alpha: 0.04),
         child: Padding(
-          padding: const EdgeInsets.symmetric(vertical: 2),
+          padding: const EdgeInsets.symmetric(vertical: 4),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             mainAxisSize: MainAxisSize.max,
@@ -184,39 +175,21 @@ class _TabCell extends StatelessWidget {
               AnimatedScale(
                 duration: animDuration,
                 curve: animCurve,
-                scale: selected ? 1.0 : 0.92,
-                child: AnimatedContainer(
-                  duration: animDuration,
-                  curve: animCurve,
-                  width: 30,
-                  height: 30,
-                  alignment: Alignment.center,
-                  decoration: BoxDecoration(
-                    color: selected
-                        ? Colors.white.withValues(alpha: 0.14)
-                        : Colors.transparent,
-                    borderRadius: BorderRadius.circular(15),
-                    border: selected
-                        ? Border.all(
-                            color: Colors.white.withValues(alpha: 0.14),
-                          )
-                        : null,
-                  ),
-                  child: Icon(
-                    selected ? item.selectedIcon : item.icon,
-                    size: selected ? 18 : 17,
-                    color: selected ? Colors.white : muted,
-                  ),
+                scale: selected ? 1.0 : 0.95,
+                child: Icon(
+                  selected ? item.selectedIcon : item.icon,
+                  size: selected ? 25 : 22,
+                  color: selected ? Colors.white : muted,
                 ),
               ),
-              const SizedBox(height: 2),
+              const SizedBox(height: 4),
               AnimatedDefaultTextStyle(
                 duration: animDuration,
                 curve: animCurve,
                 style: TextStyle(
-                  fontSize: selected ? 9.5 : 9.0,
-                  height: 1.0,
-                  letterSpacing: -0.1,
+                  fontSize: selected ? 11.0 : 10.5,
+                  height: 1.1,
+                  letterSpacing: -0.15,
                   fontWeight: selected ? FontWeight.w600 : FontWeight.w500,
                   color: selected ? Colors.white : muted,
                 ),

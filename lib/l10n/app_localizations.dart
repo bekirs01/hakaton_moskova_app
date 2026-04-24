@@ -1286,12 +1286,6 @@ abstract class AppLocalizations {
   /// **'Meslek akışı'**
   String get professionSourceLabel;
 
-  /// No description provided for @professionSavedLine.
-  ///
-  /// In tr, this message translates to:
-  /// **'Kayıt: {info}'**
-  String professionSavedLine(String info);
-
   /// No description provided for @professionPublication.
   ///
   /// In tr, this message translates to:
@@ -1543,6 +1537,36 @@ abstract class AppLocalizations {
   /// In tr, this message translates to:
   /// **'Varlık sürümü: {id}'**
   String telegramAssetVersion(String id);
+
+  /// No description provided for @memeVideoTitle.
+  ///
+  /// In tr, this message translates to:
+  /// **'Memeyi kısa videoya çevir'**
+  String get memeVideoTitle;
+
+  /// No description provided for @memeVideoSubtitle.
+  ///
+  /// In tr, this message translates to:
+  /// **'4, 8 veya 12 saniyelik klip. Video arşive kaydedilir.'**
+  String get memeVideoSubtitle;
+
+  /// No description provided for @memeVideoGenerating.
+  ///
+  /// In tr, this message translates to:
+  /// **'{seconds} sn Sora video üretiliyor; genelde 1–3 dakika sürer.'**
+  String memeVideoGenerating(String seconds);
+
+  /// No description provided for @memeVideoSaved.
+  ///
+  /// In tr, this message translates to:
+  /// **'{seconds} sn video arşive eklendi. Arşiv sekmesinden oynatabilirsin.'**
+  String memeVideoSaved(int seconds);
+
+  /// No description provided for @memeVideoSec.
+  ///
+  /// In tr, this message translates to:
+  /// **'{n} sn'**
+  String memeVideoSec(String n);
 
   /// No description provided for @telegramErrShortLink.
   ///
