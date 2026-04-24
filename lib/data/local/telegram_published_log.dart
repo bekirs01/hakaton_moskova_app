@@ -10,6 +10,7 @@ import 'package:path_provider/path_provider.dart';
 
 const _kPlatformTelegram = 'telegram';
 const _kPlatformVk = 'vk';
+const _kPlatformDzen = 'dzen';
 
 /// Kanal / VK paylaşımı; analiz sekmesinde eşleştirme için [localArchiveId] / [supabaseVersionId].
 class TelegramPublishedEntry {
@@ -30,6 +31,11 @@ class TelegramPublishedEntry {
     this.supabaseVersionId,
     this.telegramForwards,
     this.telegramReactionsJson,
+    this.telegramChannelMemberCount,
+    this.telegramRepliesCount,
+    this.vkGroupMemberCount,
+    this.vkCommentsCount,
+    this.telegramMessageDate,
   });
 
   final String id;
@@ -49,9 +55,16 @@ class TelegramPublishedEntry {
   final String? supabaseVersionId;
   /// JSON: `[{"label":"👍","count":2,"kind":"emoji"}, ...]`
   final String? telegramReactionsJson;
+  final int? telegramChannelMemberCount;
+  final int? telegramRepliesCount;
+  final int? vkGroupMemberCount;
+  final int? vkCommentsCount;
+  /// API’den gelen gönderi tarihi (ISO), Telegram.
+  final String? telegramMessageDate;
 
   bool get isTelegram => platform == _kPlatformTelegram;
   bool get isVk => platform == _kPlatformVk;
+  bool get isDzen => platform == _kPlatformDzen;
 
   Map<String, dynamic> toJson() => {
         'id': id,
@@ -70,6 +83,11 @@ class TelegramPublishedEntry {
         'supabaseVersionId': supabaseVersionId,
         'telegramForwards': telegramForwards,
         'telegramReactionsJson': telegramReactionsJson,
+        'telegramChannelMemberCount': telegramChannelMemberCount,
+        'telegramRepliesCount': telegramRepliesCount,
+        'vkGroupMemberCount': vkGroupMemberCount,
+        'vkCommentsCount': vkCommentsCount,
+        'telegramMessageDate': telegramMessageDate,
       };
 
   factory TelegramPublishedEntry.fromJson(Map<String, dynamic> j) {
@@ -91,6 +109,12 @@ class TelegramPublishedEntry {
       supabaseVersionId: j['supabaseVersionId'] as String?,
       telegramForwards: (j['telegramForwards'] as num?)?.toInt(),
       telegramReactionsJson: j['telegramReactionsJson'] as String?,
+      telegramChannelMemberCount:
+          (j['telegramChannelMemberCount'] as num?)?.toInt(),
+      telegramRepliesCount: (j['telegramRepliesCount'] as num?)?.toInt(),
+      vkGroupMemberCount: (j['vkGroupMemberCount'] as num?)?.toInt(),
+      vkCommentsCount: (j['vkCommentsCount'] as num?)?.toInt(),
+      telegramMessageDate: j['telegramMessageDate'] as String?,
     );
   }
 
@@ -100,6 +124,11 @@ class TelegramPublishedEntry {
     int? repostsCount,
     int? telegramForwards,
     String? telegramReactionsJson,
+    int? telegramChannelMemberCount,
+    int? telegramRepliesCount,
+    int? vkGroupMemberCount,
+    int? vkCommentsCount,
+    String? telegramMessageDate,
   }) {
     return TelegramPublishedEntry(
       id: id,
@@ -118,6 +147,12 @@ class TelegramPublishedEntry {
       supabaseVersionId: supabaseVersionId,
       telegramForwards: telegramForwards ?? this.telegramForwards,
       telegramReactionsJson: telegramReactionsJson ?? this.telegramReactionsJson,
+      telegramChannelMemberCount:
+          telegramChannelMemberCount ?? this.telegramChannelMemberCount,
+      telegramRepliesCount: telegramRepliesCount ?? this.telegramRepliesCount,
+      vkGroupMemberCount: vkGroupMemberCount ?? this.vkGroupMemberCount,
+      vkCommentsCount: vkCommentsCount ?? this.vkCommentsCount,
+      telegramMessageDate: telegramMessageDate ?? this.telegramMessageDate,
     );
   }
 }
@@ -327,6 +362,35 @@ class TelegramPublishedLogRepository {
     onChanged.value++;
   }
 
+  /// Dzen (simüle) — analizde platform sekmesi için yalnızca kayıt.
+  Future<void> recordDzenSimulated({
+    String? caption,
+    bool isVideo = false,
+    String? localArchiveId,
+    String? supabaseVersionId,
+  }) async {
+    await ensureLoaded();
+    final id = DateTime.now().microsecondsSinceEpoch.toString();
+    _items.insert(
+      0,
+      TelegramPublishedEntry(
+        id: id,
+        publishedAt: DateTime.now(),
+        caption: caption,
+        isVideo: isVideo,
+        platform: _kPlatformDzen,
+        localArchiveId: localArchiveId,
+        supabaseVersionId: supabaseVersionId,
+      ),
+    );
+    try {
+      await _persist();
+    } catch (e, st) {
+      debugPrint('TelegramPublishedLogRepository.recordDzenSimulated: $e\n$st');
+    }
+    onChanged.value++;
+  }
+
   /// Detay ekranında VK / Telethon ile çekilen metrikleri kaydetmek için.
   Future<void> updateEntry(
     String id, {
@@ -335,6 +399,11 @@ class TelegramPublishedLogRepository {
     int? repostsCount,
     int? telegramForwards,
     String? telegramReactionsJson,
+    int? telegramChannelMemberCount,
+    int? telegramRepliesCount,
+    int? vkGroupMemberCount,
+    int? vkCommentsCount,
+    String? telegramMessageDate,
   }) async {
     await ensureLoaded();
     final i = _ix(id);
@@ -347,6 +416,11 @@ class TelegramPublishedLogRepository {
       repostsCount: repostsCount,
       telegramForwards: telegramForwards,
       telegramReactionsJson: telegramReactionsJson,
+      telegramChannelMemberCount: telegramChannelMemberCount,
+      telegramRepliesCount: telegramRepliesCount,
+      vkGroupMemberCount: vkGroupMemberCount,
+      vkCommentsCount: vkCommentsCount,
+      telegramMessageDate: telegramMessageDate,
     );
     try {
       await _persist();

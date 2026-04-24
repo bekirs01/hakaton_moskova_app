@@ -477,6 +477,37 @@ class AppLocalizationsRu extends AppLocalizations {
   String get publicationDetailCaption => 'Текст';
 
   @override
+  String get publicationDetailTabAll => 'Все';
+
+  @override
+  String get publicationDetailTabDzen => 'Дзен';
+
+  @override
+  String get publicationDetailDzen => 'Статус';
+
+  @override
+  String get publicationDetailDzenBody => 'Имитация; метрик нет.';
+
+  @override
+  String get publicationDetailMembers => 'Сообщество (подписчики)';
+
+  @override
+  String get publicationDetailTgReplies => 'Комментарии (обсуждение)';
+
+  @override
+  String get publicationDetailTgMessageTime => 'Время поста (Telegram)';
+
+  @override
+  String get publicationDetailComments => 'Комментарии';
+
+  @override
+  String get publicationDetailStatsNotFound =>
+      'Пост не найден для этой сессии. Проверьте канал и номер; API: ./run_telegram_api.sh';
+
+  @override
+  String get publicationDetailRefreshAll => 'Обновить';
+
+  @override
   String get professionStep1Title => 'Профессия или тема';
 
   @override

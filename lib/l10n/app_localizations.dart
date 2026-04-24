@@ -938,6 +938,66 @@ abstract class AppLocalizations {
   /// **'Açıklama'**
   String get publicationDetailCaption;
 
+  /// No description provided for @publicationDetailTabAll.
+  ///
+  /// In tr, this message translates to:
+  /// **'Tümü'**
+  String get publicationDetailTabAll;
+
+  /// No description provided for @publicationDetailTabDzen.
+  ///
+  /// In tr, this message translates to:
+  /// **'Dzen'**
+  String get publicationDetailTabDzen;
+
+  /// No description provided for @publicationDetailDzen.
+  ///
+  /// In tr, this message translates to:
+  /// **'Durum'**
+  String get publicationDetailDzen;
+
+  /// No description provided for @publicationDetailDzenBody.
+  ///
+  /// In tr, this message translates to:
+  /// **'Simülasyon; gerçek metrik yok.'**
+  String get publicationDetailDzenBody;
+
+  /// No description provided for @publicationDetailMembers.
+  ///
+  /// In tr, this message translates to:
+  /// **'Topluluk (abone)'**
+  String get publicationDetailMembers;
+
+  /// No description provided for @publicationDetailTgReplies.
+  ///
+  /// In tr, this message translates to:
+  /// **'Yorum (tartışma)'**
+  String get publicationDetailTgReplies;
+
+  /// No description provided for @publicationDetailTgMessageTime.
+  ///
+  /// In tr, this message translates to:
+  /// **'Gönderi saati (Telegram)'**
+  String get publicationDetailTgMessageTime;
+
+  /// No description provided for @publicationDetailComments.
+  ///
+  /// In tr, this message translates to:
+  /// **'Yorum'**
+  String get publicationDetailComments;
+
+  /// No description provided for @publicationDetailStatsNotFound.
+  ///
+  /// In tr, this message translates to:
+  /// **'Gönderi bu oturumda bulunamadı. Kanal ve mesaj no ile eşleşmeyi kontrol edin; API: ./run_telegram_api.sh'**
+  String get publicationDetailStatsNotFound;
+
+  /// No description provided for @publicationDetailRefreshAll.
+  ///
+  /// In tr, this message translates to:
+  /// **'Yenile'**
+  String get publicationDetailRefreshAll;
+
   /// No description provided for @professionStep1Title.
   ///
   /// In tr, this message translates to:

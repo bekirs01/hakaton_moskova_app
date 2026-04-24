@@ -21,11 +21,13 @@ class VkPostStats {
     required this.views,
     this.likes,
     this.reposts,
+    this.comments,
   });
 
   final int views;
   final int? likes;
   final int? reposts;
+  final int? comments;
 }
 
 /// VK API: grup (community) duvarına [wall.post] ile yayın.
@@ -353,6 +355,40 @@ class VkWallClient {
     if (rp is Map) {
       reposts = (rp['count'] as num?)?.toInt();
     }
-    return VkPostStats(views: views, likes: likes, reposts: reposts);
+    int? comments;
+    final cm = p['comments'];
+    if (cm is Map) {
+      comments = (cm['count'] as num?)?.toInt();
+    }
+    return VkPostStats(
+      views: views,
+      likes: likes,
+      reposts: reposts,
+      comments: comments,
+    );
+  }
+
+  /// [groups.getById] — topluluk üye sayısı (mümkünse).
+  Future<int?> fetchGroupMembersCount(int groupId) async {
+    if (AppEnv.vkApiAccessToken.isEmpty) {
+      return null;
+    }
+    try {
+      final m = await _get('groups.getById', {
+        'group_id': groupId.toString(),
+        'fields': 'members_count',
+      });
+      final arr = m['response'] as List<dynamic>?;
+      if (arr == null || arr.isEmpty) {
+        return null;
+      }
+      final g = arr.first;
+      if (g is! Map) {
+        return null;
+      }
+      return (g['members_count'] as num?)?.toInt();
+    } catch (_) {
+      return null;
+    }
   }
 }

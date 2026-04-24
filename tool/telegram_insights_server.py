@@ -21,7 +21,12 @@ from pydantic import BaseModel, ConfigDict, Field
 from telethon import TelegramClient
 from telethon.errors import RPCError
 from telethon.sessions import StringSession
-from telethon.tl.types import ReactionCustomEmoji, ReactionEmoji
+from telethon.tl.functions.channels import GetFullChannelRequest
+from telethon.tl.types import (
+    PeerChannel,
+    ReactionCustomEmoji,
+    ReactionEmoji,
+)
 
 _TOOL = Path(__file__).resolve().parent
 if str(_TOOL) not in sys.path:
@@ -121,6 +126,8 @@ class ChannelPostStatsBody(BaseModel):
 
     channel: str
     message_id: int = Field(..., alias="messageId")
+    # Mobil kayıttan (-100…); kanal/peer eşleştirmesini güçlendirir, 404'ü azaltır.
+    chat_id: Optional[str] = Field(None, alias="chatId")
 
 
 class ProfessionCreateBody(BaseModel):
@@ -173,6 +180,34 @@ def _reaction_total(msg: Any) -> int:
     for item in results:
         total += int(getattr(item, "count", 0) or 0)
     return total
+
+
+def _candidates_for_channel(channel: str, chat_id: Optional[str]) -> list[Any]:
+    """
+    Aynı gönderi için farklı sohbet tanımlarını dene: @kullanici, -100…, .env kanalı, PeerChannel.
+    """
+    out: list[Any] = []
+    seen: set[str] = set()
+
+    def add_s(x: str) -> None:
+        t = (x or "").strip()
+        if t and t not in seen:
+            seen.add(t)
+            out.append(t)
+
+    add_s(channel)
+    add_s(os.environ.get("TELEGRAM_PUBLISH_CHANNEL", "").strip())
+    if chat_id:
+        c = chat_id.strip()
+        add_s(c)
+        if c.startswith("-100") and len(c) > 4:
+            try:
+                internal = int(c[4:])
+                if internal > 0:
+                    out.append(PeerChannel(channel_id=internal))
+            except ValueError:
+                pass
+    return out
 
 
 def _reaction_breakdown(msg: Any) -> list[dict[str, Any]]:
@@ -584,11 +619,14 @@ async def channel_post_stats(body: ChannelPostStatsBody):
             },
         )
     ch = (body.channel or "").strip()
-    if not ch:
+    if not ch and not (body.chat_id or "").strip():
         return JSONResponse(
             status_code=400,
             content={
-                "error": {"code": "bad_request", "message": "channel is required"},
+                "error": {
+                    "code": "bad_request",
+                    "message": "channel or chatId is required",
+                }
             },
         )
     if int(body.message_id) <= 0:
@@ -601,52 +639,81 @@ async def channel_post_stats(body: ChannelPostStatsBody):
                 },
             },
         )
-    try:
-        entity = await _client.get_entity(ch)
-    except Exception as e:
-        return JSONResponse(
-            status_code=502,
-            content={
-                "error": {
-                    "code": "telegram_entity",
-                    "message": f"Could not open channel: {e}",
-                }
-            },
-        )
-    try:
-        rows = await _client.get_messages(entity, ids=int(body.message_id))
-    except RPCError as e:
-        return JSONResponse(
-            status_code=502,
-            content={
-                "error": {
-                    "code": "telegram_fetch",
-                    "message": f"Could not read message: {e.__class__.__name__}",
-                }
-            },
-        )
-    if isinstance(rows, list):
-        msg = rows[0] if rows else None
-    else:
-        msg = rows
+    cands = _candidates_for_channel(ch, body.chat_id)
+    if not cands:
+        cands = [ch] if ch else []
+    msg = None
+    entity = None
+    last_en: Optional[str] = None
+    last_ft: Optional[str] = None
+    mid = int(body.message_id)
+    for c in cands:
+        try:
+            entity = await _client.get_entity(c)
+        except Exception as e:
+            last_en = str(e)[:200]
+            continue
+        try:
+            rows = await _client.get_messages(entity, ids=mid)
+        except RPCError as e:
+            last_ft = e.__class__.__name__
+            continue
+        if isinstance(rows, list):
+            m = rows[0] if rows else None
+        else:
+            m = rows
+        if m and getattr(m, "id", None):
+            msg = m
+            break
     if not msg or not getattr(msg, "id", None):
+        hint = ""
+        if last_en or last_ft:
+            hint = f" (last_entity={last_en!r} fetch={last_ft!r})"
         return JSONResponse(
             status_code=404,
             content={
                 "error": {
                     "code": "not_found",
-                    "message": "Message not in history or not accessible to this account",
+                    "message": "Message not in history or not accessible to this account"
+                    + hint,
                 }
             },
         )
+    assert entity is not None
     views = int(getattr(msg, "views", 0) or 0)
     forwards = int(getattr(msg, "forwards", 0) or 0)
     reactions = _reaction_breakdown(msg)
+    rpl = getattr(msg, "replies", None)
+    reply_count = 0
+    if rpl is not None:
+        reply_count = int(getattr(rpl, "replies", 0) or 0)
+    md = getattr(msg, "date", None)
+    message_date_iso: Optional[str] = None
+    if md is not None:
+        if md.tzinfo is None:
+            md = md.replace(tzinfo=timezone.utc)
+        else:
+            md = md.astimezone(timezone.utc)
+        message_date_iso = md.isoformat()
+    member_count: Optional[int] = None
+    try:
+        full = await _client(
+            GetFullChannelRequest(channel=await _client.get_input_entity(entity))
+        )
+        mc = int(
+            getattr(getattr(full, "full_chat", None), "participants_count", 0) or 0
+        )
+        member_count = mc if mc > 0 else None
+    except Exception:
+        member_count = None
     return {
         "data": {
             "views": views,
             "forwards": forwards,
             "reactions": reactions,
+            "replies": reply_count,
+            "messageDate": message_date_iso,
+            "channelMemberCount": member_count,
         }
     }
 

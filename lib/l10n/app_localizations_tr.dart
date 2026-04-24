@@ -476,6 +476,37 @@ class AppLocalizationsTr extends AppLocalizations {
   String get publicationDetailCaption => 'Açıklama';
 
   @override
+  String get publicationDetailTabAll => 'Tümü';
+
+  @override
+  String get publicationDetailTabDzen => 'Dzen';
+
+  @override
+  String get publicationDetailDzen => 'Durum';
+
+  @override
+  String get publicationDetailDzenBody => 'Simülasyon; gerçek metrik yok.';
+
+  @override
+  String get publicationDetailMembers => 'Topluluk (abone)';
+
+  @override
+  String get publicationDetailTgReplies => 'Yorum (tartışma)';
+
+  @override
+  String get publicationDetailTgMessageTime => 'Gönderi saati (Telegram)';
+
+  @override
+  String get publicationDetailComments => 'Yorum';
+
+  @override
+  String get publicationDetailStatsNotFound =>
+      'Gönderi bu oturumda bulunamadı. Kanal ve mesaj no ile eşleşmeyi kontrol edin; API: ./run_telegram_api.sh';
+
+  @override
+  String get publicationDetailRefreshAll => 'Yenile';
+
+  @override
   String get professionStep1Title => 'Meslek veya konu';
 
   @override

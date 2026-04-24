@@ -146,6 +146,14 @@ Future<void> executeArchivePublish(
   final l10n = _l10n(context);
   if (target == MemeopsShareTarget.dzen) {
     _snackSafe(context, l10n.dzenPublishSimulated);
+    unawaited(
+      TelegramPublishedLogRepository.instance.recordDzenSimulated(
+        caption: shareText.trim().isNotEmpty ? shareText.trim() : sourceLabel,
+        isVideo: kind == MemeArchiveKind.video,
+        localArchiveId: localArchiveId,
+        supabaseVersionId: supabaseVersionId,
+      ),
+    );
     return;
   }
   assert(

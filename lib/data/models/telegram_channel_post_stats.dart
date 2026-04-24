@@ -4,11 +4,20 @@ class TelegramChannelPostStats {
     required this.views,
     required this.forwards,
     required this.reactions,
+    this.replies,
+    this.messageDate,
+    this.channelMemberCount,
   });
 
   final int views;
   final int forwards;
   final List<TelegramPostReactionRow> reactions;
+  /// Tartışmada yorum sayısı (kanalda açıksa).
+  final int? replies;
+  /// Telegram sunucusundaki gönderi zamanı (ISO-8601 UTC).
+  final String? messageDate;
+  /// Kanal abone / üye sayısı (Telethon GetFullChannel).
+  final int? channelMemberCount;
 
   factory TelegramChannelPostStats.fromMap(Map<String, dynamic> m) {
     final raw = m['reactions'] as List<dynamic>? ?? const [];
@@ -22,6 +31,9 @@ class TelegramChannelPostStats {
             ),
           )
           .toList(),
+      replies: (m['replies'] as num?)?.toInt(),
+      messageDate: (m['messageDate'] as String?)?.trim(),
+      channelMemberCount: (m['channelMemberCount'] as num?)?.toInt(),
     );
   }
 }

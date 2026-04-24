@@ -257,6 +257,7 @@ class MemeopsApiClient {
   Future<TelegramChannelPostStats> fetchTelegramChannelPostStats({
     required String channel,
     required int messageId,
+    String? chatId,
   }) async {
     final t = await _token();
     final res = await _post(
@@ -265,6 +266,7 @@ class MemeopsApiClient {
       body: jsonEncode({
         'channel': channel,
         'messageId': messageId,
+        if (chatId != null && chatId.trim().isNotEmpty) 'chatId': chatId.trim(),
       }),
       timeout: const Duration(seconds: 35),
     );
