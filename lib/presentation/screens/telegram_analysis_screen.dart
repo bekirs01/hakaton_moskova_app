@@ -11,6 +11,7 @@ import 'package:hakaton_moskova_app/presentation/screens/archive_item_analysis_s
 import 'package:hakaton_moskova_app/presentation/theme/memeops_design_tokens.dart';
 import 'package:hakaton_moskova_app/presentation/theme/memeops_theme.dart';
 import 'package:hakaton_moskova_app/presentation/widgets/memeops_glass_surface.dart';
+import 'package:hakaton_moskova_app/presentation/screens/my_publications_analytics_full_screen.dart';
 import 'package:hakaton_moskova_app/l10n/app_localizations.dart';
 
 /// Arşiv ile aynı medya seti; tıklanınca paylaşım metrik analizi.
@@ -121,52 +122,117 @@ class _TelegramAnalysisScreenState extends State<TelegramAnalysisScreen> {
                 ),
               ),
             Expanded(
-              child: _rows.isEmpty
-                  ? Center(
+              child: RefreshIndicator(
+                onRefresh: _reload,
+                child: CustomScrollView(
+                  physics: const AlwaysScrollableScrollPhysics(
+                    parent: BouncingScrollPhysics(),
+                  ),
+                  slivers: [
+                    SliverToBoxAdapter(
                       child: Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 24),
-                        child: Text(
-                          l10n.archiveEmpty,
-                          textAlign: TextAlign.center,
-                          style: MemeopsTextStyles.caption(context),
-                        ),
-                      ),
-                    )
-                  : RefreshIndicator(
-                      onRefresh: _reload,
-                      child: GridView.builder(
-                        padding: const EdgeInsets.fromLTRB(8, 4, 8, 8),
-                        gridDelegate:
-                            const SliverGridDelegateWithFixedCrossAxisCount(
-                          crossAxisCount: 2,
-                          mainAxisSpacing: 8,
-                          crossAxisSpacing: 8,
-                          childAspectRatio: 0.78,
-                        ),
-                        itemCount: _rows.length,
-                        itemBuilder: (context, i) {
-                          final row = _rows[i];
-                          return _FeedTile(
-                            row: row,
-                            repo: _repo,
-                            l10n: l10n,
-                            shortDate: row.isSupabase
-                                ? _shortDate(row.supabase!.createdAt)
-                                : _shortDate(row.local!.createdAt),
+                        padding: const EdgeInsets.fromLTRB(10, 0, 10, 8),
+                        child: MemeopsGlassSurface(
+                          padding: EdgeInsets.zero,
+                          borderRadius: MemeopsRadii.md,
+                          child: ListTile(
+                            contentPadding: const EdgeInsets.symmetric(
+                              horizontal: 14,
+                              vertical: 4,
+                            ),
                             onTap: () {
                               Navigator.of(context).push<void>(
                                 MaterialPageRoute<void>(
-                                  builder: (_) => ArchiveItemAnalysisScreen(
-                                    local: row.local,
-                                    cloud: row.supabase,
-                                  ),
+                                  builder: (_) =>
+                                      const MyPublicationsAnalyticsFullScreen(),
                                 ),
                               );
                             },
-                          );
-                        },
+                            leading: Icon(
+                              Icons.insights_rounded,
+                              color: MemeopsColors.iosBlueBright
+                                  .withValues(alpha: 0.95),
+                            ),
+                            title: Text(
+                              l10n.myPubOpenFullAnalytics,
+                              style: MemeopsTextStyles.subtitle(context)
+                                  .copyWith(
+                                color: Colors.white,
+                                fontWeight: FontWeight.w600,
+                                fontSize: 15,
+                              ),
+                            ),
+                            subtitle: Text(
+                              l10n.myPubOpenFullAnalyticsSubtitle,
+                              style: MemeopsTextStyles.caption(context).copyWith(
+                                fontSize: 12,
+                                color: Colors.white.withValues(alpha: 0.5),
+                                height: 1.3,
+                              ),
+                            ),
+                            trailing: Icon(
+                              Icons.chevron_right_rounded,
+                              color: Colors.white.withValues(alpha: 0.35),
+                            ),
+                          ),
+                        ),
                       ),
                     ),
+                    if (_rows.isEmpty)
+                      SliverFillRemaining(
+                        hasScrollBody: false,
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 24),
+                          child: Center(
+                            child: Text(
+                              l10n.archiveEmpty,
+                              textAlign: TextAlign.center,
+                              style: MemeopsTextStyles.caption(context),
+                            ),
+                          ),
+                        ),
+                      )
+                    else
+                      SliverPadding(
+                        padding: const EdgeInsets.fromLTRB(8, 4, 8, 8),
+                        sliver: SliverGrid(
+                          gridDelegate:
+                              const SliverGridDelegateWithFixedCrossAxisCount(
+                            crossAxisCount: 2,
+                            mainAxisSpacing: 8,
+                            crossAxisSpacing: 8,
+                            childAspectRatio: 0.78,
+                          ),
+                          delegate: SliverChildBuilderDelegate(
+                            (context, i) {
+                              final row = _rows[i];
+                              return _FeedTile(
+                                row: row,
+                                repo: _repo,
+                                l10n: l10n,
+                                shortDate: row.isSupabase
+                                    ? _shortDate(row.supabase!.createdAt)
+                                    : _shortDate(row.local!.createdAt),
+                                onTap: () {
+                                  Navigator.of(context).push<void>(
+                                    MaterialPageRoute<void>(
+                                      builder: (_) =>
+                                          ArchiveItemAnalysisScreen(
+                                        local: row.local,
+                                        cloud: row.supabase,
+                                      ),
+                                    ),
+                                  );
+                                },
+                              );
+                            },
+                            childCount: _rows.length,
+                          ),
+                        ),
+                      ),
+                  ],
+                ),
+              ),
             ),
           ],
         );

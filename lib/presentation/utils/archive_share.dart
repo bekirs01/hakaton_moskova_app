@@ -3,6 +3,7 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:hakaton_moskova_app/core/config/app_env.dart';
+import 'package:hakaton_moskova_app/data/publication/telegram_channel_router.dart';
 import 'package:hakaton_moskova_app/core/locale/app_locale_controller.dart';
 import 'package:hakaton_moskova_app/core/ui/memeops_messenger.dart';
 import 'package:hakaton_moskova_app/data/local/meme_local_archive_repository.dart';
@@ -44,6 +45,7 @@ Future<void> _shareTelegram({
   required AppLocalizations l10n,
   String? localArchiveId,
   String? supabaseVersionId,
+  String? telegramChatId,
 }) async {
   final publish = createPublicationPort();
   final result = await publish.publishMeme(
@@ -52,6 +54,7 @@ Future<void> _shareTelegram({
     localFile: file,
     isVideo: kind == MemeArchiveKind.video,
     captionOverride: shareText,
+    telegramChatId: telegramChatId,
   );
   unawaited(
     TelegramPublishedLogRepository.instance
@@ -131,6 +134,19 @@ String _extForImageUrl(String url) {
   return '.jpg';
 }
 
+String? _telegramChatIdForQuickShare(String shareText, String sourceLabel) {
+  final d = AppEnv.telegramPublishDestinations;
+  if (d.isEmpty) {
+    return null;
+  }
+  if (d.length == 1) {
+    return d.first.chatId;
+  }
+  final blob = '$shareText $sourceLabel';
+  final i = TelegramChannelRouter.recommendIndex(d, blob);
+  return d[i].chatId;
+}
+
 /// Tek giriş noktası: yerel dosya ve/veya ağ URL’si ile Telegram, VK; Dzen sadece simüle.
 Future<void> executeArchivePublish(
   BuildContext? context, {
@@ -142,6 +158,7 @@ Future<void> executeArchivePublish(
   String? networkUrl,
   String? localArchiveId,
   String? supabaseVersionId,
+  String? telegramChatId,
 }) async {
   final l10n = _l10n(context);
   if (target == MemeopsShareTarget.dzen) {
@@ -198,6 +215,8 @@ Future<void> executeArchivePublish(
 
   try {
     if (target == MemeopsShareTarget.telegram) {
+      final tid = telegramChatId ??
+          _telegramChatIdForQuickShare(text, sourceLabel);
       await _shareTelegram(
         file: file,
         kind: kind,
@@ -205,6 +224,7 @@ Future<void> executeArchivePublish(
         l10n: l10n,
         localArchiveId: localArchiveId,
         supabaseVersionId: supabaseVersionId,
+        telegramChatId: tid,
       );
     } else if (target == MemeopsShareTarget.vk) {
       await _shareVk(

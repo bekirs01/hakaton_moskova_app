@@ -195,6 +195,17 @@ class AppLocalizationsRu extends AppLocalizations {
   String get archivePublishTitle => 'Публикация';
 
   @override
+  String get archiveTelegramSmartRoutingTitle => 'Telegram: умный выбор канала';
+
+  @override
+  String archiveTelegramSmartRoutingHint(String channel) {
+    return 'По тексту и заголовку сейчас выделен «$channel». Отметьте нужные каналы ниже; в несколько можно отправить одну публикацию.';
+  }
+
+  @override
+  String get archiveTelegramSuggestedBadge => 'Советуем';
+
+  @override
   String get archivePublishChannelsSubtitle =>
       'Можно отметить несколько каналов.';
 
@@ -403,6 +414,77 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get analysisPlatformVk => 'ВКонтакте';
+
+  @override
+  String get myPubSummaryTitle => 'Сводка публикаций';
+
+  @override
+  String get myPubSummaryEmpty =>
+      'На этом устройстве ещё нет записей о публикациях. Поделись из «Архива» — цифры появятся после загрузки метрик.';
+
+  @override
+  String get myPubSummaryTotalLabel => 'Всего публикаций';
+
+  @override
+  String get myPubSummaryViewsLabel => 'Суммарные просмотры (где известны)';
+
+  @override
+  String get myPubSummaryByType => 'Тип контента (шт.)';
+
+  @override
+  String get myPubSummaryByPlatform => 'Платформа (шт.)';
+
+  @override
+  String myPubSummaryRolling(int cur, int prev) {
+    return 'Последние 7 дней: $cur публ. · предыдущие 7 дней: $prev публ.';
+  }
+
+  @override
+  String get myPubSummaryChartTitle => '7 дней — публикации по дням';
+
+  @override
+  String get myPubSummaryTypeViews => 'Просмотры по типу';
+
+  @override
+  String get myPubSummaryPlatformViews => 'Просмотры по платформе';
+
+  @override
+  String get myPubSummaryBest => 'Самый просматриваемый (в логе)';
+
+  @override
+  String get myPubSummaryDzenLabel => 'Дзен';
+
+  @override
+  String get myPubSummaryDzenNoViews =>
+      'Дзен: имитация, просмотры не учитываются.';
+
+  @override
+  String get myPubImageShort => 'Фото';
+
+  @override
+  String get myPubVideoShort => 'Видео';
+
+  @override
+  String get myPubOpenFullAnalytics => 'Вся аналитика публикаций';
+
+  @override
+  String get myPubOpenFullAnalyticsSubtitle =>
+      'Графики, сводка и превью по каждому посту';
+
+  @override
+  String get myPubFullPageTitle => 'Детальная аналитика';
+
+  @override
+  String get myPubPerPostListTitle => 'Посты (по просмотрам, с превью)';
+
+  @override
+  String get myPubPerPostNoThumb => '—';
+
+  @override
+  String get myPubViewUnknown => 'Просмотры: неизвестно';
+
+  @override
+  String get myPubPlatformVkTr => 'VK';
 
   @override
   String get publicationDetailTitle => 'Детали публикации';

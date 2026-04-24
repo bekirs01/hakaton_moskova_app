@@ -10,6 +10,8 @@ abstract class PublicationPort {
     File? localFile,
     bool isVideo = false,
     String? captionOverride,
+    /// Telegram: boşsa [AppEnv.telegramPublishChannel] kullanılır.
+    String? telegramChatId,
   });
 }
 
@@ -41,6 +43,7 @@ class StubPublicationPort implements PublicationPort {
     File? localFile,
     bool isVideo = false,
     String? captionOverride,
+    String? telegramChatId,
   }) async {
     return const PublicationResult(comingSoon: true);
   }

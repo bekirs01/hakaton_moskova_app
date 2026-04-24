@@ -196,6 +196,18 @@ class AppLocalizationsTr extends AppLocalizations {
   String get archivePublishTitle => 'Paylaşım';
 
   @override
+  String get archiveTelegramSmartRoutingTitle =>
+      'Telegram: akıllı kanal önerisi';
+
+  @override
+  String archiveTelegramSmartRoutingHint(String channel) {
+    return 'Metin ve başlığa göre «$channel» öne çıkıyor. Aşağıdan istediğin kanalları işaretle; birden fazlasına aynı gönderi gidebilir.';
+  }
+
+  @override
+  String get archiveTelegramSuggestedBadge => 'Önerilen';
+
+  @override
   String get archivePublishChannelsSubtitle =>
       'Birden fazla kanal işaretleyebilirsiniz.';
 
@@ -401,7 +413,77 @@ class AppLocalizationsTr extends AppLocalizations {
   String get analysisPlatformTelegram => 'Telegram';
 
   @override
-  String get analysisPlatformVk => 'ВКонтакте';
+  String get analysisPlatformVk => 'VK';
+
+  @override
+  String get myPubSummaryTitle => 'Paylaşım özeti';
+
+  @override
+  String get myPubSummaryEmpty =>
+      'Bu cihazda henüz kayıtlı paylaşım yok. Arşivden paylaş; sayılar yüklenince burada dolar.';
+
+  @override
+  String get myPubSummaryTotalLabel => 'Toplam paylaşım';
+
+  @override
+  String get myPubSummaryViewsLabel => 'Toplam izlenme (bilinen)';
+
+  @override
+  String get myPubSummaryByType => 'İçerik türü (adet)';
+
+  @override
+  String get myPubSummaryByPlatform => 'Platform (adet)';
+
+  @override
+  String myPubSummaryRolling(int cur, int prev) {
+    return 'Son 7 gün: $cur paylaşım · önceki 7 gün: $prev paylaşım';
+  }
+
+  @override
+  String get myPubSummaryChartTitle => 'Son 7 gün — günlük paylaşım adedi';
+
+  @override
+  String get myPubSummaryTypeViews => 'Türe göre toplam izlenme';
+
+  @override
+  String get myPubSummaryPlatformViews => 'Platforma göre toplam izlenme';
+
+  @override
+  String get myPubSummaryBest => 'En çok izlenen (kayıtlı)';
+
+  @override
+  String get myPubSummaryDzenLabel => 'Dzen';
+
+  @override
+  String get myPubSummaryDzenNoViews => 'Dzen simüle: izlenme sayılmaz.';
+
+  @override
+  String get myPubImageShort => 'Görsel';
+
+  @override
+  String get myPubVideoShort => 'Video';
+
+  @override
+  String get myPubOpenFullAnalytics => 'Tüm paylaşım analizi';
+
+  @override
+  String get myPubOpenFullAnalyticsSubtitle =>
+      'Grafikler, özet ve her gönderi için önizleme + izlenme';
+
+  @override
+  String get myPubFullPageTitle => 'Detay analiz';
+
+  @override
+  String get myPubPerPostListTitle => 'Gönderiler (izlenmeye göre, önizlemeli)';
+
+  @override
+  String get myPubPerPostNoThumb => '—';
+
+  @override
+  String get myPubViewUnknown => 'İzlenme: bilinmiyor';
+
+  @override
+  String get myPubPlatformVkTr => 'VK';
 
   @override
   String get publicationDetailTitle => 'Paylaşım detayı';

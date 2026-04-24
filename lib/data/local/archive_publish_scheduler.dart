@@ -62,6 +62,7 @@ class ArchivePublishScheduler {
     String? networkUrl,
     String? localArchiveId,
     String? supabaseVersionId,
+    String? telegramChatId,
   }) async {
     final list = await _loadRaw();
     list.add({
@@ -75,6 +76,8 @@ class ArchivePublishScheduler {
       'networkUrl': networkUrl,
       'localArchiveId': localArchiveId,
       'supabaseVersionId': supabaseVersionId,
+      if (telegramChatId != null && telegramChatId.trim().isNotEmpty)
+        'telegramChatId': telegramChatId.trim(),
     });
     await _saveRaw(list);
     unawaited(processDue());
@@ -123,6 +126,7 @@ class ArchivePublishScheduler {
             networkUrl: (net != null && net.isNotEmpty) ? net : null,
             localArchiveId: job['localArchiveId'] as String?,
             supabaseVersionId: job['supabaseVersionId'] as String?,
+            telegramChatId: job['telegramChatId'] as String?,
           );
         } catch (e, st) {
           debugPrint('ArchivePublishScheduler: $e\n$st');

@@ -20,10 +20,14 @@ class TelegramBotPublicationPort implements PublicationPort {
     File? localFile,
     bool isVideo = false,
     String? captionOverride,
+    String? telegramChatId,
   }) async {
     if (!AppEnv.isTelegramPublishConfigured) {
       return const PublicationResult(comingSoon: true);
     }
+    final chatId = (telegramChatId != null && telegramChatId.trim().isNotEmpty)
+        ? telegramChatId.trim()
+        : AppEnv.telegramPublishChannel;
     final caption = (captionOverride?.trim().isNotEmpty == true
             ? captionOverride!.trim()
             : (brief?.displayLine ?? '').trim());
@@ -32,6 +36,7 @@ class TelegramBotPublicationPort implements PublicationPort {
         localFile,
         isVideo: isVideo,
         caption: caption,
+        chatId: chatId,
       );
     }
     final photo = imageUrl?.trim() ?? '';
@@ -42,7 +47,6 @@ class TelegramBotPublicationPort implements PublicationPort {
       );
     }
     final token = AppEnv.telegramPublishBotToken;
-    final chatId = AppEnv.telegramPublishChannel;
     final uri = Uri.parse('https://api.telegram.org/bot$token/sendPhoto');
     final body = <String, String>{
       'chat_id': chatId,
@@ -72,9 +76,9 @@ class TelegramBotPublicationPort implements PublicationPort {
     File file, {
     required bool isVideo,
     required String caption,
+    required String chatId,
   }) async {
     final token = AppEnv.telegramPublishBotToken;
-    final chatId = AppEnv.telegramPublishChannel;
     final method = isVideo ? 'sendVideo' : 'sendPhoto';
     final field = isVideo ? 'video' : 'photo';
     final uri = Uri.parse('https://api.telegram.org/bot$token/$method');

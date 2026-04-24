@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:hakaton_moskova_app/core/config/telegram_publish_channel.dart';
 
 /// Public configuration only. Never log key material.
 class AppEnv {
@@ -69,15 +70,42 @@ class AppEnv {
     return _envLine('TELEGRAM_PUBLISH_BOT_TOKEN');
   }
 
-  /// Kanal kullanıcı adı (`@memasicspace`) veya sayısal `chat_id` (`-100...`).
-  static String get telegramPublishChannel {
+  static String _telegramPublishChannelSingleRaw() {
     const fromDefine = String.fromEnvironment('TELEGRAM_PUBLISH_CHANNEL');
     if (fromDefine.isNotEmpty) return fromDefine.trim();
     return _envLine('TELEGRAM_PUBLISH_CHANNEL');
   }
 
+  /// Birden fazla hedef: [.env] `TELEGRAM_PUBLISH_CHANNELS_JSON` (tek satır JSON dizi).
+  /// Boşsa [TELEGRAM_PUBLISH_CHANNEL] tek kanal olarak kullanılır.
+  static List<TelegramPublishChannel> get telegramPublishDestinations {
+    final jsonLine = _envLine('TELEGRAM_PUBLISH_CHANNELS_JSON');
+    final parsed = TelegramPublishChannel.parseJsonList(jsonLine);
+    if (parsed.isNotEmpty) {
+      return parsed;
+    }
+    final single = _telegramPublishChannelSingleRaw();
+    if (single.isEmpty) {
+      return const [];
+    }
+    return [
+      TelegramPublishChannel(
+        chatId: single,
+        label: 'Telegram',
+        keywords: const [],
+      ),
+    ];
+  }
+
+  /// Varsayılan / birincil kanal `chat_id` ([telegramPublishDestinations] ilk eleman).
+  static String get telegramPublishChannel {
+    final d = telegramPublishDestinations;
+    return d.isEmpty ? '' : d.first.chatId;
+  }
+
   static bool get isTelegramPublishConfigured =>
-      telegramPublishBotToken.isNotEmpty && telegramPublishChannel.isNotEmpty;
+      telegramPublishBotToken.isNotEmpty &&
+      telegramPublishDestinations.isNotEmpty;
 
   /// OAuth istemci id (yalnızca `setup_vk_user_token.sh` / dokümantasyon; API çağrılarında kullanılmaz).
   static String get vkAppId {

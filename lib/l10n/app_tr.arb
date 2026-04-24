@@ -66,6 +66,14 @@
   "archiveCaptionSaved": "Metin kaydedildi.",
   "archiveCaptionCloudNeedsBrief": "Bu bulut kaydında brief bağlantısı yok; metin yalnızca bu gönderim için kullanılır.",
   "archivePublishTitle": "Paylaşım",
+  "archiveTelegramSmartRoutingTitle": "Telegram: akıllı kanal önerisi",
+  "archiveTelegramSmartRoutingHint": "Metin ve başlığa göre «{channel}» öne çıkıyor. Aşağıdan istediğin kanalları işaretle; birden fazlasına aynı gönderi gidebilir.",
+  "@archiveTelegramSmartRoutingHint": {
+    "placeholders": {
+      "channel": {"type": "String"}
+    }
+  },
+  "archiveTelegramSuggestedBadge": "Önerilen",
   "archivePublishChannelsSubtitle": "Birden fazla kanal işaretleyebilirsiniz.",
   "archivePublishSelectAtLeastOneChannel": "En az bir kanal seçin.",
   "archivePublishWhenHeading": "Gönderim zamanı",
@@ -142,7 +150,35 @@
   "analysisPostKindImage": "Görsel",
   "analysisPostKindVideo": "Video",
   "analysisPlatformTelegram": "Telegram",
-  "analysisPlatformVk": "ВКонтакте",
+  "analysisPlatformVk": "VK",
+  "myPubSummaryTitle": "Paylaşım özeti",
+  "myPubSummaryEmpty": "Bu cihazda henüz kayıtlı paylaşım yok. Arşivden paylaş; sayılar yüklenince burada dolar.",
+  "myPubSummaryTotalLabel": "Toplam paylaşım",
+  "myPubSummaryViewsLabel": "Toplam izlenme (bilinen)",
+  "myPubSummaryByType": "İçerik türü (adet)",
+  "myPubSummaryByPlatform": "Platform (adet)",
+  "myPubSummaryRolling": "Son 7 gün: {cur} paylaşım · önceki 7 gün: {prev} paylaşım",
+  "@myPubSummaryRolling": {
+    "placeholders": {
+      "cur": {"type": "int"},
+      "prev": {"type": "int"}
+    }
+  },
+  "myPubSummaryChartTitle": "Son 7 gün — günlük paylaşım adedi",
+  "myPubSummaryTypeViews": "Türe göre toplam izlenme",
+  "myPubSummaryPlatformViews": "Platforma göre toplam izlenme",
+  "myPubSummaryBest": "En çok izlenen (kayıtlı)",
+  "myPubSummaryDzenLabel": "Dzen",
+  "myPubSummaryDzenNoViews": "Dzen simüle: izlenme sayılmaz.",
+  "myPubImageShort": "Görsel",
+  "myPubVideoShort": "Video",
+  "myPubOpenFullAnalytics": "Tüm paylaşım analizi",
+  "myPubOpenFullAnalyticsSubtitle": "Grafikler, özet ve her gönderi için önizleme + izlenme",
+  "myPubFullPageTitle": "Detay analiz",
+  "myPubPerPostListTitle": "Gönderiler (izlenmeye göre, önizlemeli)",
+  "myPubPerPostNoThumb": "—",
+  "myPubViewUnknown": "İzlenme: bilinmiyor",
+  "myPubPlatformVkTr": "VK",
   "publicationDetailTitle": "Paylaşım detayı",
   "publicationDetailSectionInfo": "Bilgiler",
   "publicationDetailPublishedAt": "Yayın",

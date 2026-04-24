@@ -61,6 +61,14 @@
   "archiveCaptionSaved": "Текст сохранён.",
   "archiveCaptionCloudNeedsBrief": "Нет связанного brief; текст используется только для этой отправки.",
   "archivePublishTitle": "Публикация",
+  "archiveTelegramSmartRoutingTitle": "Telegram: умный выбор канала",
+  "archiveTelegramSmartRoutingHint": "По тексту и заголовку сейчас выделен «{channel}». Отметьте нужные каналы ниже; в несколько можно отправить одну публикацию.",
+  "@archiveTelegramSmartRoutingHint": {
+    "placeholders": {
+      "channel": {"type": "String"}
+    }
+  },
+  "archiveTelegramSuggestedBadge": "Советуем",
   "archivePublishChannelsSubtitle": "Можно отметить несколько каналов.",
   "archivePublishSelectAtLeastOneChannel": "Выберите хотя бы один канал.",
   "archivePublishWhenHeading": "Когда отправить",
@@ -133,6 +141,34 @@
   "analysisPostKindVideo": "Видео",
   "analysisPlatformTelegram": "Telegram",
   "analysisPlatformVk": "ВКонтакте",
+  "myPubSummaryTitle": "Сводка публикаций",
+  "myPubSummaryEmpty": "На этом устройстве ещё нет записей о публикациях. Поделись из «Архива» — цифры появятся после загрузки метрик.",
+  "myPubSummaryTotalLabel": "Всего публикаций",
+  "myPubSummaryViewsLabel": "Суммарные просмотры (где известны)",
+  "myPubSummaryByType": "Тип контента (шт.)",
+  "myPubSummaryByPlatform": "Платформа (шт.)",
+  "myPubSummaryRolling": "Последние 7 дней: {cur} публ. · предыдущие 7 дней: {prev} публ.",
+  "@myPubSummaryRolling": {
+    "placeholders": {
+      "cur": {"type": "int"},
+      "prev": {"type": "int"}
+    }
+  },
+  "myPubSummaryChartTitle": "7 дней — публикации по дням",
+  "myPubSummaryTypeViews": "Просмотры по типу",
+  "myPubSummaryPlatformViews": "Просмотры по платформе",
+  "myPubSummaryBest": "Самый просматриваемый (в логе)",
+  "myPubSummaryDzenLabel": "Дзен",
+  "myPubSummaryDzenNoViews": "Дзен: имитация, просмотры не учитываются.",
+  "myPubImageShort": "Фото",
+  "myPubVideoShort": "Видео",
+  "myPubOpenFullAnalytics": "Вся аналитика публикаций",
+  "myPubOpenFullAnalyticsSubtitle": "Графики, сводка и превью по каждому посту",
+  "myPubFullPageTitle": "Детальная аналитика",
+  "myPubPerPostListTitle": "Посты (по просмотрам, с превью)",
+  "myPubPerPostNoThumb": "—",
+  "myPubViewUnknown": "Просмотры: неизвестно",
+  "myPubPlatformVkTr": "VK",
   "publicationDetailTitle": "Детали публикации",
   "publicationDetailSectionInfo": "Сведения",
   "publicationDetailPublishedAt": "Публикация",

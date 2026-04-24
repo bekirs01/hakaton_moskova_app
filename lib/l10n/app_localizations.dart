@@ -434,6 +434,24 @@ abstract class AppLocalizations {
   /// **'Paylaşım'**
   String get archivePublishTitle;
 
+  /// No description provided for @archiveTelegramSmartRoutingTitle.
+  ///
+  /// In tr, this message translates to:
+  /// **'Telegram: akıllı kanal önerisi'**
+  String get archiveTelegramSmartRoutingTitle;
+
+  /// No description provided for @archiveTelegramSmartRoutingHint.
+  ///
+  /// In tr, this message translates to:
+  /// **'Metin ve başlığa göre «{channel}» öne çıkıyor. Aşağıdan istediğin kanalları işaretle; birden fazlasına aynı gönderi gidebilir.'**
+  String archiveTelegramSmartRoutingHint(String channel);
+
+  /// No description provided for @archiveTelegramSuggestedBadge.
+  ///
+  /// In tr, this message translates to:
+  /// **'Önerilen'**
+  String get archiveTelegramSuggestedBadge;
+
   /// No description provided for @archivePublishChannelsSubtitle.
   ///
   /// In tr, this message translates to:
@@ -803,8 +821,140 @@ abstract class AppLocalizations {
   /// No description provided for @analysisPlatformVk.
   ///
   /// In tr, this message translates to:
-  /// **'ВКонтакте'**
+  /// **'VK'**
   String get analysisPlatformVk;
+
+  /// No description provided for @myPubSummaryTitle.
+  ///
+  /// In tr, this message translates to:
+  /// **'Paylaşım özeti'**
+  String get myPubSummaryTitle;
+
+  /// No description provided for @myPubSummaryEmpty.
+  ///
+  /// In tr, this message translates to:
+  /// **'Bu cihazda henüz kayıtlı paylaşım yok. Arşivden paylaş; sayılar yüklenince burada dolar.'**
+  String get myPubSummaryEmpty;
+
+  /// No description provided for @myPubSummaryTotalLabel.
+  ///
+  /// In tr, this message translates to:
+  /// **'Toplam paylaşım'**
+  String get myPubSummaryTotalLabel;
+
+  /// No description provided for @myPubSummaryViewsLabel.
+  ///
+  /// In tr, this message translates to:
+  /// **'Toplam izlenme (bilinen)'**
+  String get myPubSummaryViewsLabel;
+
+  /// No description provided for @myPubSummaryByType.
+  ///
+  /// In tr, this message translates to:
+  /// **'İçerik türü (adet)'**
+  String get myPubSummaryByType;
+
+  /// No description provided for @myPubSummaryByPlatform.
+  ///
+  /// In tr, this message translates to:
+  /// **'Platform (adet)'**
+  String get myPubSummaryByPlatform;
+
+  /// No description provided for @myPubSummaryRolling.
+  ///
+  /// In tr, this message translates to:
+  /// **'Son 7 gün: {cur} paylaşım · önceki 7 gün: {prev} paylaşım'**
+  String myPubSummaryRolling(int cur, int prev);
+
+  /// No description provided for @myPubSummaryChartTitle.
+  ///
+  /// In tr, this message translates to:
+  /// **'Son 7 gün — günlük paylaşım adedi'**
+  String get myPubSummaryChartTitle;
+
+  /// No description provided for @myPubSummaryTypeViews.
+  ///
+  /// In tr, this message translates to:
+  /// **'Türe göre toplam izlenme'**
+  String get myPubSummaryTypeViews;
+
+  /// No description provided for @myPubSummaryPlatformViews.
+  ///
+  /// In tr, this message translates to:
+  /// **'Platforma göre toplam izlenme'**
+  String get myPubSummaryPlatformViews;
+
+  /// No description provided for @myPubSummaryBest.
+  ///
+  /// In tr, this message translates to:
+  /// **'En çok izlenen (kayıtlı)'**
+  String get myPubSummaryBest;
+
+  /// No description provided for @myPubSummaryDzenLabel.
+  ///
+  /// In tr, this message translates to:
+  /// **'Dzen'**
+  String get myPubSummaryDzenLabel;
+
+  /// No description provided for @myPubSummaryDzenNoViews.
+  ///
+  /// In tr, this message translates to:
+  /// **'Dzen simüle: izlenme sayılmaz.'**
+  String get myPubSummaryDzenNoViews;
+
+  /// No description provided for @myPubImageShort.
+  ///
+  /// In tr, this message translates to:
+  /// **'Görsel'**
+  String get myPubImageShort;
+
+  /// No description provided for @myPubVideoShort.
+  ///
+  /// In tr, this message translates to:
+  /// **'Video'**
+  String get myPubVideoShort;
+
+  /// No description provided for @myPubOpenFullAnalytics.
+  ///
+  /// In tr, this message translates to:
+  /// **'Tüm paylaşım analizi'**
+  String get myPubOpenFullAnalytics;
+
+  /// No description provided for @myPubOpenFullAnalyticsSubtitle.
+  ///
+  /// In tr, this message translates to:
+  /// **'Grafikler, özet ve her gönderi için önizleme + izlenme'**
+  String get myPubOpenFullAnalyticsSubtitle;
+
+  /// No description provided for @myPubFullPageTitle.
+  ///
+  /// In tr, this message translates to:
+  /// **'Detay analiz'**
+  String get myPubFullPageTitle;
+
+  /// No description provided for @myPubPerPostListTitle.
+  ///
+  /// In tr, this message translates to:
+  /// **'Gönderiler (izlenmeye göre, önizlemeli)'**
+  String get myPubPerPostListTitle;
+
+  /// No description provided for @myPubPerPostNoThumb.
+  ///
+  /// In tr, this message translates to:
+  /// **'—'**
+  String get myPubPerPostNoThumb;
+
+  /// No description provided for @myPubViewUnknown.
+  ///
+  /// In tr, this message translates to:
+  /// **'İzlenme: bilinmiyor'**
+  String get myPubViewUnknown;
+
+  /// No description provided for @myPubPlatformVkTr.
+  ///
+  /// In tr, this message translates to:
+  /// **'VK'**
+  String get myPubPlatformVkTr;
 
   /// No description provided for @publicationDetailTitle.
   ///
