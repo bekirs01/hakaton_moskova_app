@@ -20,6 +20,9 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
+  String get backToLogin => 'Giriş ekranına dön';
+
+  @override
   String get homeSubtitle => 'Meme akışına devam et — aşağıdan sekme seç.';
 
   @override

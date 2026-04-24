@@ -29,6 +29,14 @@ class _HomeShellState extends State<HomeShell> {
     return local.length > 18 ? '${local.substring(0, 18)}…' : local;
   }
 
+  Future<void> _backToLogin() async {
+    try {
+      await Supabase.instance.client.auth.signOut();
+    } catch (_) {
+      // Keep the current session if sign-out fails.
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
@@ -45,6 +53,14 @@ class _HomeShellState extends State<HomeShell> {
                 child: Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
+                    IconButton(
+                      tooltip: l10n.backToLogin,
+                      onPressed: _backToLogin,
+                      icon: Icon(
+                        Icons.arrow_back_rounded,
+                        color: Colors.white.withValues(alpha: 0.9),
+                      ),
+                    ),
                     Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,

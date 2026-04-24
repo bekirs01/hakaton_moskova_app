@@ -20,6 +20,9 @@ class AppLocalizationsRu extends AppLocalizations {
   }
 
   @override
+  String get backToLogin => 'Вернуться ко входу';
+
+  @override
   String get homeSubtitle => 'Продолжайте поток мемов — выберите вкладку ниже.';
 
   @override

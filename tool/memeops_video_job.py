@@ -11,6 +11,7 @@ import asyncio
 import os
 import uuid
 from datetime import datetime, timezone
+from pathlib import Path
 from typing import Any
 
 import httpx
@@ -71,6 +72,43 @@ def _prompt_for_video(brief: dict[str, Any]) -> str:
     )
 
 
+def _error_text(err: Exception) -> str:
+    msg = str(err).strip()
+    if not msg:
+        msg = getattr(err, "message", "") or err.__class__.__name__
+    return msg[:500]
+
+
+def _should_retry_without_reference(err: Exception) -> bool:
+    msg = _error_text(err).lower()
+    return (
+        "inpaint image must match the requested width and height" in msg
+        or "input_reference" in msg
+        or "reference image" in msg
+    )
+
+
+def _reference_upload_name(image_url: str, content_type: str | None) -> str:
+    mime = (content_type or "").split(";", 1)[0].strip().lower()
+    if mime == "image/png":
+        return "reference.png"
+    if mime == "image/webp":
+        return "reference.webp"
+    if mime == "image/gif":
+        return "reference.gif"
+    suffix = Path(image_url.split("?", 1)[0]).suffix.lower()
+    if suffix in {".png", ".jpg", ".jpeg", ".webp", ".gif"}:
+        return f"reference{suffix}"
+    return "reference.jpg"
+
+
+def _compatible_db_job_type() -> str:
+    # Current Supabase schema in this project often still allows only
+    # brief_batch/image/text. Persist the video flow under image so DB writes
+    # remain compatible without requiring an immediate migration.
+    return "image"
+
+
 async def _generate_video_bytes(prompt: str, seconds: str, size: str, image_url: str | None) -> bytes:
     key = os.environ.get("OPENAI_API_KEY", "").strip()
     if not key:
@@ -91,25 +129,35 @@ async def _generate_video_bytes(prompt: str, seconds: str, size: str, image_url:
             "size": size,
         }
         ref_bytes: bytes | None = None
+        ref_name = "reference.jpg"
         if image_url:
             try:
                 r = httpx.get(image_url, timeout=httpx.Timeout(connect=30.0, read=120.0, write=120.0, pool=120.0))
                 r.raise_for_status()
                 ref_bytes = r.content
+                ref_name = _reference_upload_name(image_url, r.headers.get("content-type"))
             except Exception:
                 ref_bytes = None
 
-        if ref_bytes is not None:
-            try:
-                job = client.videos.create(
-                    **create_kwargs,
-                    input_reference=("reference.png", ref_bytes, "image/png"),
-                )
-            except TypeError:
-                # SDK eski; input_reference yoksa referanssız dene
+        try:
+            if ref_bytes is not None:
+                try:
+                    job = client.videos.create(
+                        **create_kwargs,
+                        input_reference=(ref_name, ref_bytes),
+                    )
+                except TypeError:
+                    # SDK eski; input_reference yoksa referanssız dene
+                    job = client.videos.create(**create_kwargs)
+                except Exception as err:
+                    if _should_retry_without_reference(err):
+                        job = client.videos.create(**create_kwargs)
+                    else:
+                        raise
+            else:
                 job = client.videos.create(**create_kwargs)
-        else:
-            job = client.videos.create(**create_kwargs)
+        except Exception as err:
+            raise RuntimeError(_error_text(err)) from err
 
         import time as _time
 
@@ -120,17 +168,28 @@ async def _generate_video_bytes(prompt: str, seconds: str, size: str, image_url:
                 break
             if status == "failed":
                 err = getattr(job, "error", None)
-                msg = getattr(err, "message", None) or "Sora video failed"
+                if isinstance(err, dict):
+                    msg = str(err.get("message") or err.get("code") or "Sora video failed")
+                else:
+                    msg = getattr(err, "message", None) or str(err or "Sora video failed")
                 raise RuntimeError(str(msg)[:400])
             if _time.time() - started > timeout_total:
                 raise RuntimeError(f"sora_timeout_after_{int(timeout_total)}s")
             _time.sleep(4.0)
-            job = client.videos.retrieve(job.id)
+            try:
+                job = client.videos.retrieve(job.id)
+            except Exception as err:
+                raise RuntimeError(_error_text(err)) from err
 
         try:
             content = client.videos.download_content(job.id)
         except TypeError:
-            content = client.videos.download_content(video_id=job.id)
+            try:
+                content = client.videos.download_content(video_id=job.id)
+            except Exception as err:
+                raise RuntimeError(_error_text(err)) from err
+        except Exception as err:
+            raise RuntimeError(_error_text(err)) from err
         data = getattr(content, "read", None)
         if callable(data):
             return content.read()
@@ -239,23 +298,25 @@ async def run_meme_video_job(jwt: str, meme_brief_id: str, seconds: str | int | 
             asset_id = asset_row["id"]
             next_v = 1
 
+        job_payload = {
+            "workspace_id": workspace_id,
+            "job_type": _compatible_db_job_type(),
+            "status": "processing",
+            "meme_brief_id": meme_brief_id,
+            "profession_id": prof_id,
+            "provider": "openai_sora",
+            "is_mock": False,
+            "params": {
+                "actual_job_type": "video",
+                "model": _openai_video_model(),
+                "seconds": secs,
+                "size": size,
+            },
+        }
         job_ins = await client.post(
             f"{url}/rest/v1/ai_generation_jobs",
             headers=h,
-            json={
-                "workspace_id": workspace_id,
-                "job_type": "video",
-                "status": "processing",
-                "meme_brief_id": meme_brief_id,
-                "profession_id": prof_id,
-                "provider": "openai_sora",
-                "is_mock": False,
-                "params": {
-                    "model": _openai_video_model(),
-                    "seconds": secs,
-                    "size": size,
-                },
-            },
+            json=job_payload,
         )
         if job_ins.status_code >= 400:
             raise RuntimeError(job_ins.text)

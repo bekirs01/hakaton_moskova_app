@@ -3,6 +3,7 @@
   "appTitle": "MemeOps",
   "defaultDisplayName": "создатель",
   "greeting": "Добрый день, {name}",
+  "backToLogin": "Вернуться ко входу",
   "homeSubtitle": "Продолжайте поток мемов — выберите вкладку ниже.",
   "tabProfession": "Профессия",
   "tabTelegram": "Telegram",

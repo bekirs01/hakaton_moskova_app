@@ -116,6 +116,12 @@ abstract class AppLocalizations {
   /// **'İyi günler, {name}'**
   String greeting(String name);
 
+  /// No description provided for @backToLogin.
+  ///
+  /// In tr, this message translates to:
+  /// **'Giriş ekranına dön'**
+  String get backToLogin;
+
   /// No description provided for @homeSubtitle.
   ///
   /// In tr, this message translates to:

@@ -288,6 +288,11 @@ async def video_job_api(request: Request, body: VideoJobBody):
             status_code=502,
             content={"error": {"code": "video_job", "message": msg[:500]}},
         )
+    except Exception as e:
+        return JSONResponse(
+            status_code=502,
+            content={"error": {"code": "video_job", "message": str(e)[:500] or "Video job failed."}},
+        )
     return {"data": data}
 
 

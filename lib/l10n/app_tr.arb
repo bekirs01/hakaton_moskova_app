@@ -8,6 +8,7 @@
       "name": {"type": "String"}
     }
   },
+  "backToLogin": "Giriş ekranına dön",
   "homeSubtitle": "Meme akışına devam et — aşağıdan sekme seç.",
   "tabProfession": "Meslek",
   "tabTelegram": "Telegram",
