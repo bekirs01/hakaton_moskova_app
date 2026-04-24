@@ -1,14 +1,37 @@
 import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+/// `file_url` içinde `.../meme-assets/<object path>` bölgesinden depo nesne yolunu üretir.
+/// Eski satırlarda [storage_path] boş, `file_url` public/sign formatında kaldığında imza için gerekir.
+String? tryExtractMemeAssetsStoragePathFromUrl(String? fileUrl) {
+  final t = (fileUrl ?? '').trim();
+  if (t.isEmpty) {
+    return null;
+  }
+  final u = Uri.tryParse(t);
+  if (u == null || !u.hasScheme) {
+    return null;
+  }
+  final segs = u.pathSegments;
+  final i = segs.indexOf('meme-assets');
+  if (i < 0 || i >= segs.length - 1) {
+    return null;
+  }
+  return segs.sublist(i + 1).join('/');
+}
+
 /// [meme_asset_versions] için oynatılabilir/kullanılabilir URL.
-/// [storage_path] varsa imzalı URL üretir (gizli bucket + bozuk `file_url` / localhost).
+/// [storage_path] yoksa `file_url` yolundan çıkarılan object path ile imzalı URL üretir
+/// (gizli bucket, bozuk/localhost [file_url]).
 Future<String> resolveMemeAssetPlayableUrl(
   SupabaseClient client,
   String? rawUrl,
   String? storagePath,
 ) async {
-  final sp = (storagePath ?? '').trim();
+  var sp = (storagePath ?? '').trim();
+  if (sp.isEmpty) {
+    sp = (tryExtractMemeAssetsStoragePathFromUrl(rawUrl) ?? '').trim();
+  }
   if (sp.isNotEmpty) {
     try {
       return await client.storage

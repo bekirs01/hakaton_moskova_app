@@ -9,11 +9,32 @@ class MemeSupabaseAssetsRepository {
 
   final SupabaseClient _client;
 
+  static bool _looksLikeVideoStoragePath(String? sp) {
+    if (sp == null || sp.isEmpty) {
+      return false;
+    }
+    final s = sp.toLowerCase();
+    if (s.contains('video-') || s.contains('/video-')) {
+      if (s.contains('.mp4') || s.contains('.webm') || s.contains('.mov')) {
+        return true;
+      }
+    }
+    return s.endsWith('.mp4') ||
+        s.endsWith('.webm') ||
+        s.endsWith('.mov');
+  }
+
   static bool _isVideoUrl(String? url) {
     if (url == null || url.isEmpty) {
       return false;
     }
     final u = url.toLowerCase();
+    if (u.contains('meme-assets') && u.contains('video-')) {
+      return true;
+    }
+    if (u.contains('video-') && (u.contains('.mp4') || u.contains('mp4?'))) {
+      return true;
+    }
     return u.contains('.mp4') ||
         u.contains('.webm') ||
         u.contains('/video-') ||
@@ -65,12 +86,16 @@ class MemeSupabaseAssetsRepository {
 
     await Future.wait<void>(
       rowMaps.map((m) async {
-        final sp = m['storage_path'] as String?;
         final rawUrl = m['file_url'] as String?;
+        var sp = (m['storage_path'] as String?)?.trim() ?? '';
+        if (sp.isEmpty) {
+          sp = (tryExtractMemeAssetsStoragePathFromUrl(rawUrl) ?? '').trim();
+        }
+        m['_path_hint'] = sp;
         final url = await resolveMemeAssetPlayableUrl(
           _client,
           rawUrl,
-          sp,
+          sp.isNotEmpty ? sp : null,
         );
         m['_resolved_file_url'] = url;
       }),
@@ -82,7 +107,10 @@ class MemeSupabaseAssetsRepository {
       if (u.isEmpty) {
         continue;
       }
-      if (!_isImageUrl(u) && !_isVideoUrl(u)) {
+      final ph = (m['_path_hint'] as String?)?.trim() ?? '';
+      if (!_isImageUrl(u) &&
+          !_isVideoUrl(u) &&
+          !_looksLikeVideoStoragePath(ph.isNotEmpty ? ph : null)) {
         continue;
       }
       rows.add(m);
@@ -124,7 +152,8 @@ class MemeSupabaseAssetsRepository {
 
     return rows.map((m) {
       final u = (m['_resolved_file_url'] as String?)?.trim() ?? '';
-      final isVid = _isVideoUrl(u);
+      final ph = (m['_path_hint'] as String?)?.trim() ?? '';
+      final isVid = _isVideoUrl(u) || _looksLikeVideoStoragePath(ph);
       final id = m['id'] as String;
       final createdAt = DateTime.parse(m['created_at'] as String);
       final vn = (m['version_number'] as num?)?.toInt() ?? 0;
@@ -136,10 +165,12 @@ class MemeSupabaseAssetsRepository {
           bl = _lineFromBrief(b);
         }
       }
+      final spDb = (m['storage_path'] as String?)?.trim() ?? '';
+      final spOut = spDb.isNotEmpty ? spDb : (ph.isNotEmpty ? ph : null);
       return SupabaseMemeAssetEntry(
         id: id,
         fileUrl: u,
-        storagePath: (m['storage_path'] as String?)?.trim(),
+        storagePath: spOut,
         createdAt: createdAt,
         versionNumber: vn,
         isVideo: isVid,

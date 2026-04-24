@@ -45,6 +45,7 @@ dependencies:
   video_player: ^2.9.2
   flutter_localizations:
     sdk: flutter
+  video_thumbnail: ^0.5.6
 
 dev_dependencies:
   flutter_test:

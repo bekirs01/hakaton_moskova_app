@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:hakaton_moskova_app/data/local/meme_local_archive_repository.dart';
 import 'package:hakaton_moskova_app/l10n/app_localizations.dart';
+import 'package:hakaton_moskova_app/core/media/supabase_playable_url.dart';
 import 'package:hakaton_moskova_app/presentation/theme/memeops_design_tokens.dart';
 import 'package:hakaton_moskova_app/presentation/theme/memeops_theme.dart';
 import 'package:hakaton_moskova_app/presentation/widgets/archive_detail_publish_section.dart';
@@ -84,10 +85,12 @@ class _ArchiveVideoPlayerScreenState extends State<ArchiveVideoPlayerScreen> {
   }
 
   Future<void> _playNetworkUri(Uri uri) async {
-    final sp = widget.storagePath?.trim();
+    var sp = (widget.storagePath ?? '').trim();
+    if (sp.isEmpty) {
+      sp = (tryExtractMemeAssetsStoragePathFromUrl(uri.toString()) ?? '').trim();
+    }
     // Önce imzalı URL (bozuk file_url, localhost, gizli bucket).
-    if (sp != null &&
-        sp.isNotEmpty &&
+    if (sp.isNotEmpty &&
         Supabase.instance.client.auth.currentSession != null) {
       try {
         final signed = await Supabase.instance.client.storage
@@ -124,7 +127,7 @@ class _ArchiveVideoPlayerScreenState extends State<ArchiveVideoPlayerScreen> {
         _ready = true;
       });
     } catch (e) {
-      if (sp != null && sp.isNotEmpty && Supabase.instance.client.auth.currentSession != null) {
+      if (sp.isNotEmpty && Supabase.instance.client.auth.currentSession != null) {
         try {
           final signed = await Supabase.instance.client.storage
               .from('meme-assets')

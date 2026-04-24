@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:io';
 
+import 'package:flutter/foundation.dart' show debugPrint, Uint8List;
 import 'package:flutter/material.dart';
 import 'package:hakaton_moskova_app/core/media/supabase_playable_url.dart';
 import 'package:hakaton_moskova_app/data/local/archive_publish_scheduler.dart';
@@ -17,8 +18,118 @@ import 'package:hakaton_moskova_app/presentation/utils/archive_share.dart';
 import 'package:hakaton_moskova_app/presentation/widgets/archive_detail_publish_section.dart';
 import 'package:hakaton_moskova_app/presentation/widgets/memeops_glass_surface.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:video_thumbnail/video_thumbnail.dart';
 
 const double _kThumb = 48;
+
+/// Bulut (Supabase) video satırı: ağ URL’sinden tek kare kapak; başarısız olursa eski play yer tutucu.
+class _CloudVideoNetworkThumb extends StatefulWidget {
+  const _CloudVideoNetworkThumb({super.key, required this.videoUrl});
+
+  final String videoUrl;
+
+  @override
+  State<_CloudVideoNetworkThumb> createState() =>
+      _CloudVideoNetworkThumbState();
+}
+
+class _CloudVideoNetworkThumbState extends State<_CloudVideoNetworkThumb> {
+  late Future<Uint8List?> _thumbFuture;
+
+  @override
+  void initState() {
+    super.initState();
+    _thumbFuture = _generate();
+  }
+
+  @override
+  void didUpdateWidget(covariant _CloudVideoNetworkThumb oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.videoUrl != widget.videoUrl) {
+      setState(() {
+        _thumbFuture = _generate();
+      });
+    }
+  }
+
+  Future<Uint8List?> _generate() async {
+    final u = widget.videoUrl.trim();
+    if (u.isEmpty) {
+      return null;
+    }
+    try {
+      return await VideoThumbnail.thumbnailData(
+        video: u,
+        imageFormat: ImageFormat.JPEG,
+        maxWidth: 256,
+        timeMs: 200,
+        quality: 50,
+      );
+    } catch (e, st) {
+      debugPrint('VideoThumbnail(archive row): $e\n$st');
+      return null;
+    }
+  }
+
+  Widget _fallbackPlaceholder() {
+    return Container(
+      width: _kThumb,
+      height: _kThumb,
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(10),
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            MemeopsColors.iosBlue.withValues(alpha: 0.5),
+            Colors.black.withValues(alpha: 0.55),
+          ],
+        ),
+      ),
+      alignment: Alignment.center,
+      child: const Icon(
+        Icons.play_circle_fill_rounded,
+        color: Colors.white,
+        size: 26,
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final dpr = MediaQuery.devicePixelRatioOf(context);
+    final cacheSide = (_kThumb * dpr).round();
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(10),
+      child: FutureBuilder<Uint8List?>(
+        future: _thumbFuture,
+        builder: (context, snap) {
+          if (snap.connectionState != ConnectionState.done) {
+            return Container(
+              width: _kThumb,
+              height: _kThumb,
+              color: Colors.white.withValues(alpha: 0.06),
+            );
+          }
+          final bytes = snap.data;
+          if (bytes == null || bytes.isEmpty) {
+            return _fallbackPlaceholder();
+          }
+          return Image.memory(
+            bytes,
+            width: _kThumb,
+            height: _kThumb,
+            fit: BoxFit.cover,
+            cacheWidth: cacheSide,
+            filterQuality: FilterQuality.medium,
+            gaplessPlayback: true,
+            errorBuilder: (c, e, st) => _fallbackPlaceholder(),
+          );
+        },
+      ),
+    );
+  }
+}
 
 class _LocalArchiveThumb extends StatefulWidget {
   const _LocalArchiveThumb({required this.entry});
@@ -460,26 +571,9 @@ class _MemeArchiveScreenState extends State<MemeArchiveScreen> {
 
   Widget _thumbCloud(BuildContext context, SupabaseMemeAssetEntry a) {
     if (a.isVideo) {
-      return Container(
-        width: _kThumb,
-        height: _kThumb,
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(10),
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [
-              MemeopsColors.iosBlue.withValues(alpha: 0.5),
-              Colors.black.withValues(alpha: 0.55),
-            ],
-          ),
-        ),
-        alignment: Alignment.center,
-        child: const Icon(
-          Icons.play_circle_fill_rounded,
-          color: Colors.white,
-          size: 26,
-        ),
+      return _CloudVideoNetworkThumb(
+        key: ValueKey<String>('cloud-vid-${a.id}'),
+        videoUrl: a.fileUrl,
       );
     }
     final dpr = MediaQuery.devicePixelRatioOf(context);
