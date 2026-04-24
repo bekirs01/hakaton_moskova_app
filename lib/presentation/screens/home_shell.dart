@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:hakaton_moskova_app/l10n/app_localizations.dart';
 import 'package:hakaton_moskova_app/presentation/screens/meme_archive_screen.dart';
 import 'package:hakaton_moskova_app/presentation/screens/profession_flow_screen.dart';
-import 'package:hakaton_moskova_app/presentation/screens/publish_placeholder_screen.dart';
+import 'package:hakaton_moskova_app/presentation/screens/telegram_analysis_screen.dart';
 import 'package:hakaton_moskova_app/presentation/screens/telegram_flow_screen.dart';
 import 'package:hakaton_moskova_app/presentation/theme/memeops_design_tokens.dart';
 import 'package:hakaton_moskova_app/presentation/theme/memeops_theme.dart';
@@ -53,14 +53,12 @@ class _HomeShellState extends State<HomeShell> {
                 child: Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    IconButton(
+                    _HeaderActionButton(
                       tooltip: l10n.backToLogin,
                       onPressed: _backToLogin,
-                      icon: Icon(
-                        Icons.arrow_back_rounded,
-                        color: Colors.white.withValues(alpha: 0.9),
-                      ),
+                      icon: Icons.arrow_back_rounded,
                     ),
+                    const SizedBox(width: 12),
                     Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -72,20 +70,23 @@ class _HomeShellState extends State<HomeShell> {
                             ).copyWith(fontSize: 24),
                           ),
                           const SizedBox(height: 6),
-                          Text(
-                            l10n.homeSubtitle,
-                            style: MemeopsTextStyles.caption(context),
+                          ConstrainedBox(
+                            constraints: const BoxConstraints(maxWidth: 320),
+                            child: Text(
+                              l10n.homeSubtitle,
+                              style: MemeopsTextStyles.caption(context).copyWith(
+                                height: 1.45,
+                              ),
+                            ),
                           ),
                         ],
                       ),
                     ),
-                    IconButton(
+                    const SizedBox(width: 12),
+                    _HeaderActionButton(
                       tooltip: l10n.languageTitle,
                       onPressed: () => showMemeopsLanguageSheet(context),
-                      icon: Icon(
-                        Icons.language_rounded,
-                        color: Colors.white.withValues(alpha: 0.85),
-                      ),
+                      icon: Icons.language_rounded,
                     ),
                   ],
                 ),
@@ -96,7 +97,7 @@ class _HomeShellState extends State<HomeShell> {
                   children: const [
                     ProfessionFlowScreen(),
                     TelegramFlowScreen(),
-                    PublishPlaceholderScreen(),
+                    TelegramAnalysisScreen(),
                     MemeArchiveScreen(),
                   ],
                 ),
@@ -127,9 +128,9 @@ class _HomeShellState extends State<HomeShell> {
                 label: l10n.tabTelegram,
               ),
               MemeopsFloatingTabItem(
-                icon: Icons.rocket_launch_outlined,
-                selectedIcon: Icons.rocket_launch_rounded,
-                label: l10n.tabPublish,
+                icon: Icons.analytics_outlined,
+                selectedIcon: Icons.analytics_rounded,
+                label: l10n.tabAnalysis,
               ),
               MemeopsFloatingTabItem(
                 icon: Icons.photo_library_outlined,
@@ -137,6 +138,52 @@ class _HomeShellState extends State<HomeShell> {
                 label: l10n.tabArchive,
               ),
             ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _HeaderActionButton extends StatelessWidget {
+  const _HeaderActionButton({
+    required this.tooltip,
+    required this.onPressed,
+    required this.icon,
+  });
+
+  final String tooltip;
+  final VoidCallback onPressed;
+  final IconData icon;
+
+  @override
+  Widget build(BuildContext context) {
+    return Tooltip(
+      message: tooltip,
+      child: DecoratedBox(
+        decoration: BoxDecoration(
+          color: Colors.white.withValues(alpha: 0.05),
+          borderRadius: BorderRadius.circular(18),
+          border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.16),
+              blurRadius: 16,
+              offset: const Offset(0, 6),
+            ),
+          ],
+        ),
+        child: SizedBox(
+          width: 48,
+          height: 48,
+          child: IconButton(
+            onPressed: onPressed,
+            splashRadius: 24,
+            icon: Icon(
+              icon,
+              color: Colors.white.withValues(alpha: 0.88),
+              size: 27,
+            ),
           ),
         ),
       ),

@@ -11,6 +11,10 @@ class ChannelInsights {
     this.postTypes = const [],
     this.mediaInsights = const [],
     this.recentHighlights = const [],
+    this.activityWindows = const [],
+    this.topPosts = const [],
+    this.engagementInsights = const [],
+    this.sampleSize = 0,
     this.analysisSource,
   });
 
@@ -27,6 +31,10 @@ class ChannelInsights {
   final List<String> postTypes;
   final List<String> mediaInsights;
   final List<String> recentHighlights;
+  final List<String> activityWindows;
+  final List<String> topPosts;
+  final List<String> engagementInsights;
+  final int sampleSize;
 
   /// `telethon_live` | `offline_stub` | null (legacy servers).
   final String? analysisSource;
@@ -47,6 +55,10 @@ class ChannelInsights {
       'mediaInsights': mediaInsights,
       'postTypes': postTypes,
       'recentHighlights': recentHighlights,
+      'activityWindows': activityWindows,
+      'topPosts': topPosts,
+      'engagementInsights': engagementInsights,
+      'sampleSize': sampleSize,
       'memeableAngles': memeableAngles,
       'analysisSource': analysisSource ?? '',
     };
@@ -64,6 +76,11 @@ class ChannelInsights {
       'Post mix: ${postTypes.join("; ")}',
       'Media: ${mediaTypes.join(", ")}',
       if (mediaInsights.isNotEmpty) 'Media notes: ${mediaInsights.join(" | ")}',
+      if (activityWindows.isNotEmpty)
+        'Activity windows: ${activityWindows.join(" | ")}',
+      if (engagementInsights.isNotEmpty)
+        'Engagement: ${engagementInsights.join(" | ")}',
+      if (topPosts.isNotEmpty) 'Top posts: ${topPosts.join(" | ")}',
       if (recentHighlights.isNotEmpty)
         'Recent samples: ${recentHighlights.join(" · ")}',
       'Meme angles: ${memeableAngles.join(" | ")}',
@@ -95,6 +112,10 @@ class ChannelInsights {
       postTypes: ls('postTypes'),
       mediaInsights: ls('mediaInsights'),
       recentHighlights: ls('recentHighlights'),
+      activityWindows: ls('activityWindows'),
+      topPosts: ls('topPosts'),
+      engagementInsights: ls('engagementInsights'),
+      sampleSize: (m['sampleSize'] as num?)?.toInt() ?? 0,
       analysisSource: m['analysisSource'] as String?,
     );
   }

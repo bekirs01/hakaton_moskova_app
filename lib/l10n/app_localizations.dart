@@ -140,6 +140,12 @@ abstract class AppLocalizations {
   /// **'Telegram'**
   String get tabTelegram;
 
+  /// No description provided for @tabAnalysis.
+  ///
+  /// In tr, this message translates to:
+  /// **'Analiz'**
+  String get tabAnalysis;
+
   /// No description provided for @tabPublish.
   ///
   /// In tr, this message translates to:
@@ -391,6 +397,102 @@ abstract class AppLocalizations {
   /// In tr, this message translates to:
   /// **'Tamam'**
   String get publicationDone;
+
+  /// No description provided for @analysisTitle.
+  ///
+  /// In tr, this message translates to:
+  /// **'Telegram analizi'**
+  String get analysisTitle;
+
+  /// No description provided for @analysisSubtitle.
+  ///
+  /// In tr, this message translates to:
+  /// **'Canlı analizden gelen sinyalleri burada topla; hangi saatler, hangi formatlar ve hangi gönderi tipleri daha güçlü görünüyor hızlıca gör.'**
+  String get analysisSubtitle;
+
+  /// No description provided for @analysisEmpty.
+  ///
+  /// In tr, this message translates to:
+  /// **'Önce Telegram sekmesinden bir kanal analiz et. Son sonuç burada görünür.'**
+  String get analysisEmpty;
+
+  /// No description provided for @analysisOverview.
+  ///
+  /// In tr, this message translates to:
+  /// **'Genel görünüm'**
+  String get analysisOverview;
+
+  /// No description provided for @analysisSampleSize.
+  ///
+  /// In tr, this message translates to:
+  /// **'İncelenen gönderi'**
+  String get analysisSampleSize;
+
+  /// No description provided for @analysisSource.
+  ///
+  /// In tr, this message translates to:
+  /// **'Kaynak'**
+  String get analysisSource;
+
+  /// No description provided for @analysisSourceLive.
+  ///
+  /// In tr, this message translates to:
+  /// **'Canlı Telethon analizi'**
+  String get analysisSourceLive;
+
+  /// No description provided for @analysisSourceStub.
+  ///
+  /// In tr, this message translates to:
+  /// **'Stub / sınırlı veri'**
+  String get analysisSourceStub;
+
+  /// No description provided for @analysisActivity.
+  ///
+  /// In tr, this message translates to:
+  /// **'Aktif zaman aralıkları'**
+  String get analysisActivity;
+
+  /// No description provided for @analysisNoActivity.
+  ///
+  /// In tr, this message translates to:
+  /// **'Henüz aktif zaman aralığı verisi yok.'**
+  String get analysisNoActivity;
+
+  /// No description provided for @analysisTopPosts.
+  ///
+  /// In tr, this message translates to:
+  /// **'Öne çıkan gönderiler'**
+  String get analysisTopPosts;
+
+  /// No description provided for @analysisNoTopPosts.
+  ///
+  /// In tr, this message translates to:
+  /// **'Henüz öne çıkan gönderi verisi yok.'**
+  String get analysisNoTopPosts;
+
+  /// No description provided for @analysisAudience.
+  ///
+  /// In tr, this message translates to:
+  /// **'Kitle ve etkileşim sinyalleri'**
+  String get analysisAudience;
+
+  /// No description provided for @analysisNoAudience.
+  ///
+  /// In tr, this message translates to:
+  /// **'Henüz etkileşim sinyali yok.'**
+  String get analysisNoAudience;
+
+  /// No description provided for @analysisOpportunities.
+  ///
+  /// In tr, this message translates to:
+  /// **'İçerik fırsatları'**
+  String get analysisOpportunities;
+
+  /// No description provided for @analysisNoOpportunities.
+  ///
+  /// In tr, this message translates to:
+  /// **'Henüz içerik fırsatı çıkarılamadı.'**
+  String get analysisNoOpportunities;
 
   /// No description provided for @professionStep1Title.
   ///

@@ -32,6 +32,9 @@ class AppLocalizationsRu extends AppLocalizations {
   String get tabTelegram => 'Telegram';
 
   @override
+  String get tabAnalysis => 'Анализ';
+
+  @override
   String get tabPublish => 'Публикация';
 
   @override
@@ -170,6 +173,57 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get publicationDone => 'Готово';
+
+  @override
+  String get analysisTitle => 'Анализ Telegram';
+
+  @override
+  String get analysisSubtitle =>
+      'Собирайте сигналы из live-анализа: когда канал активнее, какие форматы тянут лучше и какие посты выглядят сильнее.';
+
+  @override
+  String get analysisEmpty =>
+      'Сначала проанализируйте канал во вкладке Telegram. Последний результат появится здесь.';
+
+  @override
+  String get analysisOverview => 'Общий обзор';
+
+  @override
+  String get analysisSampleSize => 'Постов в выборке';
+
+  @override
+  String get analysisSource => 'Источник';
+
+  @override
+  String get analysisSourceLive => 'Живой анализ Telethon';
+
+  @override
+  String get analysisSourceStub => 'Stub / ограниченные данные';
+
+  @override
+  String get analysisActivity => 'Окна активности';
+
+  @override
+  String get analysisNoActivity => 'Пока нет данных по активности.';
+
+  @override
+  String get analysisTopPosts => 'Лучшие посты';
+
+  @override
+  String get analysisNoTopPosts => 'Пока нет данных по лучшим постам.';
+
+  @override
+  String get analysisAudience => 'Сигналы аудитории и отклика';
+
+  @override
+  String get analysisNoAudience => 'Пока нет сигналов вовлечения.';
+
+  @override
+  String get analysisOpportunities => 'Контентные возможности';
+
+  @override
+  String get analysisNoOpportunities =>
+      'Пока не удалось выделить контентные возможности.';
 
   @override
   String get professionStep1Title => 'Профессия или тема';

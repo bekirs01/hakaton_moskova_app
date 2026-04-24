@@ -12,6 +12,7 @@ import 'package:hakaton_moskova_app/domain/pipeline_stage.dart';
 import 'package:hakaton_moskova_app/domain/publication_port.dart';
 import 'package:hakaton_moskova_app/l10n/app_localizations.dart';
 import 'package:hakaton_moskova_app/presentation/layout/home_tab_scroll_padding.dart';
+import 'package:hakaton_moskova_app/presentation/state/telegram_analysis_store.dart';
 import 'package:hakaton_moskova_app/presentation/theme/memeops_design_tokens.dart';
 import 'package:hakaton_moskova_app/presentation/widgets/error_retry_card.dart';
 import 'package:hakaton_moskova_app/presentation/widgets/memeops_glass_surface.dart';
@@ -121,6 +122,7 @@ class _TelegramFlowScreenState extends State<TelegramFlowScreen> {
       _selected = null;
       _variants = const [];
     });
+    TelegramAnalysisStore.instance.set(null);
     final u = _link.text.trim();
     if (u.length < 8) {
       setState(() {
@@ -136,6 +138,7 @@ class _TelegramFlowScreenState extends State<TelegramFlowScreen> {
         _insights = ins;
         _stage = TelegramPipelineStage.inputReady;
       });
+      TelegramAnalysisStore.instance.set(ins);
     } on MemeopsApiException catch (e) {
       setState(() {
         _err = e.message;
@@ -678,7 +681,7 @@ class _TelegramFlowScreenState extends State<TelegramFlowScreen> {
             VideoGenerateSection(
               memeBriefId: _selected!.id,
               caption: _selected?.displayLine,
-              sourceLabel: 'Telegram',
+              sourceLabel: l10n.telegramSourceLabel,
               stepNumber: 4,
             ),
           ],

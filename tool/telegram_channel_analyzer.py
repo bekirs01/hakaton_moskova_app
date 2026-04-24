@@ -109,6 +109,89 @@ def _recent_highlights(texts: list[str], k: int = 5) -> list[str]:
     return out
 
 
+def _hour_bucket(hour: int) -> str:
+    start = (hour // 3) * 3
+    end = (start + 3) % 24
+    return f"{start:02d}:00-{end:02d}:00"
+
+
+def _activity_windows(message_meta: list[dict[str, Any]]) -> list[str]:
+    buckets = Counter()
+    for meta in message_meta:
+        hour = meta.get("hour")
+        if isinstance(hour, int):
+            buckets[_hour_bucket(hour)] += 1
+    out: list[str] = []
+    for bucket, count in buckets.most_common(3):
+        out.append(f"{bucket} spike ({count} posts in sample)")
+    return out
+
+
+def _clip_snippet(text: str, limit: int = 72) -> str:
+    one = re.sub(r"\s+", " ", (text or "").strip())
+    if not one:
+        return "media-first post"
+    if len(one) > limit:
+        return one[: limit - 1] + "…"
+    return one
+
+
+def _top_posts(message_meta: list[dict[str, Any]]) -> list[str]:
+    ranked = sorted(
+        message_meta,
+        key=lambda x: (
+            int(x.get("reactions") or 0),
+            int(x.get("views") or 0),
+        ),
+        reverse=True,
+    )
+    out: list[str] = []
+    for meta in ranked[:4]:
+        stamp = meta.get("date_label") or "--"
+        views = int(meta.get("views") or 0)
+        reactions = int(meta.get("reactions") or 0)
+        out.append(
+            f"{stamp} • {views} views • {reactions} reactions • {_clip_snippet(str(meta.get('text') or ''))}"
+        )
+    return out
+
+
+def _engagement_insights(
+    message_meta: list[dict[str, Any]], photo_n: int, video_n: int
+) -> list[str]:
+    if not message_meta:
+        return ["Engagement stats need a live message sample."]
+    rated = [m for m in message_meta if int(m.get("views") or 0) > 0]
+    avg_rate = 0.0
+    if rated:
+        avg_rate = sum((int(m.get("reactions") or 0) / max(int(m.get("views") or 1), 1)) for m in rated) / len(rated)
+
+    photo_scores = [int(m.get("reactions") or 0) + int(m.get("views") or 0) * 0.01 for m in message_meta if m.get("has_photo")]
+    video_scores = [int(m.get("reactions") or 0) + int(m.get("views") or 0) * 0.01 for m in message_meta if m.get("has_video")]
+    text_scores = [
+        int(m.get("reactions") or 0) + int(m.get("views") or 0) * 0.01
+        for m in message_meta
+        if not m.get("has_photo") and not m.get("has_video")
+    ]
+
+    format_scores = {
+        "photo posts": (sum(photo_scores) / len(photo_scores)) if photo_scores else 0.0,
+        "video posts": (sum(video_scores) / len(video_scores)) if video_scores else 0.0,
+        "text-only posts": (sum(text_scores) / len(text_scores)) if text_scores else 0.0,
+    }
+    best_format = max(format_scores, key=format_scores.get)
+
+    out = [
+        f"Best performing format in this sample: {best_format}.",
+        f"Average reaction-to-view ratio: {avg_rate * 100:.2f}%.",
+    ]
+    if video_n and format_scores["video posts"] >= format_scores["photo posts"]:
+        out.append("Video posts are carrying at least as much response as photos.")
+    elif photo_n:
+        out.append("Static visuals still dominate the strongest response pockets.")
+    return out
+
+
 def _vision_openai(image_bytes_list: list[bytes]) -> list[str]:
     key = os.environ.get("OPENAI_API_KEY", "").strip()
     if not key or not image_bytes_list:
@@ -242,6 +325,7 @@ def analyze_channel_batch(
     channel_title: str,
     texts: list[str],
     captions: list[str],
+    message_meta: list[dict[str, Any]],
     post_types: list[str],
     photo_n: int,
     video_n: int,
@@ -324,6 +408,9 @@ def analyze_channel_batch(
         )
 
     highlights = _recent_highlights(texts, 5)
+    activity_windows = _activity_windows(message_meta)
+    top_posts = _top_posts(message_meta)
+    engagement_insights = _engagement_insights(message_meta, photo_n, video_n)
     angles = [
         f"Meme the tension between “{tone_profile.split('/')[0].strip()}” posts and audience fatigue",
         "Before/after: calm announcement vs chaotic comments",
@@ -342,6 +429,10 @@ def analyze_channel_batch(
         "mediaTypes": media_types,
         "mediaInsights": media_insights[:10],
         "postTypes": post_type_summary,
+        "activityWindows": activity_windows,
+        "topPosts": top_posts,
+        "engagementInsights": engagement_insights,
+        "sampleSize": len(message_meta),
         "recentHighlights": highlights,
         "memeableAngles": angles[:8],
         "analysisSource": "telethon_live",

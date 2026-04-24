@@ -43,6 +43,22 @@ Map<String, dynamic> stubChannelInsightsData(
     'postTypes': [
       ru ? 'stub / не подключено' : 'stub / bağlı değil',
     ],
+    'activityWindows': [
+      ru
+          ? 'Нет реальных тайм-слотов без live-анализа.'
+          : 'Canlı analiz olmadan gerçek aktif saat aralığı yok.',
+    ],
+    'topPosts': [
+      ru
+          ? 'Топ-посты появятся после live-анализа канала.'
+          : 'Öne çıkan gönderiler canlı analizden sonra gelir.',
+    ],
+    'engagementInsights': [
+      ru
+          ? 'Без Telethon невозможно собрать просмотры и реакции.'
+          : 'Telethon olmadan görüntüleme ve reaksiyon toplanamaz.',
+    ],
+    'sampleSize': 0,
     'recentHighlights': <String>[],
     'memeableAngles': [
       ru

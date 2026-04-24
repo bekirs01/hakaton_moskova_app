@@ -238,11 +238,6 @@ class _ProfessionFlowScreenState extends State<ProfessionFlowScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                Text(
-                  l10n.professionFlowCaption,
-                  style: MemeopsTextStyles.caption(context),
-                ),
-                const SizedBox(height: 14),
                 TextField(
                   controller: _professionCtrl,
                   onChanged: (_) {
@@ -378,7 +373,7 @@ class _ProfessionFlowScreenState extends State<ProfessionFlowScreen> {
             VideoGenerateSection(
               memeBriefId: _selected!.id,
               caption: _selected?.displayLine,
-              sourceLabel: 'Meslek',
+              sourceLabel: l10n.professionSourceLabel,
               stepNumber: 3,
             ),
           ],

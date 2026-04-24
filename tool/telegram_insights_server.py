@@ -10,6 +10,7 @@ import json
 import os
 import sys
 from contextlib import asynccontextmanager
+from datetime import timezone
 from pathlib import Path
 from typing import Any, Optional
 
@@ -151,6 +152,17 @@ def _auth_jwt(request: Request) -> Optional[str]:
     if not h or not h.lower().startswith("bearer "):
         return None
     return h[7:].strip()
+
+
+def _reaction_total(msg: Any) -> int:
+    reactions = getattr(msg, "reactions", None)
+    results = getattr(reactions, "results", None)
+    if not results:
+        return 0
+    total = 0
+    for item in results:
+        total += int(getattr(item, "count", 0) or 0)
+    return total
 
 
 @app.post("/api/v1/professions")
@@ -429,6 +441,7 @@ async def channel_insights(body: ChannelInsightsBody):
 
     texts: list[str] = []
     captions: list[str] = []
+    message_meta: list[dict[str, Any]] = []
     post_types: list[str] = []
     photo_n = video_n = doc_n = 0
     image_bytes: list[bytes] = []
@@ -445,6 +458,24 @@ async def channel_insights(body: ChannelInsightsBody):
                 texts.append(msg.text or "")
             if msg.photo and t:
                 captions.append(t)
+
+            dt = getattr(msg, "date", None)
+            if dt is not None:
+                if dt.tzinfo is None:
+                    dt = dt.replace(tzinfo=timezone.utc)
+                dt_local = dt.astimezone()
+                message_meta.append(
+                    {
+                        "text": t,
+                        "views": int(getattr(msg, "views", 0) or 0),
+                        "reactions": _reaction_total(msg),
+                        "forwards": int(getattr(msg, "forwards", 0) or 0),
+                        "has_photo": has_p,
+                        "has_video": has_v,
+                        "hour": dt_local.hour,
+                        "date_label": dt_local.strftime("%d.%m %H:%M"),
+                    }
+                )
 
             if msg.photo:
                 photo_n += 1
@@ -486,6 +517,7 @@ async def channel_insights(body: ChannelInsightsBody):
         title,
         texts,
         captions,
+        message_meta,
         post_types,
         photo_n,
         video_n,

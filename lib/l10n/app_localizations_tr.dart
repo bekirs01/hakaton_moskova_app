@@ -32,6 +32,9 @@ class AppLocalizationsTr extends AppLocalizations {
   String get tabTelegram => 'Telegram';
 
   @override
+  String get tabAnalysis => 'Analiz';
+
+  @override
   String get tabPublish => 'Yayın';
 
   @override
@@ -171,6 +174,56 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get publicationDone => 'Tamam';
+
+  @override
+  String get analysisTitle => 'Telegram analizi';
+
+  @override
+  String get analysisSubtitle =>
+      'Canlı analizden gelen sinyalleri burada topla; hangi saatler, hangi formatlar ve hangi gönderi tipleri daha güçlü görünüyor hızlıca gör.';
+
+  @override
+  String get analysisEmpty =>
+      'Önce Telegram sekmesinden bir kanal analiz et. Son sonuç burada görünür.';
+
+  @override
+  String get analysisOverview => 'Genel görünüm';
+
+  @override
+  String get analysisSampleSize => 'İncelenen gönderi';
+
+  @override
+  String get analysisSource => 'Kaynak';
+
+  @override
+  String get analysisSourceLive => 'Canlı Telethon analizi';
+
+  @override
+  String get analysisSourceStub => 'Stub / sınırlı veri';
+
+  @override
+  String get analysisActivity => 'Aktif zaman aralıkları';
+
+  @override
+  String get analysisNoActivity => 'Henüz aktif zaman aralığı verisi yok.';
+
+  @override
+  String get analysisTopPosts => 'Öne çıkan gönderiler';
+
+  @override
+  String get analysisNoTopPosts => 'Henüz öne çıkan gönderi verisi yok.';
+
+  @override
+  String get analysisAudience => 'Kitle ve etkileşim sinyalleri';
+
+  @override
+  String get analysisNoAudience => 'Henüz etkileşim sinyali yok.';
+
+  @override
+  String get analysisOpportunities => 'İçerik fırsatları';
+
+  @override
+  String get analysisNoOpportunities => 'Henüz içerik fırsatı çıkarılamadı.';
 
   @override
   String get professionStep1Title => 'Meslek veya konu';
