@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
@@ -21,6 +22,7 @@ class MemeArchiveEntry {
     required this.sourceLabel,
     this.kind = MemeArchiveKind.image,
     this.durationSeconds,
+    this.sourceUrl,
   });
 
   final String id;
@@ -31,6 +33,9 @@ class MemeArchiveEntry {
   final MemeArchiveKind kind;
   final int? durationSeconds;
 
+  /// Aynı üretim URL’si tekrar arşive eklenmesin (paylaş sonrası yedek vs.).
+  final String? sourceUrl;
+
   Map<String, dynamic> toJson() => {
         'id': id,
         'localFileName': localFileName,
@@ -39,6 +44,7 @@ class MemeArchiveEntry {
         'sourceLabel': sourceLabel,
         'kind': kind.name,
         'durationSeconds': durationSeconds,
+        if (sourceUrl != null) 'sourceUrl': sourceUrl,
       };
 
   factory MemeArchiveEntry.fromJson(Map<String, dynamic> j) {
@@ -52,6 +58,7 @@ class MemeArchiveEntry {
       sourceLabel: (j['sourceLabel'] as String?) ?? '',
       kind: kind,
       durationSeconds: (j['durationSeconds'] as num?)?.toInt(),
+      sourceUrl: j['sourceUrl'] as String?,
     );
   }
 }
@@ -82,23 +89,57 @@ class MemeLocalArchiveRepository {
     return File(p.join(dir.path, 'index.json'));
   }
 
-  Future<List<MemeArchiveEntry>> loadEntries() async {
+  static const _loadEntriesTimeout = Duration(seconds: 30);
+
+  /// [loadEntriesTimedOut] true ise indeks okuma süresi aşıldı; liste boş olabilir.
+  Future<({List<MemeArchiveEntry> entries, bool loadEntriesTimedOut})> loadEntries() async {
+    var timedOut = false;
+    try {
+      final list = await _loadEntriesImpl().timeout(
+        _loadEntriesTimeout,
+        onTimeout: () {
+          timedOut = true;
+          debugPrint('MemeLocalArchiveRepository.loadEntries: timed out after $_loadEntriesTimeout');
+          return <MemeArchiveEntry>[];
+        },
+      );
+      return (entries: list, loadEntriesTimedOut: timedOut);
+    } catch (e, st) {
+      debugPrint('MemeLocalArchiveRepository.loadEntries: $e\n$st');
+      return (entries: <MemeArchiveEntry>[], loadEntriesTimedOut: false);
+    }
+  }
+
+  Future<List<MemeArchiveEntry>> _loadEntriesImpl() async {
     final f = await _indexFile();
     if (!await f.exists()) {
       return [];
     }
-    try {
-      final raw = await f.readAsString();
-      final list = jsonDecode(raw) as List<dynamic>;
-      final entries = list
-          .map((e) => MemeArchiveEntry.fromJson(Map<String, dynamic>.from(e as Map)))
-          .toList();
-      entries.sort((a, b) => b.createdAt.compareTo(a.createdAt));
-      return entries;
-    } catch (e, st) {
-      debugPrint('MemeLocalArchiveRepository.loadEntries: $e\n$st');
+    final raw = await f.readAsString();
+    final decoded = jsonDecode(raw);
+    if (decoded is! List) {
+      debugPrint('MemeLocalArchiveRepository.loadEntries: index.json is not a list');
       return [];
     }
+    final entries = <MemeArchiveEntry>[];
+    for (var i = 0; i < decoded.length; i++) {
+      final e = decoded[i];
+      if (e is! Map) {
+        debugPrint('MemeLocalArchiveRepository.loadEntries: skip non-map at index $i');
+        continue;
+      }
+      try {
+        entries.add(
+          MemeArchiveEntry.fromJson(
+            Map<String, dynamic>.from(e),
+          ),
+        );
+      } catch (err, st) {
+        debugPrint('MemeLocalArchiveRepository.loadEntries: skip entry $i: $err\n$st');
+      }
+    }
+    entries.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+    return entries;
   }
 
   Future<void> _saveEntries(List<MemeArchiveEntry> entries) async {
@@ -132,6 +173,12 @@ class MemeLocalArchiveRepository {
     return File(p.join(dir.path, e.localFileName));
   }
 
+  String _urlKey(String url) {
+    final t = url.trim();
+    final q = t.indexOf('?');
+    return q < 0 ? t : t.substring(0, q);
+  }
+
   Future<void> addFromNetworkUrl({
     required String imageUrl,
     String? caption,
@@ -139,6 +186,14 @@ class MemeLocalArchiveRepository {
     MemeArchiveKind kind = MemeArchiveKind.image,
     int? durationSeconds,
   }) async {
+    final load0 = await loadEntries();
+    final key = _urlKey(imageUrl);
+    for (final e in load0.entries) {
+      if (e.sourceUrl != null && _urlKey(e.sourceUrl!) == key) {
+        return;
+      }
+    }
+
     final uri = Uri.parse(imageUrl);
     // Video dosyaları için daha geniş timeout.
     final timeout = kind == MemeArchiveKind.video
@@ -166,10 +221,30 @@ class MemeLocalArchiveRepository {
       sourceLabel: sourceLabel,
       kind: kind,
       durationSeconds: durationSeconds,
+      sourceUrl: imageUrl.trim(),
     );
-    final existing = await loadEntries();
+    final existing = List<MemeArchiveEntry>.from(load0.entries);
     existing.insert(0, entry);
     await _saveEntries(existing);
+    onChanged.value++;
+  }
+
+  /// İndeksten çıkarır ve dosyayı siler.
+  Future<void> removeEntry(MemeArchiveEntry e) async {
+    final list = await _loadEntriesImpl();
+    final next = list.where((x) => x.id != e.id).toList();
+    if (next.length == list.length) {
+      return;
+    }
+    try {
+      final f = await fileFor(e);
+      if (await f.exists()) {
+        await f.delete();
+      }
+    } catch (err, st) {
+      debugPrint('removeEntry file: $err\n$st');
+    }
+    await _saveEntries(next);
     onChanged.value++;
   }
 }

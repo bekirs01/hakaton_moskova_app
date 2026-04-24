@@ -335,8 +335,38 @@ abstract class AppLocalizations {
   /// No description provided for @archiveSubtitle.
   ///
   /// In tr, this message translates to:
-  /// **'Ürettiğin görseller bu cihazda saklanır; tarih ve kaynak aşağıda.'**
+  /// **'Yerel üretimler bu cihazda; aynı hesabın Supabase’deki görseller ve videolar aşağıda birleşir. Filtreyle cihaz / bulut ayrılabilir.'**
   String get archiveSubtitle;
+
+  /// No description provided for @archiveSourceCloud.
+  ///
+  /// In tr, this message translates to:
+  /// **'Supabase'**
+  String get archiveSourceCloud;
+
+  /// No description provided for @archiveSupabaseLoadError.
+  ///
+  /// In tr, this message translates to:
+  /// **'Hesabındaki sunucu medyaları yüklenemedi. Yerel arşiv gösteriliyor.'**
+  String get archiveSupabaseLoadError;
+
+  /// No description provided for @archiveFilterAll.
+  ///
+  /// In tr, this message translates to:
+  /// **'Tümü'**
+  String get archiveFilterAll;
+
+  /// No description provided for @archiveFilterLocal.
+  ///
+  /// In tr, this message translates to:
+  /// **'Bu cihaz'**
+  String get archiveFilterLocal;
+
+  /// No description provided for @archiveFilterCloud.
+  ///
+  /// In tr, this message translates to:
+  /// **'Supabase'**
+  String get archiveFilterCloud;
 
   /// No description provided for @archiveEmpty.
   ///
@@ -368,6 +398,36 @@ abstract class AppLocalizations {
   /// **'Görsel indirilemedi (HTTP {code}).'**
   String archiveDownloadFailed(int code);
 
+  /// No description provided for @archiveListLoadError.
+  ///
+  /// In tr, this message translates to:
+  /// **'Liste açılırken beklenmeyen bir gecikme oldu. Aşağı çekerek yenile.'**
+  String get archiveListLoadError;
+
+  /// No description provided for @archiveEntryDeleteTitle.
+  ///
+  /// In tr, this message translates to:
+  /// **'Silinsin mi?'**
+  String get archiveEntryDeleteTitle;
+
+  /// No description provided for @archiveEntryDeleteMessage.
+  ///
+  /// In tr, this message translates to:
+  /// **'Bu kayıt kalıcı olarak silinir. Supabase satırı (ve mümkünse dosya) kaldırılır; yerel dosya da silinir.'**
+  String get archiveEntryDeleteMessage;
+
+  /// No description provided for @archiveEntryDelete.
+  ///
+  /// In tr, this message translates to:
+  /// **'Sil'**
+  String get archiveEntryDelete;
+
+  /// No description provided for @archiveEntryDeleteCancel.
+  ///
+  /// In tr, this message translates to:
+  /// **'Vazgeç'**
+  String get archiveEntryDeleteCancel;
+
   /// No description provided for @publishTitle.
   ///
   /// In tr, this message translates to:
@@ -397,6 +457,48 @@ abstract class AppLocalizations {
   /// In tr, this message translates to:
   /// **'Tamam'**
   String get publicationDone;
+
+  /// No description provided for @shareTargetTitle.
+  ///
+  /// In tr, this message translates to:
+  /// **'Nereye paylaşılsın?'**
+  String get shareTargetTitle;
+
+  /// No description provided for @shareTargetSubtitle.
+  ///
+  /// In tr, this message translates to:
+  /// **'Hedefi seç; ağ isteği sadece bu paylaşım için gider.'**
+  String get shareTargetSubtitle;
+
+  /// No description provided for @shareTargetTelegram.
+  ///
+  /// In tr, this message translates to:
+  /// **'Telegram (kanal)'**
+  String get shareTargetTelegram;
+
+  /// No description provided for @shareTargetVk.
+  ///
+  /// In tr, this message translates to:
+  /// **'ВКонтакте (grup duvarı)'**
+  String get shareTargetVk;
+
+  /// No description provided for @shareNoServiceConfigured.
+  ///
+  /// In tr, this message translates to:
+  /// **'Paylaşım için .env içinde TELEGRAM_PUBLISH_* veya VK_ACCESS_TOKEN + VK_GROUP_ID gerekir.'**
+  String get shareNoServiceConfigured;
+
+  /// No description provided for @vkPostDone.
+  ///
+  /// In tr, this message translates to:
+  /// **'VK’da paylaşıldı.'**
+  String get vkPostDone;
+
+  /// No description provided for @vkPostFailed.
+  ///
+  /// In tr, this message translates to:
+  /// **'VK paylaşımı başarısız.'**
+  String get vkPostFailed;
 
   /// No description provided for @analysisTitle.
   ///
@@ -493,6 +595,132 @@ abstract class AppLocalizations {
   /// In tr, this message translates to:
   /// **'Henüz içerik fırsatı çıkarılamadı.'**
   String get analysisNoOpportunities;
+
+  /// No description provided for @analysisMyPublications.
+  ///
+  /// In tr, this message translates to:
+  /// **'Bu cihazdan kanala paylaştıkların'**
+  String get analysisMyPublications;
+
+  /// No description provided for @analysisMyPublicationsBody.
+  ///
+  /// In tr, this message translates to:
+  /// **'Telegram veya VK’ya arşivden paylaştığında burada listelenir: Telegram’da mesaj no ve izlenme; VK’da duvar gönderi no. Detayda metrikleri görebilir, VK’da yenile ile güncelleyebilirsin. Kanal analizi aşağıda devam eder.'**
+  String get analysisMyPublicationsBody;
+
+  /// No description provided for @analysisNoMyPublications.
+  ///
+  /// In tr, this message translates to:
+  /// **'Bu uygulamadan henüz kanal paylaşımı yok. Meslek / Telegram veya Arşiv’deki paylaş akışını dene.'**
+  String get analysisNoMyPublications;
+
+  /// No description provided for @analysisViewCount.
+  ///
+  /// In tr, this message translates to:
+  /// **'{n} izlenme'**
+  String analysisViewCount(int n);
+
+  /// No description provided for @analysisViewUnknown.
+  ///
+  /// In tr, this message translates to:
+  /// **'izlenme: —'**
+  String get analysisViewUnknown;
+
+  /// No description provided for @analysisPostKindImage.
+  ///
+  /// In tr, this message translates to:
+  /// **'Görsel'**
+  String get analysisPostKindImage;
+
+  /// No description provided for @analysisPostKindVideo.
+  ///
+  /// In tr, this message translates to:
+  /// **'Video'**
+  String get analysisPostKindVideo;
+
+  /// No description provided for @analysisPlatformTelegram.
+  ///
+  /// In tr, this message translates to:
+  /// **'Telegram'**
+  String get analysisPlatformTelegram;
+
+  /// No description provided for @analysisPlatformVk.
+  ///
+  /// In tr, this message translates to:
+  /// **'ВКонтакте'**
+  String get analysisPlatformVk;
+
+  /// No description provided for @publicationDetailTitle.
+  ///
+  /// In tr, this message translates to:
+  /// **'Paylaşım detayı'**
+  String get publicationDetailTitle;
+
+  /// No description provided for @publicationDetailRefreshVk.
+  ///
+  /// In tr, this message translates to:
+  /// **'VK istatistiklerini yenile'**
+  String get publicationDetailRefreshVk;
+
+  /// No description provided for @publicationDetailKind.
+  ///
+  /// In tr, this message translates to:
+  /// **'Tür'**
+  String get publicationDetailKind;
+
+  /// No description provided for @publicationDetailMessageId.
+  ///
+  /// In tr, this message translates to:
+  /// **'Mesaj'**
+  String get publicationDetailMessageId;
+
+  /// No description provided for @publicationDetailChat.
+  ///
+  /// In tr, this message translates to:
+  /// **'Sohbet'**
+  String get publicationDetailChat;
+
+  /// No description provided for @publicationDetailViews.
+  ///
+  /// In tr, this message translates to:
+  /// **'İzlenme'**
+  String get publicationDetailViews;
+
+  /// No description provided for @publicationDetailVkGroup.
+  ///
+  /// In tr, this message translates to:
+  /// **'Grup'**
+  String get publicationDetailVkGroup;
+
+  /// No description provided for @publicationDetailVkPost.
+  ///
+  /// In tr, this message translates to:
+  /// **'Gönderi'**
+  String get publicationDetailVkPost;
+
+  /// No description provided for @publicationDetailVkHint.
+  ///
+  /// In tr, this message translates to:
+  /// **'Yenile ile çekilebilir'**
+  String get publicationDetailVkHint;
+
+  /// No description provided for @publicationDetailLikes.
+  ///
+  /// In tr, this message translates to:
+  /// **'Beğeni'**
+  String get publicationDetailLikes;
+
+  /// No description provided for @publicationDetailReposts.
+  ///
+  /// In tr, this message translates to:
+  /// **'Paylaşım'**
+  String get publicationDetailReposts;
+
+  /// No description provided for @publicationDetailCaption.
+  ///
+  /// In tr, this message translates to:
+  /// **'Açıklama'**
+  String get publicationDetailCaption;
 
   /// No description provided for @professionStep1Title.
   ///

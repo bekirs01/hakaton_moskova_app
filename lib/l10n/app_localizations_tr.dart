@@ -139,7 +139,23 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get archiveSubtitle =>
-      'Ürettiğin görseller bu cihazda saklanır; tarih ve kaynak aşağıda.';
+      'Yerel üretimler bu cihazda; aynı hesabın Supabase’deki görseller ve videolar aşağıda birleşir. Filtreyle cihaz / bulut ayrılabilir.';
+
+  @override
+  String get archiveSourceCloud => 'Supabase';
+
+  @override
+  String get archiveSupabaseLoadError =>
+      'Hesabındaki sunucu medyaları yüklenemedi. Yerel arşiv gösteriliyor.';
+
+  @override
+  String get archiveFilterAll => 'Tümü';
+
+  @override
+  String get archiveFilterLocal => 'Bu cihaz';
+
+  @override
+  String get archiveFilterCloud => 'Supabase';
 
   @override
   String get archiveEmpty =>
@@ -160,6 +176,23 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
+  String get archiveListLoadError =>
+      'Liste açılırken beklenmeyen bir gecikme oldu. Aşağı çekerek yenile.';
+
+  @override
+  String get archiveEntryDeleteTitle => 'Silinsin mi?';
+
+  @override
+  String get archiveEntryDeleteMessage =>
+      'Bu kayıt kalıcı olarak silinir. Supabase satırı (ve mümkünse dosya) kaldırılır; yerel dosya da silinir.';
+
+  @override
+  String get archiveEntryDelete => 'Sil';
+
+  @override
+  String get archiveEntryDeleteCancel => 'Vazgeç';
+
+  @override
   String get publishTitle => 'Yayın';
 
   @override
@@ -174,6 +207,29 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get publicationDone => 'Tamam';
+
+  @override
+  String get shareTargetTitle => 'Nereye paylaşılsın?';
+
+  @override
+  String get shareTargetSubtitle =>
+      'Hedefi seç; ağ isteği sadece bu paylaşım için gider.';
+
+  @override
+  String get shareTargetTelegram => 'Telegram (kanal)';
+
+  @override
+  String get shareTargetVk => 'ВКонтакте (grup duvarı)';
+
+  @override
+  String get shareNoServiceConfigured =>
+      'Paylaşım için .env içinde TELEGRAM_PUBLISH_* veya VK_ACCESS_TOKEN + VK_GROUP_ID gerekir.';
+
+  @override
+  String get vkPostDone => 'VK’da paylaşıldı.';
+
+  @override
+  String get vkPostFailed => 'VK paylaşımı başarısız.';
 
   @override
   String get analysisTitle => 'Telegram analizi';
@@ -224,6 +280,73 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get analysisNoOpportunities => 'Henüz içerik fırsatı çıkarılamadı.';
+
+  @override
+  String get analysisMyPublications => 'Bu cihazdan kanala paylaştıkların';
+
+  @override
+  String get analysisMyPublicationsBody =>
+      'Telegram veya VK’ya arşivden paylaştığında burada listelenir: Telegram’da mesaj no ve izlenme; VK’da duvar gönderi no. Detayda metrikleri görebilir, VK’da yenile ile güncelleyebilirsin. Kanal analizi aşağıda devam eder.';
+
+  @override
+  String get analysisNoMyPublications =>
+      'Bu uygulamadan henüz kanal paylaşımı yok. Meslek / Telegram veya Arşiv’deki paylaş akışını dene.';
+
+  @override
+  String analysisViewCount(int n) {
+    return '$n izlenme';
+  }
+
+  @override
+  String get analysisViewUnknown => 'izlenme: —';
+
+  @override
+  String get analysisPostKindImage => 'Görsel';
+
+  @override
+  String get analysisPostKindVideo => 'Video';
+
+  @override
+  String get analysisPlatformTelegram => 'Telegram';
+
+  @override
+  String get analysisPlatformVk => 'ВКонтакте';
+
+  @override
+  String get publicationDetailTitle => 'Paylaşım detayı';
+
+  @override
+  String get publicationDetailRefreshVk => 'VK istatistiklerini yenile';
+
+  @override
+  String get publicationDetailKind => 'Tür';
+
+  @override
+  String get publicationDetailMessageId => 'Mesaj';
+
+  @override
+  String get publicationDetailChat => 'Sohbet';
+
+  @override
+  String get publicationDetailViews => 'İzlenme';
+
+  @override
+  String get publicationDetailVkGroup => 'Grup';
+
+  @override
+  String get publicationDetailVkPost => 'Gönderi';
+
+  @override
+  String get publicationDetailVkHint => 'Yenile ile çekilebilir';
+
+  @override
+  String get publicationDetailLikes => 'Beğeni';
+
+  @override
+  String get publicationDetailReposts => 'Paylaşım';
+
+  @override
+  String get publicationDetailCaption => 'Açıklama';
 
   @override
   String get professionStep1Title => 'Meslek veya konu';

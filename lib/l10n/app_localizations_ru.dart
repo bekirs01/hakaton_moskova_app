@@ -138,7 +138,23 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get archiveSubtitle =>
-      'Созданные изображения хранятся на устройстве; ниже дата и источник.';
+      'Локальные файлы; картинки и видео из Supabase того же аккаунта в общем списке. Фильтр: устройство / Supabase.';
+
+  @override
+  String get archiveSourceCloud => 'Supabase';
+
+  @override
+  String get archiveSupabaseLoadError =>
+      'Не удалось загрузить список с сервера. Показан только локальный архив.';
+
+  @override
+  String get archiveFilterAll => 'Все';
+
+  @override
+  String get archiveFilterLocal => 'Устройство';
+
+  @override
+  String get archiveFilterCloud => 'Supabase';
 
   @override
   String get archiveEmpty =>
@@ -159,6 +175,23 @@ class AppLocalizationsRu extends AppLocalizations {
   }
 
   @override
+  String get archiveListLoadError =>
+      'Список долго не открывался. Потяните вниз, чтобы обновить.';
+
+  @override
+  String get archiveEntryDeleteTitle => 'Удалить?';
+
+  @override
+  String get archiveEntryDeleteMessage =>
+      'Запись удалится безвозвратно. Строка в Supabase (и файл, если получится) и локальный файл.';
+
+  @override
+  String get archiveEntryDelete => 'Удалить';
+
+  @override
+  String get archiveEntryDeleteCancel => 'Отмена';
+
+  @override
   String get publishTitle => 'Публикация';
 
   @override
@@ -173,6 +206,29 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get publicationDone => 'Готово';
+
+  @override
+  String get shareTargetTitle => 'Куда опубликовать?';
+
+  @override
+  String get shareTargetSubtitle =>
+      'Выберите сервис; сеть уйдёт только на эту публикацию.';
+
+  @override
+  String get shareTargetTelegram => 'Telegram (канал)';
+
+  @override
+  String get shareTargetVk => 'ВКонтакте (стена группы)';
+
+  @override
+  String get shareNoServiceConfigured =>
+      'Для публикации в .env нужны TELEGRAM_PUBLISH_* или VK_ACCESS_TOKEN + VK_GROUP_ID.';
+
+  @override
+  String get vkPostDone => 'Опубликовано в VK.';
+
+  @override
+  String get vkPostFailed => 'Публикация в VK не удалась.';
 
   @override
   String get analysisTitle => 'Анализ Telegram';
@@ -224,6 +280,73 @@ class AppLocalizationsRu extends AppLocalizations {
   @override
   String get analysisNoOpportunities =>
       'Пока не удалось выделить контентные возможности.';
+
+  @override
+  String get analysisMyPublications => 'Отправлено в канал с этого устройства';
+
+  @override
+  String get analysisMyPublicationsBody =>
+      'После публикации в Telegram или VK из «Архива» здесь появляется запись. В деталях — просмотры; для VK обновите кнопкой. Ниже — анализ канала.';
+
+  @override
+  String get analysisNoMyPublications =>
+      'Пока нет публикаций в канал из приложения. Попробуй «Поделиться» в Профессии / Telegram или в «Архиве».';
+
+  @override
+  String analysisViewCount(int n) {
+    return '$n просм.';
+  }
+
+  @override
+  String get analysisViewUnknown => 'просм.: —';
+
+  @override
+  String get analysisPostKindImage => 'Картинка';
+
+  @override
+  String get analysisPostKindVideo => 'Видео';
+
+  @override
+  String get analysisPlatformTelegram => 'Telegram';
+
+  @override
+  String get analysisPlatformVk => 'ВКонтакте';
+
+  @override
+  String get publicationDetailTitle => 'Детали публикации';
+
+  @override
+  String get publicationDetailRefreshVk => 'Обновить статистику VK';
+
+  @override
+  String get publicationDetailKind => 'Тип';
+
+  @override
+  String get publicationDetailMessageId => 'Сообщение';
+
+  @override
+  String get publicationDetailChat => 'Чат';
+
+  @override
+  String get publicationDetailViews => 'Просмотры';
+
+  @override
+  String get publicationDetailVkGroup => 'Группа';
+
+  @override
+  String get publicationDetailVkPost => 'Пост';
+
+  @override
+  String get publicationDetailVkHint => 'Нажмите «Обновить»';
+
+  @override
+  String get publicationDetailLikes => 'Лайки';
+
+  @override
+  String get publicationDetailReposts => 'Репосты';
+
+  @override
+  String get publicationDetailCaption => 'Текст';
 
   @override
   String get professionStep1Title => 'Профессия или тема';

@@ -14,9 +14,21 @@ abstract class PublicationPort {
 }
 
 class PublicationResult {
-  const PublicationResult({required this.comingSoon, this.message});
+  const PublicationResult({
+    required this.comingSoon,
+    this.message,
+    this.telegramMessageId,
+    this.telegramChatId,
+    this.telegramViews,
+  });
+
   final bool comingSoon;
   final String? message;
+
+  /// Telegram [sendPhoto] / [sendVideo] yanıtı (kanal postu) — analitik için.
+  final int? telegramMessageId;
+  final String? telegramChatId;
+  final int? telegramViews;
 }
 
 class StubPublicationPort implements PublicationPort {

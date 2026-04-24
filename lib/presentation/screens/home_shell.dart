@@ -49,47 +49,64 @@ class _HomeShellState extends State<HomeShell> {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               Padding(
-                padding: const EdgeInsets.fromLTRB(20, 12, 20, 8),
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    _HeaderActionButton(
-                      tooltip: l10n.backToLogin,
-                      onPressed: _backToLogin,
-                      icon: Icons.arrow_back_rounded,
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Column(
+                padding: const EdgeInsets.fromLTRB(20, 8, 20, 6),
+                child: _index == 3
+                    ? Row(
+                        children: [
+                          _HeaderActionButton(
+                            tooltip: l10n.backToLogin,
+                            onPressed: _backToLogin,
+                            icon: Icons.arrow_back_rounded,
+                          ),
+                          const Spacer(),
+                          _HeaderActionButton(
+                            tooltip: l10n.languageTitle,
+                            onPressed: () => showMemeopsLanguageSheet(context),
+                            icon: Icons.language_rounded,
+                          ),
+                        ],
+                      )
+                    : Row(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text(
-                            l10n.greeting(_displayName(l10n)),
-                            style: MemeopsTextStyles.displayTitle(
-                              context,
-                            ).copyWith(fontSize: 24),
+                          _HeaderActionButton(
+                            tooltip: l10n.backToLogin,
+                            onPressed: _backToLogin,
+                            icon: Icons.arrow_back_rounded,
                           ),
-                          const SizedBox(height: 6),
-                          ConstrainedBox(
-                            constraints: const BoxConstraints(maxWidth: 320),
-                            child: Text(
-                              l10n.homeSubtitle,
-                              style: MemeopsTextStyles.caption(context).copyWith(
-                                height: 1.45,
-                              ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  l10n.greeting(_displayName(l10n)),
+                                  style: MemeopsTextStyles.displayTitle(
+                                    context,
+                                  ).copyWith(fontSize: 24),
+                                ),
+                                const SizedBox(height: 6),
+                                ConstrainedBox(
+                                  constraints: const BoxConstraints(maxWidth: 320),
+                                  child: Text(
+                                    l10n.homeSubtitle,
+                                    style: MemeopsTextStyles.caption(context)
+                                        .copyWith(
+                                      height: 1.45,
+                                    ),
+                                  ),
+                                ),
+                              ],
                             ),
+                          ),
+                          const SizedBox(width: 12),
+                          _HeaderActionButton(
+                            tooltip: l10n.languageTitle,
+                            onPressed: () => showMemeopsLanguageSheet(context),
+                            icon: Icons.language_rounded,
                           ),
                         ],
                       ),
-                    ),
-                    const SizedBox(width: 12),
-                    _HeaderActionButton(
-                      tooltip: l10n.languageTitle,
-                      onPressed: () => showMemeopsLanguageSheet(context),
-                      icon: Icons.language_rounded,
-                    ),
-                  ],
-                ),
               ),
               Expanded(
                 child: IndexedStack(
@@ -112,7 +129,7 @@ class _HomeShellState extends State<HomeShell> {
           top: false,
           left: false,
           right: false,
-          minimum: const EdgeInsets.fromLTRB(20, 6, 20, 10),
+          minimum: const EdgeInsets.fromLTRB(16, 4, 16, 8),
           child: MemeopsFloatingTabBar(
             selectedIndex: _index,
             onSelected: (i) => setState(() => _index = i),

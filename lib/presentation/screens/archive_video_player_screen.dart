@@ -8,16 +8,21 @@ import 'package:hakaton_moskova_app/presentation/theme/memeops_theme.dart';
 import 'package:hakaton_moskova_app/presentation/utils/archive_share.dart';
 import 'package:video_player/video_player.dart';
 
-/// Yerel arşivden gelen .mp4 dosyasını tam ekran oynatır.
+/// Arşivden yerel .mp4 veya Supabase’deki public video URL’ini tam ekran oynatır.
 class ArchiveVideoPlayerScreen extends StatefulWidget {
   const ArchiveVideoPlayerScreen({
     super.key,
-    required this.file,
+    this.file,
+    this.networkUri,
     required this.title,
     this.caption,
-  });
+  }) : assert(
+          (file != null) ^ (networkUri != null),
+          'Yerel dosya veya ağ URL’sinden yalnızca biri verilmelidir',
+        );
 
-  final File file;
+  final File? file;
+  final Uri? networkUri;
   final String title;
   final String? caption;
 
@@ -39,7 +44,12 @@ class _ArchiveVideoPlayerScreenState extends State<ArchiveVideoPlayerScreen> {
 
   Future<void> _init() async {
     try {
-      final c = VideoPlayerController.file(widget.file);
+      final VideoPlayerController c;
+      if (widget.file != null) {
+        c = VideoPlayerController.file(widget.file!);
+      } else {
+        c = VideoPlayerController.networkUrl(widget.networkUri!);
+      }
       await c.initialize();
       if (!mounted) {
         await c.dispose();
@@ -64,11 +74,20 @@ class _ArchiveVideoPlayerScreenState extends State<ArchiveVideoPlayerScreen> {
   }
 
   Future<void> _share() async {
-    await shareArchiveFile(
+    if (widget.file != null) {
+      await shareArchiveFile(
+        context,
+        file: widget.file!,
+        sourceLabel: widget.title,
+        kind: MemeArchiveKind.video,
+        caption: widget.caption,
+      );
+      return;
+    }
+    await shareArchiveVideoFromNetworkUrl(
       context,
-      file: widget.file,
+      url: widget.networkUri!.toString(),
       sourceLabel: widget.title,
-      kind: MemeArchiveKind.video,
       caption: widget.caption,
     );
   }

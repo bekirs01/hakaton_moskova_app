@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:hakaton_moskova_app/core/locale/app_locale_controller.dart';
 import 'package:hakaton_moskova_app/data/api/memeops_api_client.dart';
 import 'package:hakaton_moskova_app/data/local/meme_local_archive_repository.dart';
+import 'package:hakaton_moskova_app/data/local/telegram_published_log.dart';
 import 'package:hakaton_moskova_app/data/models/channel_insights.dart';
 import 'package:hakaton_moskova_app/data/models/meme_brief_list_item.dart';
 import 'package:hakaton_moskova_app/data/repository/meme_briefs_repository.dart';
@@ -296,6 +297,31 @@ class _TelegramFlowScreenState extends State<TelegramFlowScreen> {
           ),
         ),
       );
+      unawaited(
+        TelegramPublishedLogRepository.instance
+            .recordIfPublished(
+              r,
+              caption: _selected?.displayLine,
+              isVideo: false,
+            )
+            .catchError((Object e, StackTrace s) {
+              debugPrint('recordIfPublished: $e\n$s');
+            }),
+      );
+      if (_fileUrl != null) {
+        final loc = lookupAppLocalizations(AppLocaleController.instance.locale);
+        unawaited(
+          MemeLocalArchiveRepository.instance
+              .addFromNetworkUrl(
+                imageUrl: _fileUrl!,
+                caption: _selected?.displayLine,
+                sourceLabel: loc.telegramSourceLabel,
+              )
+              .catchError((Object e, StackTrace st) {
+                debugPrint(loc.archiveDebugSkip(e.toString()));
+              }),
+        );
+      }
     });
   }
 

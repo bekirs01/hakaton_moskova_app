@@ -78,4 +78,24 @@ class AppEnv {
 
   static bool get isTelegramPublishConfigured =>
       telegramPublishBotToken.isNotEmpty && telegramPublishChannel.isNotEmpty;
+
+  /// VK: kullanıcı token’ı (grup duvarı; [wall, photos, video, groups] kapsamı). Repoya koyma.
+  static String get vkAccessToken {
+    const fromDefine = String.fromEnvironment('VK_ACCESS_TOKEN');
+    if (fromDefine.isNotEmpty) {
+      return fromDefine.trim();
+    }
+    return _envLine('VK_ACCESS_TOKEN');
+  }
+
+  /// Pozitif grup id (vk.com/club[ … ]), boş bırakılırsa sadece kendi duvarı (destek sınırlı).
+  static String get vkGroupId {
+    const fromDefine = String.fromEnvironment('VK_GROUP_ID');
+    if (fromDefine.isNotEmpty) {
+      return fromDefine.trim();
+    }
+    return _envLine('VK_GROUP_ID');
+  }
+
+  static bool get isVkPublishConfigured => vkAccessToken.isNotEmpty && vkGroupId.isNotEmpty;
 }

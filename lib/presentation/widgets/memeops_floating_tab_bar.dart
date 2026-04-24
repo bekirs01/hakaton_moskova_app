@@ -85,19 +85,19 @@ class MemeopsFloatingTabBar extends StatelessWidget {
                       builder: (context, constraints) {
                         final cellWidth = constraints.maxWidth / items.length;
                         return SizedBox(
-                          height: 88,
+                          height: 62,
                           child: Stack(
                             children: [
                               AnimatedPositioned(
                                 duration: _anim,
                                 curve: _curve,
-                                left: cellWidth * selectedIndex + 6,
-                                top: 6,
-                                width: cellWidth - 12,
-                                height: 76,
+                                left: cellWidth * selectedIndex + 4,
+                                top: 4,
+                                width: cellWidth - 8,
+                                height: 54,
                                 child: DecoratedBox(
                                   decoration: BoxDecoration(
-                                    borderRadius: BorderRadius.circular(28),
+                                    borderRadius: BorderRadius.circular(20),
                                     gradient: LinearGradient(
                                       begin: Alignment.topLeft,
                                       end: Alignment.bottomRight,
@@ -172,11 +172,11 @@ class _TabCell extends StatelessWidget {
       color: Colors.transparent,
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(28),
+        borderRadius: BorderRadius.circular(20),
         splashColor: MemeopsColors.iosBlue.withValues(alpha: 0.12),
         highlightColor: Colors.white.withValues(alpha: 0.05),
         child: Padding(
-          padding: const EdgeInsets.symmetric(vertical: 10),
+          padding: const EdgeInsets.symmetric(vertical: 2),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             mainAxisSize: MainAxisSize.max,
@@ -188,14 +188,14 @@ class _TabCell extends StatelessWidget {
                 child: AnimatedContainer(
                   duration: animDuration,
                   curve: animCurve,
-                  width: 36,
-                  height: 36,
+                  width: 30,
+                  height: 30,
                   alignment: Alignment.center,
                   decoration: BoxDecoration(
                     color: selected
                         ? Colors.white.withValues(alpha: 0.14)
                         : Colors.transparent,
-                    borderRadius: BorderRadius.circular(18),
+                    borderRadius: BorderRadius.circular(15),
                     border: selected
                         ? Border.all(
                             color: Colors.white.withValues(alpha: 0.14),
@@ -204,17 +204,17 @@ class _TabCell extends StatelessWidget {
                   ),
                   child: Icon(
                     selected ? item.selectedIcon : item.icon,
-                    size: selected ? 22 : 21,
+                    size: selected ? 18 : 17,
                     color: selected ? Colors.white : muted,
                   ),
                 ),
               ),
-              const SizedBox(height: 6),
+              const SizedBox(height: 2),
               AnimatedDefaultTextStyle(
                 duration: animDuration,
                 curve: animCurve,
                 style: TextStyle(
-                  fontSize: selected ? 11.5 : 10.5,
+                  fontSize: selected ? 9.5 : 9.0,
                   height: 1.0,
                   letterSpacing: -0.1,
                   fontWeight: selected ? FontWeight.w600 : FontWeight.w500,

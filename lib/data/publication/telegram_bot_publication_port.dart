@@ -58,7 +58,7 @@ class TelegramBotPublicationPort implements PublicationPort {
       } catch (_) {}
       final ok = decoded?['ok'] == true;
       if (ok) {
-        return const PublicationResult(comingSoon: false);
+        return _parseOk(decoded ?? <String, dynamic>{});
       }
       final desc =
           decoded?['description'] as String? ?? 'HTTP ${res.statusCode}: ${res.body}';
@@ -94,7 +94,7 @@ class TelegramBotPublicationPort implements PublicationPort {
       } catch (_) {}
       final ok = decoded?['ok'] == true;
       if (ok) {
-        return const PublicationResult(comingSoon: false);
+        return _parseOk(decoded ?? <String, dynamic>{});
       }
       final desc =
           decoded?['description'] as String? ?? 'HTTP ${res.statusCode}: ${res.body}';
@@ -102,5 +102,43 @@ class TelegramBotPublicationPort implements PublicationPort {
     } catch (e) {
       return PublicationResult(comingSoon: false, message: e.toString());
     }
+  }
+
+  /// sendPhoto / sendVideo cevabından mesaj id ve (varsa) izlenmeyi okur.
+  static PublicationResult _parseOk(Map<String, dynamic> decoded) {
+    final r = decoded['result'];
+    if (r is! Map) {
+      return const PublicationResult(comingSoon: false);
+    }
+    final rm = Map<String, dynamic>.from(r);
+    int? messageId;
+    final mid = rm['message_id'];
+    if (mid is int) {
+      messageId = mid;
+    } else if (mid is num) {
+      messageId = mid.toInt();
+    }
+    String? chatId;
+    final chat = rm['chat'];
+    if (chat is Map) {
+      final m = Map<String, dynamic>.from(chat);
+      final id = m['id'];
+      if (id != null) {
+        chatId = id.toString();
+      }
+    }
+    int? views;
+    final v = rm['views'];
+    if (v is int) {
+      views = v;
+    } else if (v is num) {
+      views = v.toInt();
+    }
+    return PublicationResult(
+      comingSoon: false,
+      telegramMessageId: messageId,
+      telegramChatId: chatId,
+      telegramViews: views,
+    );
   }
 }
