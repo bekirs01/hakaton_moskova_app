@@ -46,6 +46,8 @@
   "archiveSubtitle": "Ürettiğin görseller bu cihazda saklanır; tarih ve kaynak aşağıda.",
   "archiveEmpty": "Henüz kayıtlı görsel yok.\nMeslek veya Telegram sekmesinden meme üret.",
   "archiveFileMissing": "Dosya bulunamadı (silinmiş olabilir).",
+  "archiveShare": "Paylaş",
+  "archiveShareFailed": "Paylaşma menüsü açılamadı.",
   "archiveDownloadFailed": "Görsel indirilemedi (HTTP {code}).",
   "@archiveDownloadFailed": {
     "placeholders": {

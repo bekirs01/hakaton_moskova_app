@@ -146,6 +146,12 @@ class AppLocalizationsTr extends AppLocalizations {
   String get archiveFileMissing => 'Dosya bulunamadı (silinmiş olabilir).';
 
   @override
+  String get archiveShare => 'Paylaş';
+
+  @override
+  String get archiveShareFailed => 'Paylaşma menüsü açılamadı.';
+
+  @override
   String archiveDownloadFailed(int code) {
     return 'Görsel indirilemedi (HTTP $code).';
   }

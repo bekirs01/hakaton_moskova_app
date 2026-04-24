@@ -145,6 +145,12 @@ class AppLocalizationsRu extends AppLocalizations {
   String get archiveFileMissing => 'Файл не найден (возможно удалён).';
 
   @override
+  String get archiveShare => 'Поделиться';
+
+  @override
+  String get archiveShareFailed => 'Не удалось открыть меню шаринга.';
+
+  @override
   String archiveDownloadFailed(int code) {
     return 'Не удалось скачать изображение (HTTP $code).';
   }

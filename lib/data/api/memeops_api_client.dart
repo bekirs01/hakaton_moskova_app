@@ -43,13 +43,32 @@ class MemeopsApiClient {
   /// Görsel: OpenAI (uzun okuma) + Supabase; Python tarafı ~15 dk + pay.
   static const _imageJobTimeout = Duration(seconds: 1200);
   static const _briefBatchTimeout = Duration(seconds: 180);
+  static const _videoTokenMinValidity = Duration(minutes: 5);
 
   Uri _u(String path) {
     final base = AppEnv.memeopsApiBase.replaceAll(RegExp(r'/$'), '');
     return Uri.parse('$base$path');
   }
 
-  Future<String?> _token() async => _supabase.auth.currentSession?.accessToken;
+  Future<String?> _token({Duration? minValidity}) async {
+    final session = _supabase.auth.currentSession;
+    if (session == null) {
+      return null;
+    }
+    final min = minValidity ?? Duration.zero;
+    final expiresAt = session.expiresAt;
+    if (expiresAt != null) {
+      final expiry = DateTime.fromMillisecondsSinceEpoch(
+        expiresAt * 1000,
+        isUtc: true,
+      );
+      if (expiry.difference(DateTime.now().toUtc()) <= min) {
+        final refreshed = await _supabase.auth.refreshSession();
+        return refreshed.session?.accessToken ?? _supabase.auth.currentSession?.accessToken;
+      }
+    }
+    return session.accessToken;
+  }
 
   Map<String, String> _headers(String? token) {
     return {
@@ -126,6 +145,13 @@ class MemeopsApiClient {
     return jsonDecode(body) as Map<String, dynamic>;
   }
 
+  bool _isExpiredJwtResponse(http.Response r) {
+    final body = r.body.toLowerCase();
+    return (r.statusCode == 401 || r.statusCode == 403) &&
+        body.contains('exp') &&
+        body.contains('claim timestamp check failed');
+  }
+
   /// POST `/api/v1/professions` — same as web dashboard (workspace ensured server-side).
   Future<String> createProfession({
     required String title,
@@ -190,13 +216,22 @@ class MemeopsApiClient {
   /// `seconds` yalnızca "4", "8" veya "12" olabilir (Sora kısıtı).
   Future<({String? fileUrl, String? assetVersionId, String? jobId, String? seconds})>
       generateVideo(String memeBriefId, {String seconds = '4'}) async {
-    final t = await _token();
-    final res = await _post(
+    var t = await _token(minValidity: _videoTokenMinValidity);
+    var res = await _post(
       '/api/v1/ai/jobs/video',
       token: t,
       body: jsonEncode({'memeBriefId': memeBriefId, 'seconds': seconds}),
       timeout: _imageJobTimeout,
     );
+    if (_isExpiredJwtResponse(res)) {
+      t = await _token(minValidity: _videoTokenMinValidity);
+      res = await _post(
+        '/api/v1/ai/jobs/video',
+        token: t,
+        body: jsonEncode({'memeBriefId': memeBriefId, 'seconds': seconds}),
+        timeout: _imageJobTimeout,
+      );
+    }
     final m = _jsonOrThrow(res, 'video');
     final data = m['data'] as Map<String, dynamic>? ?? m;
     return (

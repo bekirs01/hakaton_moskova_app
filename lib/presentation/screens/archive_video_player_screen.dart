@@ -1,8 +1,10 @@
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:hakaton_moskova_app/l10n/app_localizations.dart';
 import 'package:hakaton_moskova_app/presentation/theme/memeops_design_tokens.dart';
 import 'package:hakaton_moskova_app/presentation/theme/memeops_theme.dart';
+import 'package:hakaton_moskova_app/presentation/utils/archive_share.dart';
 import 'package:video_player/video_player.dart';
 
 /// Yerel arşivden gelen .mp4 dosyasını tam ekran oynatır.
@@ -60,8 +62,18 @@ class _ArchiveVideoPlayerScreenState extends State<ArchiveVideoPlayerScreen> {
     super.dispose();
   }
 
+  Future<void> _share() async {
+    await shareArchiveFile(
+      context,
+      file: widget.file,
+      sourceLabel: widget.title,
+      caption: widget.caption,
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     return Scaffold(
       backgroundColor: MemeopsColors.bgMid,
       appBar: AppBar(
@@ -72,6 +84,13 @@ class _ArchiveVideoPlayerScreenState extends State<ArchiveVideoPlayerScreen> {
           icon: const Icon(Icons.close_rounded),
           onPressed: () => Navigator.pop(context),
         ),
+        actions: [
+          IconButton(
+            tooltip: l10n.archiveShare,
+            onPressed: _share,
+            icon: const Icon(Icons.share_rounded),
+          ),
+        ],
       ),
       body: ListView(
         padding: const EdgeInsets.fromLTRB(16, 16, 16, 32),

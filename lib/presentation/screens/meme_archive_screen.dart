@@ -7,6 +7,7 @@ import 'package:hakaton_moskova_app/presentation/layout/home_tab_scroll_padding.
 import 'package:hakaton_moskova_app/presentation/screens/archive_video_player_screen.dart';
 import 'package:hakaton_moskova_app/presentation/theme/memeops_design_tokens.dart';
 import 'package:hakaton_moskova_app/presentation/theme/memeops_theme.dart';
+import 'package:hakaton_moskova_app/presentation/utils/archive_share.dart';
 import 'package:hakaton_moskova_app/presentation/widgets/memeops_glass_surface.dart';
 
 class MemeArchiveScreen extends StatefulWidget {
@@ -94,6 +95,18 @@ class _MemeArchiveScreenState extends State<MemeArchiveScreen> {
               icon: const Icon(Icons.close_rounded),
               onPressed: () => Navigator.pop(ctx),
             ),
+            actions: [
+              IconButton(
+                tooltip: l10n.archiveShare,
+                onPressed: () => shareArchiveFile(
+                  ctx,
+                  file: file,
+                  sourceLabel: e.sourceLabel,
+                  caption: e.caption,
+                ),
+                icon: const Icon(Icons.share_rounded),
+              ),
+            ],
           ),
           body: ListView(
             padding: const EdgeInsets.fromLTRB(16, 16, 16, 32),
@@ -121,6 +134,19 @@ class _MemeArchiveScreenState extends State<MemeArchiveScreen> {
           ),
         ),
       ),
+    );
+  }
+
+  Future<void> _share(MemeArchiveEntry e) async {
+    final file = await _repo.fileFor(e);
+    if (!mounted) {
+      return;
+    }
+    await shareArchiveFile(
+      context,
+      file: file,
+      sourceLabel: e.sourceLabel,
+      caption: e.caption,
     );
   }
 
@@ -329,13 +355,41 @@ class _MemeArchiveScreenState extends State<MemeArchiveScreen> {
                                                     ),
                                               ),
                                             ],
+                                            const SizedBox(height: 10),
+                                            TextButton.icon(
+                                              onPressed: () => _share(e),
+                                              style: TextButton.styleFrom(
+                                                foregroundColor:
+                                                    MemeopsColors.iosBlueBright,
+                                                padding:
+                                                    const EdgeInsets.symmetric(
+                                                      horizontal: 10,
+                                                      vertical: 8,
+                                                    ),
+                                                tapTargetSize:
+                                                    MaterialTapTargetSize
+                                                        .shrinkWrap,
+                                                minimumSize: Size.zero,
+                                              ),
+                                              icon: const Icon(
+                                                Icons.share_rounded,
+                                                size: 18,
+                                              ),
+                                              label: Text(l10n.archiveShare),
+                                            ),
                                           ],
                                         ),
                                       ),
-                                      Icon(
-                                        Icons.chevron_right_rounded,
-                                        color: Colors.white.withValues(
-                                          alpha: 0.35,
+                                      Padding(
+                                        padding: const EdgeInsets.only(
+                                          top: 4,
+                                          left: 8,
+                                        ),
+                                        child: Icon(
+                                          Icons.chevron_right_rounded,
+                                          color: Colors.white.withValues(
+                                            alpha: 0.35,
+                                          ),
                                         ),
                                       ),
                                     ],

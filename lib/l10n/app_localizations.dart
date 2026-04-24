@@ -344,6 +344,18 @@ abstract class AppLocalizations {
   /// **'Dosya bulunamadı (silinmiş olabilir).'**
   String get archiveFileMissing;
 
+  /// No description provided for @archiveShare.
+  ///
+  /// In tr, this message translates to:
+  /// **'Paylaş'**
+  String get archiveShare;
+
+  /// No description provided for @archiveShareFailed.
+  ///
+  /// In tr, this message translates to:
+  /// **'Paylaşma menüsü açılamadı.'**
+  String get archiveShareFailed;
+
   /// No description provided for @archiveDownloadFailed.
   ///
   /// In tr, this message translates to:
