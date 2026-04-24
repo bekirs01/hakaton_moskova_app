@@ -6,7 +6,10 @@ import 'package:hakaton_moskova_app/data/local/meme_local_archive_repository.dar
     show MemeArchiveEntry, MemeArchiveKind, MemeLocalArchiveRepository;
 import 'package:hakaton_moskova_app/data/local/telegram_published_log.dart';
 import 'package:hakaton_moskova_app/data/models/supabase_meme_asset_entry.dart';
-import 'package:hakaton_moskova_app/presentation/feed/meme_unified_feed.dart';
+import 'package:hakaton_moskova_app/presentation/feed/meme_unified_feed.dart'
+    show MemeFeedRow, buildMemeFeedLoad;
+import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:hakaton_moskova_app/data/repository/meme_supabase_assets_repository.dart';
 import 'package:hakaton_moskova_app/presentation/screens/archive_item_analysis_screen.dart';
 import 'package:hakaton_moskova_app/presentation/theme/memeops_design_tokens.dart';
 import 'package:hakaton_moskova_app/presentation/theme/memeops_theme.dart';
@@ -29,6 +32,8 @@ class TelegramAnalysisScreen extends StatefulWidget {
 
 class _TelegramAnalysisScreenState extends State<TelegramAnalysisScreen> {
   final _repo = MemeLocalArchiveRepository.instance;
+  late final MemeSupabaseAssetsRepository _cloudRepo =
+      MemeSupabaseAssetsRepository(Supabase.instance.client);
 
   List<MemeFeedRow> _rows = const [];
   /// Arka planda tazelenecek; tam ekran spinner yok, üstte ince progress.
@@ -65,32 +70,86 @@ class _TelegramAnalysisScreenState extends State<TelegramAnalysisScreen> {
     super.dispose();
   }
 
+  void _updateRowsAndCache(
+    List<MemeFeedRow> rows, {
+    required bool loadTimeout,
+    required bool supabaseFailed,
+  }) {
+    _rows = rows;
+    _loadTimeout = loadTimeout;
+    _supabaseFailed = supabaseFailed;
+    _analysisFeedRowCache = List<MemeFeedRow>.from(_rows);
+    _analysisFeedCacheTimeout = _loadTimeout;
+    _analysisFeedCacheSupabaseFailed = _supabaseFailed;
+  }
+
+  /// Arşiv ile aynı: önce yerel indeks anında, sonra bulut satırları birleşir.
   Future<void> _reload() async {
     if (!mounted) {
       return;
     }
     setState(() {
-      // Önbellek / liste doluysa tam ekran bekletme; sadece ilk boş açılışta üst bar.
       _feedRefreshing = _rows.isEmpty;
     });
-    MemeFeedLoad? load;
+
+    var localList = const <MemeArchiveEntry>[];
+    var loadTimedOut = false;
     try {
-      load = await loadMemeUnifiedFeed();
+      final r = await _repo.loadEntries();
+      localList = r.entries;
+      loadTimedOut = r.loadEntriesTimedOut;
     } catch (e, st) {
-      debugPrint('TelegramAnalysisScreen._reload: $e\n$st');
+      debugPrint('TelegramAnalysisScreen._reload local: $e\n$st');
     }
+
     if (!mounted) {
       return;
     }
     setState(() {
-      if (load != null) {
-        _rows = load.rows;
-        _loadTimeout = load.loadEntriesTimedOut;
-        _supabaseFailed = load.supabaseFailed;
-        _analysisFeedRowCache = List<MemeFeedRow>.from(_rows);
-        _analysisFeedCacheTimeout = _loadTimeout;
-        _analysisFeedCacheSupabaseFailed = _supabaseFailed;
-      }
+      _updateRowsAndCache(
+        buildMemeFeedLoad(
+          localList: localList,
+          cloudList: const [],
+          loadEntriesTimedOut: loadTimedOut,
+          supabaseFailed: false,
+        ).rows,
+        loadTimeout: loadTimedOut,
+        supabaseFailed: false,
+      );
+      _feedRefreshing = true;
+    });
+
+    var cloud = const <SupabaseMemeAssetEntry>[];
+    var supabaseFailed = false;
+    try {
+      cloud = await _cloudRepo.listAccountAssets();
+    } catch (e, st) {
+      debugPrint('TelegramAnalysisScreen._reload cloud: $e\n$st');
+      supabaseFailed = true;
+    }
+
+    try {
+      final r2 = await _repo.loadEntries();
+      localList = r2.entries;
+      loadTimedOut = r2.loadEntriesTimedOut;
+    } catch (e, st) {
+      debugPrint('TelegramAnalysisScreen._reload local refresh: $e\n$st');
+    }
+
+    if (!mounted) {
+      return;
+    }
+    setState(() {
+      _updateRowsAndCache(
+        buildMemeFeedLoad(
+          localList: localList,
+          cloudList: cloud,
+          loadEntriesTimedOut: loadTimedOut,
+          supabaseFailed: supabaseFailed,
+        ).rows,
+        loadTimeout: loadTimedOut,
+        supabaseFailed: supabaseFailed,
+      );
       _feedRefreshing = false;
     });
   }
@@ -219,7 +278,6 @@ class _TelegramAnalysisScreenState extends State<TelegramAnalysisScreen> {
                               final row = _rows[i];
                               return _FeedTile(
                                 row: row,
-                                repo: _repo,
                                 l10n: l10n,
                                 shortDate: row.isSupabase
                                     ? _shortDate(row.supabase!.createdAt)
@@ -255,14 +313,12 @@ class _TelegramAnalysisScreenState extends State<TelegramAnalysisScreen> {
 class _FeedTile extends StatelessWidget {
   const _FeedTile({
     required this.row,
-    required this.repo,
     required this.l10n,
     required this.shortDate,
     required this.onTap,
   });
 
   final MemeFeedRow row;
-  final MemeLocalArchiveRepository repo;
   final AppLocalizations l10n;
   final String shortDate;
   final VoidCallback onTap;
@@ -297,10 +353,7 @@ class _FeedTile extends StatelessWidget {
                   ),
                   child: row.isSupabase
                       ? _CloudThumb(s: row.supabase!)
-                      : _LocalThumb(
-                          e: row.local!,
-                          repo: repo,
-                        ),
+                      : _AnalysisLocalThumb(e: row.local!),
                 ),
               ),
               Padding(
@@ -341,18 +394,40 @@ class _FeedTile extends StatelessWidget {
   }
 }
 
-class _LocalThumb extends StatelessWidget {
-  const _LocalThumb({
-    required this.e,
-    required this.repo,
-  });
+class _AnalysisLocalThumb extends StatefulWidget {
+  const _AnalysisLocalThumb({required this.e});
 
   final MemeArchiveEntry e;
-  final MemeLocalArchiveRepository repo;
+
+  @override
+  State<_AnalysisLocalThumb> createState() => _AnalysisLocalThumbState();
+}
+
+class _AnalysisLocalThumbState extends State<_AnalysisLocalThumb> {
+  static final _repo = MemeLocalArchiveRepository.instance;
+  late Future<File> _fileFuture;
+
+  @override
+  void initState() {
+    super.initState();
+    _fileFuture = _repo.fileFor(widget.e);
+  }
+
+  @override
+  void didUpdateWidget(covariant _AnalysisLocalThumb oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.e.id != widget.e.id) {
+      _fileFuture = _repo.fileFor(widget.e);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
-    if (e.kind == MemeArchiveKind.video) {
+    final w = (MediaQuery.sizeOf(context).width - 24) / 2;
+    final dpr = MediaQuery.devicePixelRatioOf(context);
+    final cacheW = (w * dpr).round();
+
+    if (widget.e.kind == MemeArchiveKind.video) {
       return const ColoredBox(
         color: Color(0xFF1a2235),
         child: Center(
@@ -365,8 +440,11 @@ class _LocalThumb extends StatelessWidget {
       );
     }
     return FutureBuilder<File>(
-      future: repo.fileFor(e),
+      future: _fileFuture,
       builder: (context, snap) {
+        if (snap.connectionState != ConnectionState.done) {
+          return const ColoredBox(color: Color(0xFF1a2235));
+        }
         final f = snap.data;
         if (f == null || !f.existsSync()) {
           return const ColoredBox(
@@ -377,6 +455,8 @@ class _LocalThumb extends StatelessWidget {
         return Image.file(
           f,
           fit: BoxFit.cover,
+          cacheWidth: cacheW,
+          filterQuality: FilterQuality.medium,
         );
       },
     );
@@ -402,9 +482,14 @@ class _CloudThumb extends StatelessWidget {
         ),
       );
     }
+    final w = (MediaQuery.sizeOf(context).width - 24) / 2;
+    final cacheW = (w * MediaQuery.devicePixelRatioOf(context)).round();
     return Image.network(
       s.fileUrl,
       fit: BoxFit.cover,
+      cacheWidth: cacheW,
+      filterQuality: FilterQuality.medium,
+      gaplessPlayback: true,
       errorBuilder: (c, e, st) => const ColoredBox(
         color: Color(0xFF1a2235),
         child: Icon(Icons.image_not_supported_outlined, color: Colors.white38),
