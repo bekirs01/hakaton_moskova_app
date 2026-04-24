@@ -223,20 +223,7 @@ class _ProfessionFlowScreenState extends State<ProfessionFlowScreen> {
               debugPrint('recordIfPublished: $e\n$s');
             }),
       );
-      if (_fileUrl != null) {
-        final loc = lookupAppLocalizations(AppLocaleController.instance.locale);
-        unawaited(
-          MemeLocalArchiveRepository.instance
-              .addFromNetworkUrl(
-                imageUrl: _fileUrl!,
-                caption: _selected?.displayLine,
-                sourceLabel: loc.professionSourceLabel,
-              )
-              .catchError((Object e, StackTrace st) {
-                debugPrint(loc.archiveDebugSkip(e.toString()));
-              }),
-        );
-      }
+      // Görsel zaten _runImage sonrası arşive eklendi; yayımlamada tekrar ekleme (çift satır).
     });
   }
 

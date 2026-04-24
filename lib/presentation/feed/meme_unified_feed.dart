@@ -38,6 +38,16 @@ String _normAssetUrl(String url) {
   return q < 0 ? t : t.substring(0, q);
 }
 
+/// Aynı depo nesnesi: imza veya host farklı olsa da [Uri.path] eşleşir.
+String _dedupKeyForUrl(String url) {
+  final t = _normAssetUrl(url);
+  final u = Uri.tryParse(t);
+  if (u != null && u.path.isNotEmpty) {
+    return u.path;
+  }
+  return t;
+}
+
 /// Yerel + bulut girdilerini birleştirir; arşiv ekranı aşamalı yükleme için dışa açık.
 MemeFeedLoad buildMemeFeedLoad({
   required List<MemeArchiveEntry> localList,
@@ -45,26 +55,50 @@ MemeFeedLoad buildMemeFeedLoad({
   required bool loadEntriesTimedOut,
   required bool supabaseFailed,
 }) {
+  // Aynı sourceUrl (ör. arşiv iki kez yazıldıysa) yerelde tek satır.
+  final localDeduped = <MemeArchiveEntry>[];
+  final seenLocalSource = <String>{};
+  for (final e in localList) {
+    final su = e.sourceUrl?.trim();
+    if (su != null && su.isNotEmpty) {
+      final k = _dedupKeyForUrl(su);
+      if (k.isNotEmpty && seenLocalSource.contains(k)) {
+        continue;
+      }
+      if (k.isNotEmpty) {
+        seenLocalSource.add(k);
+      }
+    }
+    localDeduped.add(e);
+  }
+
   final localAssetKeys = <String>{
-    for (final e in localList)
+    for (final e in localDeduped)
       if (e.sourceUrl != null && e.sourceUrl!.trim().isNotEmpty)
-        _normAssetUrl(e.sourceUrl!),
+        _dedupKeyForUrl(e.sourceUrl!),
   };
   final cloudDeduped = cloudList
-      .where((v) => !localAssetKeys.contains(_normAssetUrl(v.fileUrl)))
+      .where((v) => !localAssetKeys.contains(_dedupKeyForUrl(v.fileUrl)))
       .toList();
 
   final merged = <MemeFeedRow>[];
-  for (final e in localList) {
+  for (final e in localDeduped) {
     merged.add(MemeFeedRow.local(e));
   }
   for (final v in cloudDeduped) {
     merged.add(MemeFeedRow.cloud(v));
   }
+  // En yeni üstte: tek tip UTC ile karşılaştır (yerel/Supabase farkı sırayı bozmasın).
   merged.sort((a, b) {
-    final ta = a.isSupabase ? a.supabase!.createdAt : a.local!.createdAt;
-    final tb = b.isSupabase ? b.supabase!.createdAt : b.local!.createdAt;
-    return tb.compareTo(ta);
+    final da = a.isSupabase ? a.supabase!.createdAt : a.local!.createdAt;
+    final db = b.isSupabase ? b.supabase!.createdAt : b.local!.createdAt;
+    final c = db.toUtc().compareTo(da.toUtc());
+    if (c != 0) {
+      return c;
+    }
+    final sa = a.isSupabase ? a.supabase!.id : a.local!.id;
+    final sb = b.isSupabase ? b.supabase!.id : b.local!.id;
+    return sa.compareTo(sb);
   });
 
   return MemeFeedLoad(

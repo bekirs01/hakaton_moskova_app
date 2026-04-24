@@ -201,7 +201,13 @@ class MemeLocalArchiveRepository {
   String _urlKey(String url) {
     final t = url.trim();
     final q = t.indexOf('?');
-    return q < 0 ? t : t.substring(0, q);
+    final noQuery = q < 0 ? t : t.substring(0, q);
+    final u = Uri.tryParse(noQuery);
+    if (u != null && u.path.isNotEmpty) {
+      // Aynı depo yolu, farklı ?token=… ile tekrar ekleme yapılmasın.
+      return u.path;
+    }
+    return noQuery;
   }
 
   Future<void> addFromNetworkUrl({
