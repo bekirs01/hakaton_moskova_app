@@ -1,41 +1,50 @@
+import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
-/// [meme_asset_versions.file_url] boş / bozuk / localhost ise [storage_path] ile
-/// **public** URL üretir (DNS "hostname not found" çoğu zaman bu yüzden olur).
-/// İmzalı URL gerekirse oynatıcıda ayrıca [ArchiveVideoPlayerScreen] yedekler.
-String resolveMemeAssetPlayableUrl(
+/// [meme_asset_versions] için oynatılabilir/kullanılabilir URL.
+/// [storage_path] varsa imzalı URL üretir (gizli bucket + bozuk `file_url` / localhost).
+Future<String> resolveMemeAssetPlayableUrl(
   SupabaseClient client,
   String? rawUrl,
   String? storagePath,
-) {
-  final raw = (rawUrl ?? '').trim();
+) async {
   final sp = (storagePath ?? '').trim();
-
-  bool looksBroken(String u) {
-    if (u.isEmpty) {
-      return true;
+  if (sp.isNotEmpty) {
+    try {
+      return await client.storage
+          .from('meme-assets')
+          .createSignedUrl(sp, 60 * 60);
+    } catch (e, st) {
+      if (kDebugMode) {
+        debugPrint('resolveMemeAssetPlayableUrl signed: $e\n$st');
+      }
+      return client.storage.from('meme-assets').getPublicUrl(sp);
     }
-    final p = Uri.tryParse(u);
-    if (p == null) {
-      return true;
-    }
-    if (!p.hasScheme) {
-      return true;
-    }
-    if (p.host.isEmpty) {
-      return true;
-    }
-    if (p.host == '127.0.0.1' || p.host == 'localhost' || p.host == '0.0.0.0') {
-      return true;
-    }
-    return false;
   }
-
-  if (!looksBroken(raw)) {
+  final raw = (rawUrl ?? '').trim();
+  if (!looksUnplayableLocalhost(raw)) {
     return raw;
   }
-  if (sp.isNotEmpty) {
-    return client.storage.from('meme-assets').getPublicUrl(sp);
-  }
   return raw;
+}
+
+bool looksUnplayableLocalhost(String u) {
+  if (u.isEmpty) {
+    return true;
+  }
+  final p = Uri.tryParse(u);
+  if (p == null || !p.hasScheme) {
+    return true;
+  }
+  if (p.host.isEmpty) {
+    return true;
+  }
+  final h = p.host.toLowerCase();
+  if (h == '127.0.0.1' ||
+      h == 'localhost' ||
+      h == '0.0.0.0' ||
+      h == '10.0.2.2') {
+    return true;
+  }
+  return false;
 }

@@ -87,8 +87,8 @@
       "name": {"type": "String"}
     }
   },
-  "archiveTelegramRecFooter": "Bu yalnızca Telegram gönderiminin hangi kanala gideceğini seçer; VK / Dzen satırlarından bağımsızdır.",
-  "archivePublishChannelsSubtitle": "Telegram, VK ve Dzen — en üstteki çipler yalnızca Telegram kanalı içindir.",
+  "archiveTelegramRecFooter": "Metin ve başlıktaki kelimelere göre (kozmetik, okul vb.) uyumlu kanal yıldızla işaretlenir. VK ve Dzen: yalnızca «paylaşıldı» (Telegram dışı gerçek istek yok).",
+  "archivePublishChannelsSubtitle": "Telegram, VK, Dzen. Alttaki kartlar sadece Telegram hedefi içindir.",
   "archivePublishSelectAtLeastOneChannel": "En az bir kanal seçin.",
   "archivePublishWhenHeading": "Gönderim zamanı",
   "archivePublishWhenNow": "Hemen gönder",
@@ -272,6 +272,11 @@
   "telegramStep1SubtitleLive": "Yerel Telethon API ile canlı özet; aynı bağlamdan fikirler.",
   "telegramStep1SubtitleStub": "Genel kanal linki · canlı çekim için ./run_telegram_api.sh",
   "telegramLinkLabel": "Telegram kanalı / genel link",
+  "telegramQuickPickTitle": "Hızlı seçim (kanal)",
+  "telegramQuickPickRecommended": "Önerilen",
+  "telegramQuickChannelMems": "memsit52",
+  "telegramQuickChannelNakida": "nakidaifuturememes",
+  "telegramQuickPickHintLearn": "Meslek metninde öğrenme / eğitim geçerse aşağıdaki “öğrenme / gelecek” kanalı öne çıkar.",
   "telegramAnalyzing": "Kanal analiz ediliyor…",
   "telegramAnalyseButton": "Bağlantıyı analiz et",
   "telegramStep2Title": "Özet ve fikir üretimi",

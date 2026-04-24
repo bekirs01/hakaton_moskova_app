@@ -232,11 +232,11 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get archiveTelegramRecFooter =>
-      'Bu yalnızca Telegram gönderiminin hangi kanala gideceğini seçer; VK / Dzen satırlarından bağımsızdır.';
+      'Metin ve başlıktaki kelimelere göre (kozmetik, okul vb.) uyumlu kanal yıldızla işaretlenir. VK ve Dzen: yalnızca «paylaşıldı» (Telegram dışı gerçek istek yok).';
 
   @override
   String get archivePublishChannelsSubtitle =>
-      'Telegram, VK ve Dzen — en üstteki çipler yalnızca Telegram kanalı içindir.';
+      'Telegram, VK, Dzen. Alttaki kartlar sadece Telegram hedefi içindir.';
 
   @override
   String get archivePublishSelectAtLeastOneChannel => 'En az bir kanal seçin.';
@@ -701,6 +701,22 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get telegramLinkLabel => 'Telegram kanalı / genel link';
+
+  @override
+  String get telegramQuickPickTitle => 'Hızlı seçim (kanal)';
+
+  @override
+  String get telegramQuickPickRecommended => 'Önerilen';
+
+  @override
+  String get telegramQuickChannelMems => 'memsit52';
+
+  @override
+  String get telegramQuickChannelNakida => 'nakidaifuturememes';
+
+  @override
+  String get telegramQuickPickHintLearn =>
+      'Meslek metninde öğrenme / eğitim geçerse aşağıdaki “öğrenme / gelecek” kanalı öne çıkar.';
 
   @override
   String get telegramAnalyzing => 'Kanal analiz ediliyor…';

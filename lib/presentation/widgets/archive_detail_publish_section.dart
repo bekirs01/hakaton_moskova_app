@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:hakaton_moskova_app/core/config/app_env.dart';
+import 'package:hakaton_moskova_app/core/config/telegram_publish_channel.dart';
 import 'package:hakaton_moskova_app/data/publication/telegram_channel_router.dart';
 import 'package:hakaton_moskova_app/data/local/archive_publish_scheduler.dart';
 import 'package:hakaton_moskova_app/data/local/meme_local_archive_repository.dart';
@@ -70,12 +71,29 @@ class ArchiveDetailPublishSectionState extends State<ArchiveDetailPublishSection
     return d[i].chatId;
   }
 
+  /// «Telegram» ile aynı metinse alt başlık göstermeyiz (yineleme).
+  String? _telegramRowSubtitle(AppLocalizations l10n) {
+    final d = AppEnv.telegramPublishDestinations;
+    if (d.isEmpty) {
+      return null;
+    }
+    final raw = d[_telegramTargetIndex.clamp(0, d.length - 1)].uiName.trim();
+    if (raw.isEmpty) {
+      return null;
+    }
+    final main = l10n.shareTargetTelegram.trim();
+    if (raw.toLowerCase() == main.toLowerCase()) {
+      return null;
+    }
+    return raw;
+  }
+
   @override
   void initState() {
     super.initState();
     _caption = TextEditingController(text: widget.initialCaption ?? '');
     _caption.addListener(_onCaptionChanged);
-    _postVk = AppEnv.isVkPublishConfigured;
+    _postVk = false;
     final tgDest = AppEnv.telegramPublishDestinations;
     if (tgDest.length > 1) {
       _telegramTargetIndex = TelegramChannelRouter.recommendIndex(
@@ -448,77 +466,6 @@ class ArchiveDetailPublishSectionState extends State<ArchiveDetailPublishSection
           ),
         ),
         const SizedBox(height: 10),
-        if (tg && tgDest.length > 1) ...[
-          _MemeopsInsetCard(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                Text(
-                  l10n.archiveWeRecommendTitle,
-                  style: MemeopsTextStyles.caption(context).copyWith(
-                    color: Colors.white.withValues(alpha: 0.8),
-                    fontWeight: FontWeight.w700,
-                    fontSize: 13,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                Wrap(
-                  spacing: 6,
-                  runSpacing: 6,
-                  children: List.generate(tgDest.length, (i) {
-                    final rec = _routerSuggestedIndex() == i;
-                    return FilterChip(
-                      showCheckmark: false,
-                      selected: _telegramTargetIndex == i,
-                      label: Text(
-                        tgDest[i].uiName,
-                        style: TextStyle(
-                          fontSize: 12.5,
-                          fontWeight: FontWeight.w600,
-                          color: _telegramTargetIndex == i
-                              ? Colors.white
-                              : Colors.white.withValues(alpha: 0.88),
-                        ),
-                      ),
-                      avatar: rec
-                          ? Icon(
-                              Icons.auto_awesome,
-                              size: 16,
-                              color: MemeopsColors.iosBlueBright
-                                  .withValues(alpha: 0.95),
-                            )
-                          : null,
-                      selectedColor: MemeopsColors.iosBlue.withValues(alpha: 0.45),
-                      backgroundColor: Colors.white.withValues(alpha: 0.06),
-                      side: BorderSide(
-                        color: _telegramTargetIndex == i
-                            ? MemeopsColors.iosBlueBright
-                                .withValues(alpha: 0.6)
-                            : Colors.white.withValues(alpha: 0.12),
-                      ),
-                      onSelected: _busy
-                          ? null
-                          : (_) {
-                              setState(() => _telegramTargetIndex = i);
-                            },
-                    );
-                  }),
-                ),
-                const SizedBox(height: 6),
-                Text(
-                  l10n.archiveTelegramRecFooter,
-                  style: MemeopsTextStyles.caption(context).copyWith(
-                    height: 1.3,
-                    color: Colors.white.withValues(alpha: 0.4),
-                    fontSize: 11,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 10),
-        ],
         if (!tg && !AppEnv.isVkPublishConfigured)
           Padding(
             padding: const EdgeInsets.only(bottom: 8),
@@ -542,11 +489,7 @@ class ArchiveDetailPublishSectionState extends State<ArchiveDetailPublishSection
                   icon: Icons.send_rounded,
                   iconColor: const Color(0xFF2AABEE),
                   label: l10n.shareTargetTelegram,
-                  subtitle: tgDest.isEmpty
-                      ? null
-                      : tgDest[_telegramTargetIndex
-                              .clamp(0, tgDest.length - 1)]
-                          .uiName,
+                  subtitle: _telegramRowSubtitle(l10n),
                   badgeText: (tgDest.length > 1 &&
                           _postTelegram &&
                           _routerSuggestedIndex() == _telegramTargetIndex)
@@ -587,6 +530,95 @@ class ArchiveDetailPublishSectionState extends State<ArchiveDetailPublishSection
             ],
           ),
         ),
+        if (tg && tgDest.length > 1) ...[
+          const SizedBox(height: 14),
+          _MemeopsInsetCard(
+            padding: const EdgeInsets.all(14),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Row(
+                  children: [
+                    Icon(
+                      Icons.lightbulb_outline_rounded,
+                      size: 22,
+                      color: MemeopsColors.iosBlueBright.withValues(alpha: 0.95),
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Text(
+                        l10n.archiveWeRecommendTitle,
+                        style: MemeopsTextStyles.caption(context).copyWith(
+                          color: Colors.white.withValues(alpha: 0.95),
+                          fontWeight: FontWeight.w800,
+                          fontSize: 15,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                LayoutBuilder(
+                  builder: (context, c) {
+                    final narrow = c.maxWidth < 340;
+                    if (narrow) {
+                      return Column(
+                        children: List.generate(
+                          tgDest.length,
+                          (i) => Padding(
+                            padding: EdgeInsets.only(
+                              bottom: i < tgDest.length - 1 ? 10 : 0,
+                            ),
+                            child: _TgRecChannelButton(
+                              channel: tgDest[i],
+                              selected: _telegramTargetIndex == i,
+                              contentMatch: _routerSuggestedIndex() == i,
+                              busy: _busy,
+                              suggestedLabel: l10n.archiveTelegramSuggestedBadge,
+                              onTap: () => setState(() => _telegramTargetIndex = i),
+                            ),
+                          ),
+                        ),
+                      );
+                    }
+                    return Row(
+                      children: List.generate(
+                        tgDest.length,
+                        (i) {
+                          return Expanded(
+                            child: Padding(
+                              padding: EdgeInsets.only(
+                                right: i < tgDest.length - 1 ? 10 : 0,
+                              ),
+                              child: _TgRecChannelButton(
+                                channel: tgDest[i],
+                                selected: _telegramTargetIndex == i,
+                                contentMatch: _routerSuggestedIndex() == i,
+                                busy: _busy,
+                                suggestedLabel: l10n.archiveTelegramSuggestedBadge,
+                                onTap: () =>
+                                    setState(() => _telegramTargetIndex = i),
+                              ),
+                            ),
+                          );
+                        },
+                      ),
+                    );
+                  },
+                ),
+                const SizedBox(height: 10),
+                Text(
+                  l10n.archiveTelegramRecFooter,
+                  style: MemeopsTextStyles.caption(context).copyWith(
+                    height: 1.35,
+                    color: Colors.white.withValues(alpha: 0.4),
+                    fontSize: 11.5,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
         const SizedBox(height: 18),
         Text(
           l10n.archivePublishWhenHeading,
@@ -694,6 +726,129 @@ class ArchiveDetailPublishSectionState extends State<ArchiveDetailPublishSection
                 ),
         ),
       ],
+    );
+  }
+}
+
+/// İki Telegram hedefi — tıklanınca gönderim kanalı seçilir; içerik eşleşmesi [contentMatch].
+class _TgRecChannelButton extends StatelessWidget {
+  const _TgRecChannelButton({
+    required this.channel,
+    required this.selected,
+    required this.contentMatch,
+    required this.busy,
+    required this.suggestedLabel,
+    required this.onTap,
+  });
+
+  final TelegramPublishChannel channel;
+  final bool selected;
+  final bool contentMatch;
+  final bool busy;
+  final String suggestedLabel;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final border = selected
+        ? MemeopsColors.iosBlueBright.withValues(alpha: 0.65)
+        : Colors.white.withValues(alpha: 0.12);
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: busy ? null : onTap,
+        borderRadius: BorderRadius.circular(MemeopsRadii.md),
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 200),
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(MemeopsRadii.md),
+            border: Border.all(color: border, width: selected ? 1.6 : 1),
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: selected
+                  ? [
+                      MemeopsColors.iosBlue.withValues(alpha: 0.32),
+                      MemeopsColors.iosBlue.withValues(alpha: 0.08),
+                    ]
+                  : [
+                      Colors.white.withValues(alpha: 0.05),
+                      Colors.white.withValues(alpha: 0.02),
+                    ],
+            ),
+            boxShadow: selected
+                ? [
+                    BoxShadow(
+                      color: MemeopsColors.iosBlue.withValues(alpha: 0.18),
+                      blurRadius: 10,
+                      offset: const Offset(0, 4),
+                    ),
+                  ]
+                : null,
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              if (contentMatch)
+                Container(
+                  margin: const EdgeInsets.only(bottom: 6),
+                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                  decoration: BoxDecoration(
+                    color: MemeopsColors.iosBlue.withValues(alpha: 0.4),
+                    borderRadius: BorderRadius.circular(6),
+                    border: Border.all(
+                      color: MemeopsColors.iosBlueBright.withValues(alpha: 0.4),
+                    ),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(
+                        Icons.auto_awesome,
+                        size: 12,
+                        color: MemeopsColors.iosBlueBright
+                            .withValues(alpha: 0.95),
+                      ),
+                      const SizedBox(width: 4),
+                      Text(
+                        suggestedLabel,
+                        style: TextStyle(
+                          fontSize: 10.5,
+                          fontWeight: FontWeight.w800,
+                          color: MemeopsColors.iosBlueBright
+                              .withValues(alpha: 0.98),
+                          height: 1.1,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              Text(
+                channel.uiName,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 13.5,
+                  fontWeight: FontWeight.w700,
+                  height: 1.2,
+                ),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                channel.label,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  color: Colors.white.withValues(alpha: 0.38),
+                  fontSize: 11,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 }

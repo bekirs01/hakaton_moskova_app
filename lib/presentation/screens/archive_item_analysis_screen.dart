@@ -172,28 +172,47 @@ class _CloudPreview extends StatelessWidget {
         onPressed: () => _openCloudArchiveVideo(context, c),
       );
     }
-    final playUrl = resolveMemeAssetPlayableUrl(
-      Supabase.instance.client,
-      c.fileUrl,
-      c.storagePath,
-    );
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(MemeopsRadii.md),
-      child: Image.network(
-        playUrl,
-        fit: BoxFit.contain,
-        loadingBuilder: (c, w, p) {
-          if (p == null) {
-            return w;
-          }
+    return FutureBuilder<String>(
+      future: resolveMemeAssetPlayableUrl(
+        Supabase.instance.client,
+        c.fileUrl,
+        c.storagePath,
+      ),
+      builder: (context, snap) {
+        if (snap.connectionState != ConnectionState.done) {
           return const Center(
             child: Padding(
               padding: EdgeInsets.all(32),
               child: CircularProgressIndicator(),
             ),
           );
-        },
-      ),
+        }
+        final playUrl = (snap.data ?? '').trim();
+        if (playUrl.isEmpty) {
+          return Text(
+            AppLocalizations.of(context).errNetworkUser,
+            style: const TextStyle(color: Colors.white70),
+          );
+        }
+        return ClipRRect(
+          borderRadius: BorderRadius.circular(MemeopsRadii.md),
+          child: Image.network(
+            playUrl,
+            fit: BoxFit.contain,
+            loadingBuilder: (c, w, p) {
+              if (p == null) {
+                return w;
+              }
+              return const Center(
+                child: Padding(
+                  padding: EdgeInsets.all(32),
+                  child: CircularProgressIndicator(),
+                ),
+              );
+            },
+          ),
+        );
+      },
     );
   }
 }
@@ -222,7 +241,11 @@ Future<void> _openCloudArchiveVideo(
     return;
   }
   final client = Supabase.instance.client;
-  final resolved = resolveMemeAssetPlayableUrl(client, c.fileUrl, c.storagePath);
+  final resolved = await resolveMemeAssetPlayableUrl(
+    client,
+    c.fileUrl,
+    c.storagePath,
+  );
   final u = Uri.tryParse(resolved.trim());
   if (u == null || !u.hasScheme || u.host.isEmpty) {
     if (context.mounted) {

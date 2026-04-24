@@ -63,7 +63,7 @@ class MemeSupabaseAssetsRepository {
       final m = Map<String, dynamic>.from(e);
       final sp = m['storage_path'] as String?;
       final rawUrl = m['file_url'] as String?;
-      final url = resolveMemeAssetPlayableUrl(
+      final url = await resolveMemeAssetPlayableUrl(
         _client,
         rawUrl,
         sp,

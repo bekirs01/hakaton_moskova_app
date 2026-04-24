@@ -253,7 +253,7 @@ class _MemeArchiveScreenState extends State<MemeArchiveScreen> {
         );
         return;
       }
-      final resolved = resolveMemeAssetPlayableUrl(
+      final resolved = await resolveMemeAssetPlayableUrl(
         Supabase.instance.client,
         v.fileUrl,
         v.storagePath,

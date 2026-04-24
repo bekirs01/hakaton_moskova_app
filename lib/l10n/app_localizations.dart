@@ -497,13 +497,13 @@ abstract class AppLocalizations {
   /// No description provided for @archiveTelegramRecFooter.
   ///
   /// In tr, this message translates to:
-  /// **'Bu yalnızca Telegram gönderiminin hangi kanala gideceğini seçer; VK / Dzen satırlarından bağımsızdır.'**
+  /// **'Metin ve başlıktaki kelimelere göre (kozmetik, okul vb.) uyumlu kanal yıldızla işaretlenir. VK ve Dzen: yalnızca «paylaşıldı» (Telegram dışı gerçek istek yok).'**
   String get archiveTelegramRecFooter;
 
   /// No description provided for @archivePublishChannelsSubtitle.
   ///
   /// In tr, this message translates to:
-  /// **'Telegram, VK ve Dzen — en üstteki çipler yalnızca Telegram kanalı içindir.'**
+  /// **'Telegram, VK, Dzen. Alttaki kartlar sadece Telegram hedefi içindir.'**
   String get archivePublishChannelsSubtitle;
 
   /// No description provided for @archivePublishSelectAtLeastOneChannel.
@@ -1351,6 +1351,36 @@ abstract class AppLocalizations {
   /// In tr, this message translates to:
   /// **'Telegram kanalı / genel link'**
   String get telegramLinkLabel;
+
+  /// No description provided for @telegramQuickPickTitle.
+  ///
+  /// In tr, this message translates to:
+  /// **'Hızlı seçim (kanal)'**
+  String get telegramQuickPickTitle;
+
+  /// No description provided for @telegramQuickPickRecommended.
+  ///
+  /// In tr, this message translates to:
+  /// **'Önerilen'**
+  String get telegramQuickPickRecommended;
+
+  /// No description provided for @telegramQuickChannelMems.
+  ///
+  /// In tr, this message translates to:
+  /// **'memsit52'**
+  String get telegramQuickChannelMems;
+
+  /// No description provided for @telegramQuickChannelNakida.
+  ///
+  /// In tr, this message translates to:
+  /// **'nakidaifuturememes'**
+  String get telegramQuickChannelNakida;
+
+  /// No description provided for @telegramQuickPickHintLearn.
+  ///
+  /// In tr, this message translates to:
+  /// **'Meslek metninde öğrenme / eğitim geçerse aşağıdaki “öğrenme / gelecek” kanalı öne çıkar.'**
+  String get telegramQuickPickHintLearn;
 
   /// No description provided for @telegramAnalyzing.
   ///

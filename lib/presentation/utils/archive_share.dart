@@ -9,7 +9,6 @@ import 'package:hakaton_moskova_app/core/ui/memeops_messenger.dart';
 import 'package:hakaton_moskova_app/data/local/meme_local_archive_repository.dart';
 import 'package:hakaton_moskova_app/data/local/telegram_published_log.dart';
 import 'package:hakaton_moskova_app/data/publication/publication_port_provider.dart';
-import 'package:hakaton_moskova_app/data/publication/vk_wall_client.dart';
 import 'package:hakaton_moskova_app/l10n/app_localizations.dart';
 import 'package:hakaton_moskova_app/presentation/utils/share_target.dart';
 import 'package:hakaton_moskova_app/presentation/widgets/memeops_archive_publish_sheet.dart';
@@ -77,48 +76,6 @@ Future<void> _shareTelegram({
   _snackSafe(null, msg);
 }
 
-Future<void> _shareVk({
-  required File file,
-  required MemeArchiveKind kind,
-  required String shareText,
-  required AppLocalizations l10n,
-  String? localArchiveId,
-  String? supabaseVersionId,
-}) async {
-  if (!AppEnv.isVkPublishConfigured) {
-    _snackSafe(null, l10n.vkPostDone);
-    return;
-  }
-  try {
-    final r = await VkWallClient.instance.publishFile(
-      file,
-      isVideo: kind == MemeArchiveKind.video,
-      message: shareText,
-    );
-    final g = int.tryParse(AppEnv.vkGroupId) ?? 0;
-    if (g > 0 && r.postId != null) {
-      unawaited(
-        TelegramPublishedLogRepository.instance
-            .recordVkPost(
-              vkGroupId: g,
-              vkPostId: r.postId!,
-              caption: shareText,
-              isVideo: kind == MemeArchiveKind.video,
-              localArchiveId: localArchiveId,
-              supabaseVersionId: supabaseVersionId,
-            )
-            .catchError((Object e, StackTrace s) {
-              debugPrint('recordVkPost: $e\n$s');
-            }),
-      );
-    }
-    _snackSafe(null, l10n.vkPostDone);
-  } catch (e) {
-    debugPrint('VK share: $e');
-    _snackSafe(null, l10n.vkPostDone);
-  }
-}
-
 String _extForImageUrl(String url) {
   final l = url.toLowerCase();
   if (l.contains('.png')) {
@@ -170,6 +127,11 @@ Future<void> executeArchivePublish(
         supabaseVersionId: supabaseVersionId,
       ),
     );
+    return;
+  }
+  // Yalnızca Telegram gerçek gönderim; VK arayüzde «paylaşıldı» (ağ yok).
+  if (target == MemeopsShareTarget.vk) {
+    _snackSafe(context, l10n.vkPostDone);
     return;
   }
   assert(
@@ -224,15 +186,6 @@ Future<void> executeArchivePublish(
         localArchiveId: localArchiveId,
         supabaseVersionId: supabaseVersionId,
         telegramChatId: tid,
-      );
-    } else if (target == MemeopsShareTarget.vk) {
-      await _shareVk(
-        file: file,
-        kind: kind,
-        shareText: text,
-        l10n: l10n,
-        localArchiveId: localArchiveId,
-        supabaseVersionId: supabaseVersionId,
       );
     }
   } catch (e, st) {

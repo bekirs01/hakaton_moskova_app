@@ -37,6 +37,90 @@ class _HomeShellState extends State<HomeShell> {
     }
   }
 
+  /// 0: Profesyon — derli toplu selamlama, alt açıklama yok, geri + dil.
+  /// 1: Telegram — üst başlık yok (geri kaldırıldı).
+  /// 2: Analiz, 3: Arşiv — mevcut davranış.
+  Widget _headerTopContent(AppLocalizations l10n) {
+    if (_index == 2) {
+      return Align(
+        alignment: Alignment.centerLeft,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              l10n.tabAnalysis,
+              style: MemeopsTextStyles.displayTitle(
+                context,
+              ).copyWith(fontSize: 24),
+            ),
+            const SizedBox(height: 6),
+            ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 320),
+              child: Text(
+                l10n.analysisMyPublications,
+                style: MemeopsTextStyles.caption(context).copyWith(
+                  height: 1.45,
+                ),
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+    if (_index == 3) {
+      return Row(
+        children: [
+          _HeaderActionButton(
+            tooltip: l10n.backToLogin,
+            onPressed: _backToLogin,
+            icon: Icons.arrow_back_rounded,
+          ),
+          const Spacer(),
+          _HeaderActionButton(
+            tooltip: l10n.languageTitle,
+            onPressed: () => showMemeopsLanguageSheet(context),
+            icon: Icons.language_rounded,
+          ),
+        ],
+      );
+    }
+    if (_index == 1) {
+      // Telegram sekmesi: üstte geri yok (yalnızca link alanı).
+      return const SizedBox.shrink();
+    }
+    // _index == 0: Meslek
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.center,
+      children: [
+        _HeaderActionButton(
+          tooltip: l10n.backToLogin,
+          onPressed: _backToLogin,
+          icon: Icons.arrow_back_rounded,
+        ),
+        const SizedBox(width: 10),
+        Expanded(
+          child: Text(
+            l10n.greeting(_displayName(l10n)),
+            style: MemeopsTextStyles.sectionTitle(context).copyWith(
+              fontSize: 18,
+              fontWeight: FontWeight.w600,
+              height: 1.25,
+              letterSpacing: -0.2,
+            ),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
+        ),
+        const SizedBox(width: 8),
+        _HeaderActionButton(
+          tooltip: l10n.languageTitle,
+          onPressed: () => showMemeopsLanguageSheet(context),
+          icon: Icons.language_rounded,
+        ),
+      ],
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
@@ -49,90 +133,13 @@ class _HomeShellState extends State<HomeShell> {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               Padding(
-                padding: const EdgeInsets.fromLTRB(20, 8, 20, 6),
-                child: _index == 2
-                    ? Align(
-                        alignment: Alignment.centerLeft,
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              l10n.tabAnalysis,
-                              style: MemeopsTextStyles.displayTitle(
-                                context,
-                              ).copyWith(fontSize: 24),
-                            ),
-                            const SizedBox(height: 6),
-                            ConstrainedBox(
-                              constraints:
-                                  const BoxConstraints(maxWidth: 320),
-                              child: Text(
-                                l10n.analysisMyPublications,
-                                style: MemeopsTextStyles.caption(context)
-                                    .copyWith(height: 1.45),
-                              ),
-                            ),
-                          ],
-                        ),
-                      )
-                    : _index == 3
-                        ? Row(
-                            children: [
-                              _HeaderActionButton(
-                                tooltip: l10n.backToLogin,
-                                onPressed: _backToLogin,
-                                icon: Icons.arrow_back_rounded,
-                              ),
-                              const Spacer(),
-                              _HeaderActionButton(
-                                tooltip: l10n.languageTitle,
-                                onPressed: () =>
-                                    showMemeopsLanguageSheet(context),
-                                icon: Icons.language_rounded,
-                              ),
-                            ],
-                          )
-                        : Row(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          _HeaderActionButton(
-                            tooltip: l10n.backToLogin,
-                            onPressed: _backToLogin,
-                            icon: Icons.arrow_back_rounded,
-                          ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  l10n.greeting(_displayName(l10n)),
-                                  style: MemeopsTextStyles.displayTitle(
-                                    context,
-                                  ).copyWith(fontSize: 24),
-                                ),
-                                const SizedBox(height: 6),
-                                ConstrainedBox(
-                                  constraints: const BoxConstraints(maxWidth: 320),
-                                  child: Text(
-                                    l10n.homeSubtitle,
-                                    style: MemeopsTextStyles.caption(context)
-                                        .copyWith(
-                                      height: 1.45,
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                          const SizedBox(width: 12),
-                          _HeaderActionButton(
-                            tooltip: l10n.languageTitle,
-                            onPressed: () => showMemeopsLanguageSheet(context),
-                            icon: Icons.language_rounded,
-                          ),
-                        ],
-                      ),
+                padding: EdgeInsets.fromLTRB(
+                  20,
+                  _index == 1 ? 4 : 8,
+                  20,
+                  _index == 1 ? 4 : 6,
+                ),
+                child: _headerTopContent(l10n),
               ),
               Expanded(
                 child: IndexedStack(

@@ -82,8 +82,8 @@
       "name": {"type": "String"}
     }
   },
-  "archiveTelegramRecFooter": "Это только направление для Telegram. VK / Дзен снизу — отдельно.",
-  "archivePublishChannelsSubtitle": "Три цели: Telegram, VK, Дзен. Вверху — варианты канала для Telegram.",
+  "archiveTelegramRecFooter": "По тексту и словам (косметика, школа и т.д.) отмечается подходящий канал. VK / Дзен: только «опубликовано» без реальной отправки с вашей стороны (кроме Telegram-бота).",
+  "archivePublishChannelsSubtitle": "Telegram, VK, Дзен. Каналы в нижней карточке — только для направления в Telegram.",
   "archivePublishSelectAtLeastOneChannel": "Выберите хотя бы один канал.",
   "archivePublishWhenHeading": "Когда отправить",
   "archivePublishWhenNow": "Сразу",
@@ -257,6 +257,11 @@
   "telegramStep1SubtitleLive": "Живое резюме через локальный Telethon API; идеи из того же контекста.",
   "telegramStep1SubtitleStub": "Публичная ссылка на канал · для живого чтения запустите ./run_telegram_api.sh",
   "telegramLinkLabel": "Канал Telegram / публичная ссылка",
+  "telegramQuickPickTitle": "Быстрый выбор (канал)",
+  "telegramQuickPickRecommended": "Советуем",
+  "telegramQuickChannelMems": "memsit52",
+  "telegramQuickChannelNakida": "nakidaifuturememes",
+  "telegramQuickPickHintLearn": "Если в теме профессии есть обучение / школа, подсвечиваем канал «будущее / обучение».",
   "telegramAnalyzing": "Анализ канала…",
   "telegramAnalyseButton": "Анализировать ссылку",
   "telegramStep2Title": "Резюме и идеи",

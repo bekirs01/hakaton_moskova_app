@@ -12,6 +12,7 @@ import 'package:hakaton_moskova_app/data/publication/publication_port_provider.d
 import 'package:hakaton_moskova_app/domain/publication_port.dart';
 import 'package:hakaton_moskova_app/l10n/app_localizations.dart';
 import 'package:hakaton_moskova_app/presentation/layout/home_tab_scroll_padding.dart';
+import 'package:hakaton_moskova_app/presentation/state/profession_hint_store.dart';
 import 'package:hakaton_moskova_app/presentation/theme/memeops_design_tokens.dart';
 import 'package:hakaton_moskova_app/presentation/widgets/error_retry_card.dart';
 import 'package:hakaton_moskova_app/presentation/widgets/memeops_glass_surface.dart';
@@ -243,8 +244,19 @@ class _ProfessionFlowScreenState extends State<ProfessionFlowScreen> {
     });
   }
 
+  void _syncProfessionHint() {
+    ProfessionHintStore.instance.setText(_professionCtrl.text);
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    _professionCtrl.addListener(_syncProfessionHint);
+  }
+
   @override
   void dispose() {
+    _professionCtrl.removeListener(_syncProfessionHint);
     _professionCtrl.dispose();
     super.dispose();
   }

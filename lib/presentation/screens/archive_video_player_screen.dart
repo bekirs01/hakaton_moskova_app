@@ -84,6 +84,32 @@ class _ArchiveVideoPlayerScreenState extends State<ArchiveVideoPlayerScreen> {
   }
 
   Future<void> _playNetworkUri(Uri uri) async {
+    final sp = widget.storagePath?.trim();
+    // Önce imzalı URL (bozuk file_url, localhost, gizli bucket).
+    if (sp != null &&
+        sp.isNotEmpty &&
+        Supabase.instance.client.auth.currentSession != null) {
+      try {
+        final signed = await Supabase.instance.client.storage
+            .from('meme-assets')
+            .createSignedUrl(sp, 60 * 30);
+        final c0 = VideoPlayerController.networkUrl(Uri.parse(signed));
+        await c0.initialize();
+        if (!mounted) {
+          await c0.dispose();
+          return;
+        }
+        c0.setLooping(true);
+        c0.play();
+        setState(() {
+          _controller = c0;
+          _ready = true;
+        });
+        return;
+      } catch (e, st) {
+        debugPrint('ArchiveVideoPlayer signed first: $e\n$st');
+      }
+    }
     try {
       final c = VideoPlayerController.networkUrl(uri);
       await c.initialize();
@@ -98,7 +124,6 @@ class _ArchiveVideoPlayerScreenState extends State<ArchiveVideoPlayerScreen> {
         _ready = true;
       });
     } catch (e) {
-      final sp = widget.storagePath?.trim();
       if (sp != null && sp.isNotEmpty && Supabase.instance.client.auth.currentSession != null) {
         try {
           final signed = await Supabase.instance.client.storage

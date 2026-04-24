@@ -231,11 +231,11 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get archiveTelegramRecFooter =>
-      'Это только направление для Telegram. VK / Дзен снизу — отдельно.';
+      'По тексту и словам (косметика, школа и т.д.) отмечается подходящий канал. VK / Дзен: только «опубликовано» без реальной отправки с вашей стороны (кроме Telegram-бота).';
 
   @override
   String get archivePublishChannelsSubtitle =>
-      'Три цели: Telegram, VK, Дзен. Вверху — варианты канала для Telegram.';
+      'Telegram, VK, Дзен. Каналы в нижней карточке — только для направления в Telegram.';
 
   @override
   String get archivePublishSelectAtLeastOneChannel =>
@@ -704,6 +704,22 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get telegramLinkLabel => 'Канал Telegram / публичная ссылка';
+
+  @override
+  String get telegramQuickPickTitle => 'Быстрый выбор (канал)';
+
+  @override
+  String get telegramQuickPickRecommended => 'Советуем';
+
+  @override
+  String get telegramQuickChannelMems => 'memsit52';
+
+  @override
+  String get telegramQuickChannelNakida => 'nakidaifuturememes';
+
+  @override
+  String get telegramQuickPickHintLearn =>
+      'Если в теме профессии есть обучение / школа, подсвечиваем канал «будущее / обучение».';
 
   @override
   String get telegramAnalyzing => 'Анализ канала…';
