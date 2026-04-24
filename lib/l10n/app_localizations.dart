@@ -392,6 +392,114 @@ abstract class AppLocalizations {
   /// **'Paylaşma menüsü açılamadı.'**
   String get archiveShareFailed;
 
+  /// No description provided for @archiveShareFailedWithError.
+  ///
+  /// In tr, this message translates to:
+  /// **'Paylaşma: {error}'**
+  String archiveShareFailedWithError(String error);
+
+  /// No description provided for @archiveShareSheetSubtitle.
+  ///
+  /// In tr, this message translates to:
+  /// **'Telegram veya VK. Zamanlama ve metin düzenleme: arşivde öğenin içine girin.'**
+  String get archiveShareSheetSubtitle;
+
+  /// No description provided for @archiveCaptionLabel.
+  ///
+  /// In tr, this message translates to:
+  /// **'Gönderi metni'**
+  String get archiveCaptionLabel;
+
+  /// No description provided for @archiveCaptionSave.
+  ///
+  /// In tr, this message translates to:
+  /// **'Metni kaydet'**
+  String get archiveCaptionSave;
+
+  /// No description provided for @archiveCaptionSaved.
+  ///
+  /// In tr, this message translates to:
+  /// **'Metin kaydedildi.'**
+  String get archiveCaptionSaved;
+
+  /// No description provided for @archiveCaptionCloudNeedsBrief.
+  ///
+  /// In tr, this message translates to:
+  /// **'Bu bulut kaydında brief bağlantısı yok; metin yalnızca bu gönderim için kullanılır.'**
+  String get archiveCaptionCloudNeedsBrief;
+
+  /// No description provided for @archivePublishTitle.
+  ///
+  /// In tr, this message translates to:
+  /// **'Paylaşım'**
+  String get archivePublishTitle;
+
+  /// No description provided for @archivePublishChannelsSubtitle.
+  ///
+  /// In tr, this message translates to:
+  /// **'Birden fazla kanal işaretleyebilirsiniz.'**
+  String get archivePublishChannelsSubtitle;
+
+  /// No description provided for @archivePublishSelectAtLeastOneChannel.
+  ///
+  /// In tr, this message translates to:
+  /// **'En az bir kanal seçin.'**
+  String get archivePublishSelectAtLeastOneChannel;
+
+  /// No description provided for @archivePublishWhenHeading.
+  ///
+  /// In tr, this message translates to:
+  /// **'Gönderim zamanı'**
+  String get archivePublishWhenHeading;
+
+  /// No description provided for @archivePublishWhenNow.
+  ///
+  /// In tr, this message translates to:
+  /// **'Hemen gönder'**
+  String get archivePublishWhenNow;
+
+  /// No description provided for @archivePublishWhenSchedule.
+  ///
+  /// In tr, this message translates to:
+  /// **'İleri tarih'**
+  String get archivePublishWhenSchedule;
+
+  /// No description provided for @archivePublishPickDateTime.
+  ///
+  /// In tr, this message translates to:
+  /// **'Tarih ve saat seç'**
+  String get archivePublishPickDateTime;
+
+  /// No description provided for @archivePublishSubmit.
+  ///
+  /// In tr, this message translates to:
+  /// **'Gönder'**
+  String get archivePublishSubmit;
+
+  /// No description provided for @archivePublishScheduledAck.
+  ///
+  /// In tr, this message translates to:
+  /// **'Zamanlandı: {when}'**
+  String archivePublishScheduledAck(String when);
+
+  /// No description provided for @archivePublishChooseSchedule.
+  ///
+  /// In tr, this message translates to:
+  /// **'Önce tarih ve saat seçin.'**
+  String get archivePublishChooseSchedule;
+
+  /// No description provided for @archivePublishSchedulePast.
+  ///
+  /// In tr, this message translates to:
+  /// **'Zaman geçmiş olamaz.'**
+  String get archivePublishSchedulePast;
+
+  /// No description provided for @archivePublishScheduleNeedOpenApp.
+  ///
+  /// In tr, this message translates to:
+  /// **'Uygulama açıkken sıraya alınır; tamamen kapalıysa gönderim gecikebilir.'**
+  String get archivePublishScheduleNeedOpenApp;
+
   /// No description provided for @archiveDownloadFailed.
   ///
   /// In tr, this message translates to:
@@ -482,11 +590,29 @@ abstract class AppLocalizations {
   /// **'ВКонтакте (grup duvarı)'**
   String get shareTargetVk;
 
+  /// No description provided for @shareTargetDzen.
+  ///
+  /// In tr, this message translates to:
+  /// **'Дзен (Dzen) — yalnızca seçim (simülasyon)'**
+  String get shareTargetDzen;
+
   /// No description provided for @shareNoServiceConfigured.
   ///
   /// In tr, this message translates to:
-  /// **'Paylaşım için .env içinde TELEGRAM_PUBLISH_* veya VK_ACCESS_TOKEN + VK_GROUP_ID gerekir.'**
+  /// **'Paylaşım için .env içinde TELEGRAM_PUBLISH_* veya VK_ACCESS_TOKEN + VK_GROUP_ID gerekir; Dzen ayrıca her zaman (simüle) seçilebilir.'**
   String get shareNoServiceConfigured;
+
+  /// No description provided for @archivePublishNoTgVkDzenOnly.
+  ///
+  /// In tr, this message translates to:
+  /// **'Telegram ve VK .env’te tanımlı değil. Aşağıdan Dzen’i (simülasyon) seçebilirsin.'**
+  String get archivePublishNoTgVkDzenOnly;
+
+  /// No description provided for @dzenPublishSimulated.
+  ///
+  /// In tr, this message translates to:
+  /// **'Dzen: gönderim yalnızca simüle edildi; gerçek yayı yok.'**
+  String get dzenPublishSimulated;
 
   /// No description provided for @vkPostDone.
   ///
@@ -499,6 +625,12 @@ abstract class AppLocalizations {
   /// In tr, this message translates to:
   /// **'VK paylaşımı başarısız.'**
   String get vkPostFailed;
+
+  /// No description provided for @vkPostNeedUserToken.
+  ///
+  /// In tr, this message translates to:
+  /// **'VK: topluluk (grup) access token resim/gönderi yükleyemez. .env’e kullanıcı OAuth token ekle: VK_USER_ACCESS_TOKEN= (kapsam: wall, photos, video, groups, offline). Proje kökünde: ./setup_vk_user_token.sh'**
+  String get vkPostNeedUserToken;
 
   /// No description provided for @analysisTitle.
   ///
@@ -614,6 +746,30 @@ abstract class AppLocalizations {
   /// **'Bu uygulamadan henüz kanal paylaşımı yok. Meslek / Telegram veya Arşiv’deki paylaş akışını dene.'**
   String get analysisNoMyPublications;
 
+  /// No description provided for @analysisEmptyVideoGrid.
+  ///
+  /// In tr, this message translates to:
+  /// **'Henüz paylaştığın video yok. Arşivden videoyu Telegram veya VK’ya paylaş; burada ızgarada görünür.'**
+  String get analysisEmptyVideoGrid;
+
+  /// No description provided for @analysisNotSharedTitle.
+  ///
+  /// In tr, this message translates to:
+  /// **'Henüz bu içerik için metrik yok'**
+  String get analysisNotSharedTitle;
+
+  /// No description provided for @analysisNotSharedBody.
+  ///
+  /// In tr, this message translates to:
+  /// **'Bu medya arşivde kayıtlı ancak uygulamadan Telegram / VK’ya eşleşen bir paylaşım yok. Arşivden paylaş; sonraki açılışlarda burada izlenme ve (VK’da) beğeni / paylaşım görebilirsin. Eski paylaşımlar kimlik eşleşmediyse de boş kalabilir.'**
+  String get analysisNotSharedBody;
+
+  /// No description provided for @analysisOpenPreview.
+  ///
+  /// In tr, this message translates to:
+  /// **'Önizleme aç'**
+  String get analysisOpenPreview;
+
   /// No description provided for @analysisViewCount.
   ///
   /// In tr, this message translates to:
@@ -656,11 +812,59 @@ abstract class AppLocalizations {
   /// **'Paylaşım detayı'**
   String get publicationDetailTitle;
 
+  /// No description provided for @publicationDetailSectionInfo.
+  ///
+  /// In tr, this message translates to:
+  /// **'Bilgiler'**
+  String get publicationDetailSectionInfo;
+
+  /// No description provided for @publicationDetailPublishedAt.
+  ///
+  /// In tr, this message translates to:
+  /// **'Yayın'**
+  String get publicationDetailPublishedAt;
+
+  /// No description provided for @publicationDetailRefreshTelegram.
+  ///
+  /// In tr, this message translates to:
+  /// **'Telegram metriklerini yenile'**
+  String get publicationDetailRefreshTelegram;
+
   /// No description provided for @publicationDetailRefreshVk.
   ///
   /// In tr, this message translates to:
   /// **'VK istatistiklerini yenile'**
   String get publicationDetailRefreshVk;
+
+  /// No description provided for @publicationDetailReactions.
+  ///
+  /// In tr, this message translates to:
+  /// **'Reaksiyonlar'**
+  String get publicationDetailReactions;
+
+  /// No description provided for @publicationDetailReactionsEmpty.
+  ///
+  /// In tr, this message translates to:
+  /// **'—'**
+  String get publicationDetailReactionsEmpty;
+
+  /// No description provided for @publicationDetailEmojiReaction.
+  ///
+  /// In tr, this message translates to:
+  /// **'{emoji}  ×{count}'**
+  String publicationDetailEmojiReaction(String emoji, int count);
+
+  /// No description provided for @publicationDetailCustomReaction.
+  ///
+  /// In tr, this message translates to:
+  /// **'Özel  ×{count}'**
+  String publicationDetailCustomReaction(int count);
+
+  /// No description provided for @publicationDetailReactionCountOnly.
+  ///
+  /// In tr, this message translates to:
+  /// **'×{count}'**
+  String publicationDetailReactionCountOnly(int count);
 
   /// No description provided for @publicationDetailKind.
   ///
@@ -680,11 +884,23 @@ abstract class AppLocalizations {
   /// **'Sohbet'**
   String get publicationDetailChat;
 
+  /// No description provided for @publicationDetailChannel.
+  ///
+  /// In tr, this message translates to:
+  /// **'Kanal (Telegram)'**
+  String get publicationDetailChannel;
+
   /// No description provided for @publicationDetailViews.
   ///
   /// In tr, this message translates to:
   /// **'İzlenme'**
   String get publicationDetailViews;
+
+  /// No description provided for @publicationDetailForwards.
+  ///
+  /// In tr, this message translates to:
+  /// **'İletme (Telegram)'**
+  String get publicationDetailForwards;
 
   /// No description provided for @publicationDetailVkGroup.
   ///

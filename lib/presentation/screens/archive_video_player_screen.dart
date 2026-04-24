@@ -5,7 +5,7 @@ import 'package:hakaton_moskova_app/data/local/meme_local_archive_repository.dar
 import 'package:hakaton_moskova_app/l10n/app_localizations.dart';
 import 'package:hakaton_moskova_app/presentation/theme/memeops_design_tokens.dart';
 import 'package:hakaton_moskova_app/presentation/theme/memeops_theme.dart';
-import 'package:hakaton_moskova_app/presentation/utils/archive_share.dart';
+import 'package:hakaton_moskova_app/presentation/widgets/archive_detail_publish_section.dart';
 import 'package:video_player/video_player.dart';
 
 /// Arşivden yerel .mp4 veya Supabase’deki public video URL’ini tam ekran oynatır.
@@ -16,6 +16,9 @@ class ArchiveVideoPlayerScreen extends StatefulWidget {
     this.networkUri,
     required this.title,
     this.caption,
+    this.localArchiveId,
+    this.supabaseVersionId,
+    this.sourceMemeBriefId,
   }) : assert(
           (file != null) ^ (networkUri != null),
           'Yerel dosya veya ağ URL’sinden yalnızca biri verilmelidir',
@@ -25,6 +28,9 @@ class ArchiveVideoPlayerScreen extends StatefulWidget {
   final Uri? networkUri;
   final String title;
   final String? caption;
+  final String? localArchiveId;
+  final String? supabaseVersionId;
+  final String? sourceMemeBriefId;
 
   @override
   State<ArchiveVideoPlayerScreen> createState() =>
@@ -32,6 +38,7 @@ class ArchiveVideoPlayerScreen extends StatefulWidget {
 }
 
 class _ArchiveVideoPlayerScreenState extends State<ArchiveVideoPlayerScreen> {
+  final _publishKey = GlobalKey<ArchiveDetailPublishSectionState>();
   VideoPlayerController? _controller;
   bool _ready = false;
   String? _error;
@@ -74,22 +81,7 @@ class _ArchiveVideoPlayerScreenState extends State<ArchiveVideoPlayerScreen> {
   }
 
   Future<void> _share() async {
-    if (widget.file != null) {
-      await shareArchiveFile(
-        context,
-        file: widget.file!,
-        sourceLabel: widget.title,
-        kind: MemeArchiveKind.video,
-        caption: widget.caption,
-      );
-      return;
-    }
-    await shareArchiveVideoFromNetworkUrl(
-      context,
-      url: widget.networkUri!.toString(),
-      sourceLabel: widget.title,
-      caption: widget.caption,
-    );
+    await _publishKey.currentState?.submitPublish();
   }
 
   @override
@@ -160,17 +152,18 @@ class _ArchiveVideoPlayerScreenState extends State<ArchiveVideoPlayerScreen> {
               ),
             ),
           ],
-          if (widget.caption != null && widget.caption!.isNotEmpty) ...[
-            const SizedBox(height: 16),
-            Text(
-              widget.caption!,
-              style: TextStyle(
-                color: Colors.white.withValues(alpha: 0.9),
-                fontSize: 15,
-                height: 1.4,
-              ),
-            ),
-          ],
+          const SizedBox(height: 20),
+          ArchiveDetailPublishSection(
+            key: _publishKey,
+            sourceLabel: widget.title,
+            initialCaption: widget.caption,
+            mediaKind: MemeArchiveKind.video,
+            localFile: widget.file,
+            networkUrl: widget.networkUri?.toString(),
+            localArchiveId: widget.localArchiveId,
+            supabaseVersionId: widget.supabaseVersionId,
+            sourceMemeBriefId: widget.sourceMemeBriefId,
+          ),
         ],
       ),
     );

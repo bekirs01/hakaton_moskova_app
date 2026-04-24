@@ -170,6 +170,69 @@ class AppLocalizationsRu extends AppLocalizations {
   String get archiveShareFailed => 'Не удалось открыть меню шаринга.';
 
   @override
+  String archiveShareFailedWithError(String error) {
+    return 'Публикация: $error';
+  }
+
+  @override
+  String get archiveShareSheetSubtitle =>
+      'Telegram или ВК. Расписание и текст — внутри карточки в архиве.';
+
+  @override
+  String get archiveCaptionLabel => 'Текст к посту';
+
+  @override
+  String get archiveCaptionSave => 'Сохранить текст';
+
+  @override
+  String get archiveCaptionSaved => 'Текст сохранён.';
+
+  @override
+  String get archiveCaptionCloudNeedsBrief =>
+      'Нет связанного brief; текст используется только для этой отправки.';
+
+  @override
+  String get archivePublishTitle => 'Публикация';
+
+  @override
+  String get archivePublishChannelsSubtitle =>
+      'Можно отметить несколько каналов.';
+
+  @override
+  String get archivePublishSelectAtLeastOneChannel =>
+      'Выберите хотя бы один канал.';
+
+  @override
+  String get archivePublishWhenHeading => 'Когда отправить';
+
+  @override
+  String get archivePublishWhenNow => 'Сразу';
+
+  @override
+  String get archivePublishWhenSchedule => 'Позже';
+
+  @override
+  String get archivePublishPickDateTime => 'Дата и время';
+
+  @override
+  String get archivePublishSubmit => 'Отправить';
+
+  @override
+  String archivePublishScheduledAck(String when) {
+    return 'Запланировано: $when';
+  }
+
+  @override
+  String get archivePublishChooseSchedule => 'Сначала выберите дату и время.';
+
+  @override
+  String get archivePublishSchedulePast => 'Время не может быть в прошлом.';
+
+  @override
+  String get archivePublishScheduleNeedOpenApp =>
+      'Очередь работает пока приложение открыто; если закрыто — отправка может задержаться.';
+
+  @override
   String archiveDownloadFailed(int code) {
     return 'Не удалось скачать изображение (HTTP $code).';
   }
@@ -221,14 +284,29 @@ class AppLocalizationsRu extends AppLocalizations {
   String get shareTargetVk => 'ВКонтакте (стена группы)';
 
   @override
+  String get shareTargetDzen => 'Дзен (только выбор, имитация)';
+
+  @override
   String get shareNoServiceConfigured =>
-      'Для публикации в .env нужны TELEGRAM_PUBLISH_* или VK_ACCESS_TOKEN + VK_GROUP_ID.';
+      'В .env нужны TELEGRAM_PUBLISH_* или VK_ACCESS_TOKEN + VK_GROUP_ID; Дзен также всегда доступен (имитация).';
+
+  @override
+  String get archivePublishNoTgVkDzenOnly =>
+      'Telegram и VK в .env не настроены. Можно выбрать Дзен (имитация).';
+
+  @override
+  String get dzenPublishSimulated =>
+      'Дзен: публикация только имитирована, реального поста нет.';
 
   @override
   String get vkPostDone => 'Опубликовано в VK.';
 
   @override
   String get vkPostFailed => 'Публикация в VK не удалась.';
+
+  @override
+  String get vkPostNeedUserToken =>
+      'VK: community token не подходит для загрузки. Добавь OAuth пользователя в .env: VK_USER_ACCESS_TOKEN= (права: wall, photos, video, groups, offline). Скрипт: ./setup_vk_user_token.sh';
 
   @override
   String get analysisTitle => 'Анализ Telegram';
@@ -293,6 +371,20 @@ class AppLocalizationsRu extends AppLocalizations {
       'Пока нет публикаций в канал из приложения. Попробуй «Поделиться» в Профессии / Telegram или в «Архиве».';
 
   @override
+  String get analysisEmptyVideoGrid =>
+      'Пока нет опубликованных видео. Поделись из «Архива» в Telegram или VK — карточка появится здесь.';
+
+  @override
+  String get analysisNotSharedTitle => 'Пока нет метрик';
+
+  @override
+  String get analysisNotSharedBody =>
+      'Файл в архиве, но нет публикации из приложения в Telegram/VK. Поделись из «Архива». Старые записи без id могут не сопасться.';
+
+  @override
+  String get analysisOpenPreview => 'Открыть просмотр';
+
+  @override
   String analysisViewCount(int n) {
     return '$n просм.';
   }
@@ -316,7 +408,37 @@ class AppLocalizationsRu extends AppLocalizations {
   String get publicationDetailTitle => 'Детали публикации';
 
   @override
+  String get publicationDetailSectionInfo => 'Сведения';
+
+  @override
+  String get publicationDetailPublishedAt => 'Публикация';
+
+  @override
+  String get publicationDetailRefreshTelegram => 'Обновить метрики Telegram';
+
+  @override
   String get publicationDetailRefreshVk => 'Обновить статистику VK';
+
+  @override
+  String get publicationDetailReactions => 'Реакции';
+
+  @override
+  String get publicationDetailReactionsEmpty => '—';
+
+  @override
+  String publicationDetailEmojiReaction(String emoji, int count) {
+    return '$emoji  ×$count';
+  }
+
+  @override
+  String publicationDetailCustomReaction(int count) {
+    return 'Своя  ×$count';
+  }
+
+  @override
+  String publicationDetailReactionCountOnly(int count) {
+    return '×$count';
+  }
 
   @override
   String get publicationDetailKind => 'Тип';
@@ -328,7 +450,13 @@ class AppLocalizationsRu extends AppLocalizations {
   String get publicationDetailChat => 'Чат';
 
   @override
+  String get publicationDetailChannel => 'Канал (Telegram)';
+
+  @override
   String get publicationDetailViews => 'Просмотры';
+
+  @override
+  String get publicationDetailForwards => 'Пересылок (Telegram)';
 
   @override
   String get publicationDetailVkGroup => 'Группа';

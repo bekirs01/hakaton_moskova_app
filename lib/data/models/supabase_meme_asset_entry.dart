@@ -10,6 +10,7 @@ class SupabaseMemeAssetEntry {
     required this.versionNumber,
     required this.isVideo,
     this.briefLine,
+    this.sourceMemeBriefId,
   });
 
   final String id;
@@ -18,4 +19,7 @@ class SupabaseMemeAssetEntry {
   final int versionNumber;
   final bool isVideo;
   final String? briefLine;
+
+  /// [meme_briefs] satırı; açıklama kaydı için gerekli.
+  final String? sourceMemeBriefId;
 }

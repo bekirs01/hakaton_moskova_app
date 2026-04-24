@@ -50,23 +50,49 @@ class _HomeShellState extends State<HomeShell> {
             children: [
               Padding(
                 padding: const EdgeInsets.fromLTRB(20, 8, 20, 6),
-                child: _index == 3
-                    ? Row(
-                        children: [
-                          _HeaderActionButton(
-                            tooltip: l10n.backToLogin,
-                            onPressed: _backToLogin,
-                            icon: Icons.arrow_back_rounded,
-                          ),
-                          const Spacer(),
-                          _HeaderActionButton(
-                            tooltip: l10n.languageTitle,
-                            onPressed: () => showMemeopsLanguageSheet(context),
-                            icon: Icons.language_rounded,
-                          ),
-                        ],
+                child: _index == 2
+                    ? Align(
+                        alignment: Alignment.centerLeft,
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              l10n.tabAnalysis,
+                              style: MemeopsTextStyles.displayTitle(
+                                context,
+                              ).copyWith(fontSize: 24),
+                            ),
+                            const SizedBox(height: 6),
+                            ConstrainedBox(
+                              constraints:
+                                  const BoxConstraints(maxWidth: 320),
+                              child: Text(
+                                l10n.analysisMyPublications,
+                                style: MemeopsTextStyles.caption(context)
+                                    .copyWith(height: 1.45),
+                              ),
+                            ),
+                          ],
+                        ),
                       )
-                    : Row(
+                    : _index == 3
+                        ? Row(
+                            children: [
+                              _HeaderActionButton(
+                                tooltip: l10n.backToLogin,
+                                onPressed: _backToLogin,
+                                icon: Icons.arrow_back_rounded,
+                              ),
+                              const Spacer(),
+                              _HeaderActionButton(
+                                tooltip: l10n.languageTitle,
+                                onPressed: () =>
+                                    showMemeopsLanguageSheet(context),
+                                icon: Icons.language_rounded,
+                              ),
+                            ],
+                          )
+                        : Row(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           _HeaderActionButton(

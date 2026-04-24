@@ -2,33 +2,21 @@ import 'dart:async';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:hakaton_moskova_app/data/local/archive_publish_scheduler.dart';
 import 'package:hakaton_moskova_app/data/local/meme_local_archive_repository.dart';
 import 'package:hakaton_moskova_app/data/models/supabase_meme_asset_entry.dart';
 import 'package:hakaton_moskova_app/data/repository/meme_supabase_assets_repository.dart';
 import 'package:hakaton_moskova_app/l10n/app_localizations.dart';
+import 'package:hakaton_moskova_app/presentation/feed/meme_unified_feed.dart';
 import 'package:hakaton_moskova_app/presentation/screens/archive_video_player_screen.dart';
 import 'package:hakaton_moskova_app/presentation/theme/memeops_design_tokens.dart';
 import 'package:hakaton_moskova_app/presentation/theme/memeops_theme.dart';
 import 'package:hakaton_moskova_app/presentation/utils/archive_share.dart';
+import 'package:hakaton_moskova_app/presentation/widgets/archive_detail_publish_section.dart';
 import 'package:hakaton_moskova_app/presentation/widgets/memeops_glass_surface.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 const double _kThumb = 48;
-
-class _ArchiveListRow {
-  _ArchiveListRow._(this.local, this.supabase);
-
-  factory _ArchiveListRow.local(MemeArchiveEntry e) =>
-      _ArchiveListRow._(e, null);
-
-  factory _ArchiveListRow.cloud(SupabaseMemeAssetEntry e) =>
-      _ArchiveListRow._(null, e);
-
-  final MemeArchiveEntry? local;
-  final SupabaseMemeAssetEntry? supabase;
-
-  bool get isSupabase => supabase != null;
-}
 
 class MemeArchiveScreen extends StatefulWidget {
   const MemeArchiveScreen({super.key});
@@ -42,7 +30,7 @@ class _MemeArchiveScreenState extends State<MemeArchiveScreen> {
   late final MemeSupabaseAssetsRepository _cloudRepo =
       MemeSupabaseAssetsRepository(Supabase.instance.client);
 
-  List<_ArchiveListRow> _allRows = const [];
+  List<MemeFeedRow> _allRows = const [];
   bool _loading = true;
   bool _showLoadTimeoutHint = false;
   bool _supabaseFailed = false;
@@ -50,6 +38,7 @@ class _MemeArchiveScreenState extends State<MemeArchiveScreen> {
   @override
   void initState() {
     super.initState();
+    unawaited(ArchivePublishScheduler.instance.ensureStarted());
     _repo.onChanged.addListener(_reload);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) {
@@ -73,52 +62,22 @@ class _MemeArchiveScreenState extends State<MemeArchiveScreen> {
       _showLoadTimeoutHint = false;
       _supabaseFailed = false;
     });
-    var localList = const <MemeArchiveEntry>[];
-    var loadTimedOut = false;
-    var cloudList = const <SupabaseMemeAssetEntry>[];
-    var supabaseFailed = false;
-
+    MemeFeedLoad? load;
     try {
-      final r = await _repo.loadEntries();
-      localList = r.entries;
-      loadTimedOut = r.loadEntriesTimedOut;
+      load = await loadMemeUnifiedFeed();
     } catch (e, st) {
-      debugPrint('MemeArchiveScreen._reload local: $e\n$st');
-    }
-
-    try {
-      cloudList = await _cloudRepo.listAccountAssets();
-    } catch (e, st) {
-      debugPrint('MemeArchiveScreen._reload cloud: $e\n$st');
-      supabaseFailed = true;
+      debugPrint('MemeArchiveScreen._reload: $e\n$st');
     }
 
     if (!mounted) {
       return;
     }
 
-    final merged = <_ArchiveListRow>[];
-    for (final e in localList) {
-      merged.add(_ArchiveListRow.local(e));
-    }
-    for (final v in cloudList) {
-      merged.add(_ArchiveListRow.cloud(v));
-    }
-    merged.sort((a, b) {
-      final ta = a.isSupabase
-          ? a.supabase!.createdAt
-          : a.local!.createdAt;
-      final tb = b.isSupabase
-          ? b.supabase!.createdAt
-          : b.local!.createdAt;
-      return tb.compareTo(ta);
-    });
-
     setState(() {
-      _allRows = merged;
+      _allRows = load?.rows ?? const [];
       _loading = false;
-      _showLoadTimeoutHint = loadTimedOut;
-      _supabaseFailed = supabaseFailed;
+      _showLoadTimeoutHint = load?.loadEntriesTimedOut ?? false;
+      _supabaseFailed = load?.supabaseFailed ?? true;
     });
   }
 
@@ -249,6 +208,7 @@ class _MemeArchiveScreenState extends State<MemeArchiveScreen> {
             file: file,
             title: e.sourceLabel,
             caption: e.caption,
+            localArchiveId: e.id,
           ),
         ),
       );
@@ -256,55 +216,7 @@ class _MemeArchiveScreenState extends State<MemeArchiveScreen> {
     }
     await Navigator.of(context).push<void>(
       MaterialPageRoute<void>(
-        builder: (ctx) => Scaffold(
-          backgroundColor: MemeopsColors.bgMid,
-          appBar: AppBar(
-            backgroundColor: Colors.black.withValues(alpha: 0.25),
-            foregroundColor: Colors.white,
-            title: Text(e.sourceLabel, style: const TextStyle(fontSize: 16)),
-            leading: IconButton(
-              icon: const Icon(Icons.close_rounded),
-              onPressed: () => Navigator.pop(ctx),
-            ),
-            actions: [
-              IconButton(
-                tooltip: l10n.archiveShare,
-                onPressed: () => shareArchiveFile(
-                  ctx,
-                  file: file,
-                  sourceLabel: e.sourceLabel,
-                  kind: e.kind,
-                  caption: e.caption,
-                ),
-                icon: const Icon(Icons.share_rounded, size: 22),
-              ),
-            ],
-          ),
-          body: ListView(
-            padding: const EdgeInsets.fromLTRB(12, 12, 12, 24),
-            children: [
-              ClipRRect(
-                borderRadius: BorderRadius.circular(MemeopsRadii.md),
-                child: InteractiveViewer(
-                  minScale: 0.6,
-                  maxScale: 4,
-                  child: Image.file(file, fit: BoxFit.contain),
-                ),
-              ),
-              if (e.caption != null && e.caption!.isNotEmpty) ...[
-                const SizedBox(height: 12),
-                Text(
-                  e.caption!,
-                  style: TextStyle(
-                    color: Colors.white.withValues(alpha: 0.9),
-                    fontSize: 14,
-                    height: 1.4,
-                  ),
-                ),
-              ],
-            ],
-          ),
-        ),
+        builder: (_) => _ArchiveLocalStillDetailPage(entry: e, file: file),
       ),
     );
   }
@@ -321,6 +233,8 @@ class _MemeArchiveScreenState extends State<MemeArchiveScreen> {
             networkUri: Uri.parse(v.fileUrl),
             title: l10n.tabArchive,
             caption: v.briefLine,
+            supabaseVersionId: v.id,
+            sourceMemeBriefId: v.sourceMemeBriefId,
           ),
         ),
       );
@@ -328,77 +242,7 @@ class _MemeArchiveScreenState extends State<MemeArchiveScreen> {
     }
     await Navigator.of(context).push<void>(
       MaterialPageRoute<void>(
-        builder: (ctx) => Scaffold(
-          backgroundColor: MemeopsColors.bgMid,
-          appBar: AppBar(
-            backgroundColor: Colors.black.withValues(alpha: 0.25),
-            foregroundColor: Colors.white,
-            title: Text(l10n.tabArchive, style: const TextStyle(fontSize: 16)),
-            leading: IconButton(
-              icon: const Icon(Icons.close_rounded),
-              onPressed: () => Navigator.pop(ctx),
-            ),
-            actions: [
-              IconButton(
-                tooltip: l10n.archiveShare,
-                onPressed: () {
-                  shareArchiveImageFromNetworkUrl(
-                    ctx,
-                    url: v.fileUrl,
-                    sourceLabel: l10n.tabArchive,
-                    caption: v.briefLine,
-                  );
-                },
-                icon: const Icon(Icons.share_rounded, size: 22),
-              ),
-            ],
-          ),
-          body: ListView(
-            padding: const EdgeInsets.fromLTRB(12, 12, 12, 24),
-            children: [
-              ClipRRect(
-                borderRadius: BorderRadius.circular(MemeopsRadii.md),
-                child: InteractiveViewer(
-                  minScale: 0.6,
-                  maxScale: 4,
-                  child: Image.network(
-                    v.fileUrl,
-                    fit: BoxFit.contain,
-                    loadingBuilder: (c, w, p) {
-                      if (p == null) {
-                        return w;
-                      }
-                      return const Center(
-                        child: Padding(
-                          padding: EdgeInsets.all(40),
-                          child: CircularProgressIndicator(),
-                        ),
-                      );
-                    },
-                    errorBuilder: (c, e, st) => Padding(
-                      padding: const EdgeInsets.all(24),
-                      child: Text(
-                        l10n.imageLoadError,
-                        style: MemeopsTextStyles.caption(context),
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-              if (v.briefLine != null && v.briefLine!.isNotEmpty) ...[
-                const SizedBox(height: 12),
-                Text(
-                  v.briefLine!,
-                  style: TextStyle(
-                    color: Colors.white.withValues(alpha: 0.9),
-                    fontSize: 14,
-                    height: 1.4,
-                  ),
-                ),
-              ],
-            ],
-          ),
-        ),
+        builder: (_) => _ArchiveCloudStillDetailPage(asset: v, l10n: l10n),
       ),
     );
   }
@@ -414,6 +258,7 @@ class _MemeArchiveScreenState extends State<MemeArchiveScreen> {
       sourceLabel: e.sourceLabel,
       kind: e.kind,
       caption: e.caption,
+      localArchiveId: e.id,
     );
   }
 
@@ -427,6 +272,7 @@ class _MemeArchiveScreenState extends State<MemeArchiveScreen> {
         url: v.fileUrl,
         sourceLabel: l10n.tabArchive,
         caption: v.briefLine,
+        supabaseVersionId: v.id,
       );
     } else {
       await shareArchiveImageFromNetworkUrl(
@@ -434,6 +280,7 @@ class _MemeArchiveScreenState extends State<MemeArchiveScreen> {
         url: v.fileUrl,
         sourceLabel: l10n.tabArchive,
         caption: v.briefLine,
+        supabaseVersionId: v.id,
       );
     }
   }
@@ -763,6 +610,158 @@ class _MemeArchiveScreenState extends State<MemeArchiveScreen> {
                 ),
         ),
       ],
+    );
+  }
+}
+
+class _ArchiveLocalStillDetailPage extends StatefulWidget {
+  const _ArchiveLocalStillDetailPage({
+    required this.entry,
+    required this.file,
+  });
+
+  final MemeArchiveEntry entry;
+  final File file;
+
+  @override
+  State<_ArchiveLocalStillDetailPage> createState() =>
+      _ArchiveLocalStillDetailPageState();
+}
+
+class _ArchiveLocalStillDetailPageState extends State<_ArchiveLocalStillDetailPage> {
+  final _publishKey = GlobalKey<ArchiveDetailPublishSectionState>();
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final e = widget.entry;
+    return Scaffold(
+      backgroundColor: MemeopsColors.bgMid,
+      appBar: AppBar(
+        backgroundColor: Colors.black.withValues(alpha: 0.25),
+        foregroundColor: Colors.white,
+        title: Text(e.sourceLabel, style: const TextStyle(fontSize: 16)),
+        leading: IconButton(
+          icon: const Icon(Icons.close_rounded),
+          onPressed: () => Navigator.pop(context),
+        ),
+        actions: [
+          IconButton(
+            tooltip: l10n.archiveShare,
+            onPressed: () => _publishKey.currentState?.submitPublish(),
+            icon: const Icon(Icons.share_rounded, size: 22),
+          ),
+        ],
+      ),
+      body: ListView(
+        padding: const EdgeInsets.fromLTRB(12, 12, 12, 24),
+        children: [
+          ClipRRect(
+            borderRadius: BorderRadius.circular(MemeopsRadii.md),
+            child: InteractiveViewer(
+              minScale: 0.6,
+              maxScale: 4,
+              child: Image.file(widget.file, fit: BoxFit.contain),
+            ),
+          ),
+          const SizedBox(height: 16),
+          ArchiveDetailPublishSection(
+            key: _publishKey,
+            sourceLabel: e.sourceLabel,
+            initialCaption: e.caption,
+            mediaKind: e.kind,
+            localFile: widget.file,
+            localArchiveId: e.id,
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _ArchiveCloudStillDetailPage extends StatefulWidget {
+  const _ArchiveCloudStillDetailPage({
+    required this.asset,
+    required this.l10n,
+  });
+
+  final SupabaseMemeAssetEntry asset;
+  final AppLocalizations l10n;
+
+  @override
+  State<_ArchiveCloudStillDetailPage> createState() =>
+      _ArchiveCloudStillDetailPageState();
+}
+
+class _ArchiveCloudStillDetailPageState extends State<_ArchiveCloudStillDetailPage> {
+  final _publishKey = GlobalKey<ArchiveDetailPublishSectionState>();
+
+  @override
+  Widget build(BuildContext context) {
+    final v = widget.asset;
+    final l10n = widget.l10n;
+    return Scaffold(
+      backgroundColor: MemeopsColors.bgMid,
+      appBar: AppBar(
+        backgroundColor: Colors.black.withValues(alpha: 0.25),
+        foregroundColor: Colors.white,
+        title: Text(l10n.tabArchive, style: const TextStyle(fontSize: 16)),
+        leading: IconButton(
+          icon: const Icon(Icons.close_rounded),
+          onPressed: () => Navigator.pop(context),
+        ),
+        actions: [
+          IconButton(
+            tooltip: l10n.archiveShare,
+            onPressed: () => _publishKey.currentState?.submitPublish(),
+            icon: const Icon(Icons.share_rounded, size: 22),
+          ),
+        ],
+      ),
+      body: ListView(
+        padding: const EdgeInsets.fromLTRB(12, 12, 12, 24),
+        children: [
+          ClipRRect(
+            borderRadius: BorderRadius.circular(MemeopsRadii.md),
+            child: InteractiveViewer(
+              minScale: 0.6,
+              maxScale: 4,
+              child: Image.network(
+                v.fileUrl,
+                fit: BoxFit.contain,
+                loadingBuilder: (c, w, p) {
+                  if (p == null) {
+                    return w;
+                  }
+                  return const Center(
+                    child: Padding(
+                      padding: EdgeInsets.all(40),
+                      child: CircularProgressIndicator(),
+                    ),
+                  );
+                },
+                errorBuilder: (c, e, st) => Padding(
+                  padding: const EdgeInsets.all(24),
+                  child: Text(
+                    l10n.imageLoadError,
+                    style: MemeopsTextStyles.caption(context),
+                  ),
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(height: 16),
+          ArchiveDetailPublishSection(
+            key: _publishKey,
+            sourceLabel: l10n.tabArchive,
+            initialCaption: v.briefLine,
+            mediaKind: MemeArchiveKind.image,
+            networkUrl: v.fileUrl,
+            supabaseVersionId: v.id,
+            sourceMemeBriefId: v.sourceMemeBriefId,
+          ),
+        ],
+      ),
     );
   }
 }

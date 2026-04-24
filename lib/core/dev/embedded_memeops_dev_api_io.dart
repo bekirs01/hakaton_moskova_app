@@ -144,6 +144,21 @@ abstract final class EmbeddedMemeopsDevApi {
       return;
     }
 
+    if (path == '/api/v1/telegram/channel-post-stats' && request.method == 'POST') {
+      request.response.statusCode = HttpStatus.serviceUnavailable;
+      request.response.write(
+        jsonEncode({
+          'error': {
+            'code': 'needs_python_api',
+            'message':
+                'Post stats (views/reactions) need ./run_telegram_api.sh with Telethon session.',
+          },
+        }),
+      );
+      await request.response.close();
+      return;
+    }
+
     final isInsights =
         path == '/api/v1/telegram/channel-insights' && request.method == 'POST';
 

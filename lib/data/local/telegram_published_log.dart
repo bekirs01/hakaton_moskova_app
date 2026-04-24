@@ -2,6 +2,8 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:flutter/foundation.dart';
+import 'package:hakaton_moskova_app/data/local/meme_local_archive_repository.dart';
+import 'package:hakaton_moskova_app/data/models/supabase_meme_asset_entry.dart';
 import 'package:hakaton_moskova_app/domain/publication_port.dart';
 import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
@@ -9,7 +11,7 @@ import 'package:path_provider/path_provider.dart';
 const _kPlatformTelegram = 'telegram';
 const _kPlatformVk = 'vk';
 
-/// Kanal / VK paylaşımı; analiz sekmesinde listelenir.
+/// Kanal / VK paylaşımı; analiz sekmesinde eşleştirme için [localArchiveId] / [supabaseVersionId].
 class TelegramPublishedEntry {
   const TelegramPublishedEntry({
     required this.id,
@@ -24,6 +26,10 @@ class TelegramPublishedEntry {
     this.vkPostId,
     this.likesCount,
     this.repostsCount,
+    this.localArchiveId,
+    this.supabaseVersionId,
+    this.telegramForwards,
+    this.telegramReactionsJson,
   });
 
   final String id;
@@ -31,6 +37,7 @@ class TelegramPublishedEntry {
   final int? messageId;
   final String? chatId;
   final int? views;
+  final int? telegramForwards;
   final String? caption;
   final bool isVideo;
   final String platform;
@@ -38,6 +45,10 @@ class TelegramPublishedEntry {
   final int? vkPostId;
   final int? likesCount;
   final int? repostsCount;
+  final String? localArchiveId;
+  final String? supabaseVersionId;
+  /// JSON: `[{"label":"👍","count":2,"kind":"emoji"}, ...]`
+  final String? telegramReactionsJson;
 
   bool get isTelegram => platform == _kPlatformTelegram;
   bool get isVk => platform == _kPlatformVk;
@@ -55,6 +66,10 @@ class TelegramPublishedEntry {
         'vkPostId': vkPostId,
         'likesCount': likesCount,
         'repostsCount': repostsCount,
+        'localArchiveId': localArchiveId,
+        'supabaseVersionId': supabaseVersionId,
+        'telegramForwards': telegramForwards,
+        'telegramReactionsJson': telegramReactionsJson,
       };
 
   factory TelegramPublishedEntry.fromJson(Map<String, dynamic> j) {
@@ -72,6 +87,10 @@ class TelegramPublishedEntry {
       vkPostId: (j['vkPostId'] as num?)?.toInt(),
       likesCount: (j['likesCount'] as num?)?.toInt(),
       repostsCount: (j['repostsCount'] as num?)?.toInt(),
+      localArchiveId: j['localArchiveId'] as String?,
+      supabaseVersionId: j['supabaseVersionId'] as String?,
+      telegramForwards: (j['telegramForwards'] as num?)?.toInt(),
+      telegramReactionsJson: j['telegramReactionsJson'] as String?,
     );
   }
 
@@ -79,6 +98,8 @@ class TelegramPublishedEntry {
     int? views,
     int? likesCount,
     int? repostsCount,
+    int? telegramForwards,
+    String? telegramReactionsJson,
   }) {
     return TelegramPublishedEntry(
       id: id,
@@ -93,6 +114,10 @@ class TelegramPublishedEntry {
       vkPostId: vkPostId,
       likesCount: likesCount ?? this.likesCount,
       repostsCount: repostsCount ?? this.repostsCount,
+      localArchiveId: localArchiveId,
+      supabaseVersionId: supabaseVersionId,
+      telegramForwards: telegramForwards ?? this.telegramForwards,
+      telegramReactionsJson: telegramReactionsJson ?? this.telegramReactionsJson,
     );
   }
 }
@@ -108,6 +133,72 @@ class TelegramPublishedLogRepository {
 
   List<TelegramPublishedEntry> get items =>
       List<TelegramPublishedEntry>.unmodifiable(_items);
+
+  /// Arşiv satırı ile paylaşım kaydını eşleştirir.
+  TelegramPublishedEntry? findForArchiveItem({
+    String? localArchiveId,
+    String? supabaseVersionId,
+  }) {
+    for (final e in _items) {
+      if (localArchiveId != null &&
+          e.localArchiveId != null &&
+          e.localArchiveId == localArchiveId) {
+        return e;
+      }
+      if (supabaseVersionId != null &&
+          e.supabaseVersionId != null &&
+          e.supabaseVersionId == supabaseVersionId) {
+        return e;
+      }
+    }
+    return null;
+  }
+
+  /// Id eşleşmediyse: aynı tür, altyazı ve zaman yakınlığı (eski paylaşımlar için).
+  TelegramPublishedEntry? findFuzzyForArchiveItem({
+    MemeArchiveEntry? local,
+    SupabaseMemeAssetEntry? cloud,
+  }) {
+    final direct = findForArchiveItem(
+      localArchiveId: local?.id,
+      supabaseVersionId: cloud?.id,
+    );
+    if (direct != null) {
+      return direct;
+    }
+    final l = local;
+    final isVid = l != null
+        ? l.kind == MemeArchiveKind.video
+        : cloud!.isVideo;
+    final t0 = l != null ? l.createdAt : cloud!.createdAt;
+    var cap = l != null
+        ? (l.caption ?? '').trim()
+        : (cloud!.briefLine ?? '').trim();
+
+    TelegramPublishedEntry? best;
+    for (final e in _items) {
+      if (e.isVideo != isVid) {
+        continue;
+      }
+      final ec = (e.caption ?? '').trim();
+      if (cap.isNotEmpty) {
+        if (ec != cap) {
+          continue;
+        }
+        if (e.publishedAt.difference(t0).inHours.abs() > 24 * 7) {
+          continue;
+        }
+      } else {
+        if (e.publishedAt.difference(t0).inSeconds.abs() > 600) {
+          continue;
+        }
+      }
+      if (best == null || e.publishedAt.isAfter(best.publishedAt)) {
+        best = e;
+      }
+    }
+    return best;
+  }
 
   Future<File> _file() async {
     final doc = await getApplicationDocumentsDirectory();
@@ -161,6 +252,8 @@ class TelegramPublishedLogRepository {
     PublicationResult r, {
     String? caption,
     bool isVideo = false,
+    String? localArchiveId,
+    String? supabaseVersionId,
   }) async {
     if (r.comingSoon) {
       return;
@@ -185,6 +278,9 @@ class TelegramPublishedLogRepository {
         caption: caption,
         isVideo: isVideo,
         platform: _kPlatformTelegram,
+        localArchiveId: localArchiveId,
+        supabaseVersionId: supabaseVersionId,
+        telegramForwards: r.telegramForwards,
       ),
     );
     try {
@@ -201,6 +297,8 @@ class TelegramPublishedLogRepository {
     required int? vkPostId,
     String? caption,
     bool isVideo = false,
+    String? localArchiveId,
+    String? supabaseVersionId,
   }) async {
     if (vkPostId == null) {
       return;
@@ -217,6 +315,8 @@ class TelegramPublishedLogRepository {
         platform: _kPlatformVk,
         vkGroupId: vkGroupId,
         vkPostId: vkPostId,
+        localArchiveId: localArchiveId,
+        supabaseVersionId: supabaseVersionId,
       ),
     );
     try {
@@ -227,12 +327,14 @@ class TelegramPublishedLogRepository {
     onChanged.value++;
   }
 
-  /// Detay ekranında VK metriklerini yenilemek için.
+  /// Detay ekranında VK / Telethon ile çekilen metrikleri kaydetmek için.
   Future<void> updateEntry(
     String id, {
     int? views,
     int? likesCount,
     int? repostsCount,
+    int? telegramForwards,
+    String? telegramReactionsJson,
   }) async {
     await ensureLoaded();
     final i = _ix(id);
@@ -243,6 +345,8 @@ class TelegramPublishedLogRepository {
       views: views,
       likesCount: likesCount,
       repostsCount: repostsCount,
+      telegramForwards: telegramForwards,
+      telegramReactionsJson: telegramReactionsJson,
     );
     try {
       await _persist();

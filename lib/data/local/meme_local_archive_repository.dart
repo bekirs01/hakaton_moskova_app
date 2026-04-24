@@ -229,6 +229,30 @@ class MemeLocalArchiveRepository {
     onChanged.value++;
   }
 
+  /// [index.json] içinde açıklamayı günceller (boş string → null).
+  Future<void> updateEntryCaption(String id, String? caption) async {
+    final list = await _loadEntriesImpl();
+    final idx = list.indexWhere((e) => e.id == id);
+    if (idx < 0) {
+      return;
+    }
+    final e = list[idx];
+    final trimmed = caption?.trim();
+    final nextCaption = (trimmed == null || trimmed.isEmpty) ? null : trimmed;
+    list[idx] = MemeArchiveEntry(
+      id: e.id,
+      localFileName: e.localFileName,
+      createdAt: e.createdAt,
+      caption: nextCaption,
+      sourceLabel: e.sourceLabel,
+      kind: e.kind,
+      durationSeconds: e.durationSeconds,
+      sourceUrl: e.sourceUrl,
+    );
+    await _saveEntries(list);
+    onChanged.value++;
+  }
+
   /// İndeksten çıkarır ve dosyayı siler.
   Future<void> removeEntry(MemeArchiveEntry e) async {
     final list = await _loadEntriesImpl();

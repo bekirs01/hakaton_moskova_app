@@ -64,7 +64,7 @@ class VkWallClient {
   ) async {
     final q = {
       ...p,
-      'access_token': AppEnv.vkAccessToken,
+      'access_token': AppEnv.vkApiAccessToken,
       'v': _v,
     };
     final u = Uri.https('api.vk.com', 'method/$method', q);
@@ -78,7 +78,7 @@ class VkWallClient {
   Future<dynamic> _postFormResponse(String method, Map<String, String> p) async {
     final body = {
       ...p,
-      'access_token': AppEnv.vkAccessToken,
+      'access_token': AppEnv.vkApiAccessToken,
       'v': _v,
     };
     final u = Uri.https('api.vk.com', 'method/$method');
@@ -106,14 +106,29 @@ class VkWallClient {
     if (response is num) {
       return response.toInt();
     }
+    if (response is String) {
+      return int.tryParse(response.trim());
+    }
     if (response is Map) {
-      final o = response['post_id'];
-      if (o is int) {
-        return o;
+      final m = Map<dynamic, dynamic>.from(response);
+      for (final key in <String>['post_id', 'id']) {
+        final o = m[key];
+        if (o is int) {
+          return o;
+        }
+        if (o is num) {
+          return o.toInt();
+        }
+        if (o is String) {
+          final p = int.tryParse(o.trim());
+          if (p != null) {
+            return p;
+          }
+        }
       }
-      if (o is num) {
-        return o.toInt();
-      }
+    }
+    if (kDebugMode) {
+      debugPrint('VK wall.post: unexpected response shape: $response');
     }
     return null;
   }
@@ -190,7 +205,7 @@ class VkWallClient {
       'server': '$server',
       'photo': photo,
       'hash': hash,
-      'access_token': AppEnv.vkAccessToken,
+      'access_token': AppEnv.vkApiAccessToken,
       'v': _v,
     };
     final uSave = Uri.https('api.vk.com', 'method/photos.saveWallPhoto');
@@ -219,7 +234,14 @@ class VkWallClient {
       'message': _msg(message),
       'attachments': att,
     });
-    return VkPublishResult(postId: _parseWallPostId(wallRes));
+    final postId = _parseWallPostId(wallRes);
+    if (postId == null) {
+      if (kDebugMode) {
+        debugPrint('VK wall.post (photo) raw: $wallRes');
+      }
+      throw StateError('wall.post: no post_id in response');
+    }
+    return VkPublishResult(postId: postId);
   }
 
   /// video.save → yük (video_file) → wall.post
@@ -272,7 +294,14 @@ class VkWallClient {
       'message': _msg(message),
       'attachments': att,
     });
-    return VkPublishResult(postId: _parseWallPostId(wallRes));
+    final postId = _parseWallPostId(wallRes);
+    if (postId == null) {
+      if (kDebugMode) {
+        debugPrint('VK wall.post (video) raw: $wallRes');
+      }
+      throw StateError('wall.post: no post_id in response');
+    }
+    return VkPublishResult(postId: postId);
   }
 
   Future<VkPublishResult> publishFile(
@@ -292,7 +321,7 @@ class VkWallClient {
     required int groupId,
     required int postId,
   }) async {
-    if (AppEnv.vkAccessToken.isEmpty) {
+    if (AppEnv.vkApiAccessToken.isEmpty) {
       return null;
     }
     final id = '-${groupId}_$postId';

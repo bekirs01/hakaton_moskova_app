@@ -20,6 +20,7 @@ class PublicationResult {
     this.telegramMessageId,
     this.telegramChatId,
     this.telegramViews,
+    this.telegramForwards,
   });
 
   final bool comingSoon;
@@ -29,6 +30,7 @@ class PublicationResult {
   final int? telegramMessageId;
   final String? telegramChatId;
   final int? telegramViews;
+  final int? telegramForwards;
 }
 
 class StubPublicationPort implements PublicationPort {

@@ -49,6 +49,34 @@
   "archiveFileMissing": "Файл не найден (возможно удалён).",
   "archiveShare": "Поделиться",
   "archiveShareFailed": "Не удалось открыть меню шаринга.",
+  "archiveShareFailedWithError": "Публикация: {error}",
+  "@archiveShareFailedWithError": {
+    "placeholders": {
+      "error": {"type": "String"}
+    }
+  },
+  "archiveShareSheetSubtitle": "Telegram или ВК. Расписание и текст — внутри карточки в архиве.",
+  "archiveCaptionLabel": "Текст к посту",
+  "archiveCaptionSave": "Сохранить текст",
+  "archiveCaptionSaved": "Текст сохранён.",
+  "archiveCaptionCloudNeedsBrief": "Нет связанного brief; текст используется только для этой отправки.",
+  "archivePublishTitle": "Публикация",
+  "archivePublishChannelsSubtitle": "Можно отметить несколько каналов.",
+  "archivePublishSelectAtLeastOneChannel": "Выберите хотя бы один канал.",
+  "archivePublishWhenHeading": "Когда отправить",
+  "archivePublishWhenNow": "Сразу",
+  "archivePublishWhenSchedule": "Позже",
+  "archivePublishPickDateTime": "Дата и время",
+  "archivePublishSubmit": "Отправить",
+  "archivePublishScheduledAck": "Запланировано: {when}",
+  "@archivePublishScheduledAck": {
+    "placeholders": {
+      "when": {"type": "String"}
+    }
+  },
+  "archivePublishChooseSchedule": "Сначала выберите дату и время.",
+  "archivePublishSchedulePast": "Время не может быть в прошлом.",
+  "archivePublishScheduleNeedOpenApp": "Очередь работает пока приложение открыто; если закрыто — отправка может задержаться.",
   "archiveDownloadFailed": "Не удалось скачать изображение (HTTP {code}).",
   "archiveListLoadError": "Список долго не открывался. Потяните вниз, чтобы обновить.",
   "archiveEntryDeleteTitle": "Удалить?",
@@ -64,9 +92,13 @@
   "shareTargetSubtitle": "Выберите сервис; сеть уйдёт только на эту публикацию.",
   "shareTargetTelegram": "Telegram (канал)",
   "shareTargetVk": "ВКонтакте (стена группы)",
-  "shareNoServiceConfigured": "Для публикации в .env нужны TELEGRAM_PUBLISH_* или VK_ACCESS_TOKEN + VK_GROUP_ID.",
+  "shareTargetDzen": "Дзен (только выбор, имитация)",
+  "shareNoServiceConfigured": "В .env нужны TELEGRAM_PUBLISH_* или VK_ACCESS_TOKEN + VK_GROUP_ID; Дзен также всегда доступен (имитация).",
+  "archivePublishNoTgVkDzenOnly": "Telegram и VK в .env не настроены. Можно выбрать Дзен (имитация).",
+  "dzenPublishSimulated": "Дзен: публикация только имитирована, реального поста нет.",
   "vkPostDone": "Опубликовано в VK.",
   "vkPostFailed": "Публикация в VK не удалась.",
+  "vkPostNeedUserToken": "VK: community token не подходит для загрузки. Добавь OAuth пользователя в .env: VK_USER_ACCESS_TOKEN= (права: wall, photos, video, groups, offline). Скрипт: ./setup_vk_user_token.sh",
   "analysisTitle": "Анализ Telegram",
   "analysisSubtitle": "Собирайте сигналы из live-анализа: когда канал активнее, какие форматы тянут лучше и какие посты выглядят сильнее.",
   "analysisEmpty": "Сначала проанализируйте канал во вкладке Telegram. Последний результат появится здесь.",
@@ -86,6 +118,10 @@
   "analysisMyPublications": "Отправлено в канал с этого устройства",
   "analysisMyPublicationsBody": "После публикации в Telegram или VK из «Архива» здесь появляется запись. В деталях — просмотры; для VK обновите кнопкой. Ниже — анализ канала.",
   "analysisNoMyPublications": "Пока нет публикаций в канал из приложения. Попробуй «Поделиться» в Профессии / Telegram или в «Архиве».",
+  "analysisEmptyVideoGrid": "Пока нет опубликованных видео. Поделись из «Архива» в Telegram или VK — карточка появится здесь.",
+  "analysisNotSharedTitle": "Пока нет метрик",
+  "analysisNotSharedBody": "Файл в архиве, но нет публикации из приложения в Telegram/VK. Поделись из «Архива». Старые записи без id могут не сопасться.",
+  "analysisOpenPreview": "Открыть просмотр",
   "analysisViewCount": "{n} просм.",
   "@analysisViewCount": {
     "placeholders": {
@@ -98,11 +134,37 @@
   "analysisPlatformTelegram": "Telegram",
   "analysisPlatformVk": "ВКонтакте",
   "publicationDetailTitle": "Детали публикации",
+  "publicationDetailSectionInfo": "Сведения",
+  "publicationDetailPublishedAt": "Публикация",
+  "publicationDetailRefreshTelegram": "Обновить метрики Telegram",
   "publicationDetailRefreshVk": "Обновить статистику VK",
+  "publicationDetailReactions": "Реакции",
+  "publicationDetailReactionsEmpty": "—",
+  "publicationDetailEmojiReaction": "{emoji}  ×{count}",
+  "@publicationDetailEmojiReaction": {
+    "placeholders": {
+      "emoji": {"type": "String"},
+      "count": {"type": "int"}
+    }
+  },
+  "publicationDetailCustomReaction": "Своя  ×{count}",
+  "@publicationDetailCustomReaction": {
+    "placeholders": {
+      "count": {"type": "int"}
+    }
+  },
+  "publicationDetailReactionCountOnly": "×{count}",
+  "@publicationDetailReactionCountOnly": {
+    "placeholders": {
+      "count": {"type": "int"}
+    }
+  },
   "publicationDetailKind": "Тип",
   "publicationDetailMessageId": "Сообщение",
   "publicationDetailChat": "Чат",
+  "publicationDetailChannel": "Канал (Telegram)",
   "publicationDetailViews": "Просмотры",
+  "publicationDetailForwards": "Пересылок (Telegram)",
   "publicationDetailVkGroup": "Группа",
   "publicationDetailVkPost": "Пост",
   "publicationDetailVkHint": "Нажмите «Обновить»",

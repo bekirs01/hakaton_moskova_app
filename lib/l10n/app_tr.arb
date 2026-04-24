@@ -54,6 +54,34 @@
   "archiveFileMissing": "Dosya bulunamadı (silinmiş olabilir).",
   "archiveShare": "Paylaş",
   "archiveShareFailed": "Paylaşma menüsü açılamadı.",
+  "archiveShareFailedWithError": "Paylaşma: {error}",
+  "@archiveShareFailedWithError": {
+    "placeholders": {
+      "error": {"type": "String"}
+    }
+  },
+  "archiveShareSheetSubtitle": "Telegram veya VK. Zamanlama ve metin düzenleme: arşivde öğenin içine girin.",
+  "archiveCaptionLabel": "Gönderi metni",
+  "archiveCaptionSave": "Metni kaydet",
+  "archiveCaptionSaved": "Metin kaydedildi.",
+  "archiveCaptionCloudNeedsBrief": "Bu bulut kaydında brief bağlantısı yok; metin yalnızca bu gönderim için kullanılır.",
+  "archivePublishTitle": "Paylaşım",
+  "archivePublishChannelsSubtitle": "Birden fazla kanal işaretleyebilirsiniz.",
+  "archivePublishSelectAtLeastOneChannel": "En az bir kanal seçin.",
+  "archivePublishWhenHeading": "Gönderim zamanı",
+  "archivePublishWhenNow": "Hemen gönder",
+  "archivePublishWhenSchedule": "İleri tarih",
+  "archivePublishPickDateTime": "Tarih ve saat seç",
+  "archivePublishSubmit": "Gönder",
+  "archivePublishScheduledAck": "Zamanlandı: {when}",
+  "@archivePublishScheduledAck": {
+    "placeholders": {
+      "when": {"type": "String"}
+    }
+  },
+  "archivePublishChooseSchedule": "Önce tarih ve saat seçin.",
+  "archivePublishSchedulePast": "Zaman geçmiş olamaz.",
+  "archivePublishScheduleNeedOpenApp": "Uygulama açıkken sıraya alınır; tamamen kapalıysa gönderim gecikebilir.",
   "archiveDownloadFailed": "Görsel indirilemedi (HTTP {code}).",
   "@archiveDownloadFailed": {
     "placeholders": {
@@ -74,9 +102,13 @@
   "shareTargetSubtitle": "Hedefi seç; ağ isteği sadece bu paylaşım için gider.",
   "shareTargetTelegram": "Telegram (kanal)",
   "shareTargetVk": "ВКонтакте (grup duvarı)",
-  "shareNoServiceConfigured": "Paylaşım için .env içinde TELEGRAM_PUBLISH_* veya VK_ACCESS_TOKEN + VK_GROUP_ID gerekir.",
+  "shareTargetDzen": "Дзен (Dzen) — yalnızca seçim (simülasyon)",
+  "shareNoServiceConfigured": "Paylaşım için .env içinde TELEGRAM_PUBLISH_* veya VK_ACCESS_TOKEN + VK_GROUP_ID gerekir; Dzen ayrıca her zaman (simüle) seçilebilir.",
+  "archivePublishNoTgVkDzenOnly": "Telegram ve VK .env’te tanımlı değil. Aşağıdan Dzen’i (simülasyon) seçebilirsin.",
+  "dzenPublishSimulated": "Dzen: gönderim yalnızca simüle edildi; gerçek yayı yok.",
   "vkPostDone": "VK’da paylaşıldı.",
   "vkPostFailed": "VK paylaşımı başarısız.",
+  "vkPostNeedUserToken": "VK: topluluk (grup) access token resim/gönderi yükleyemez. .env’e kullanıcı OAuth token ekle: VK_USER_ACCESS_TOKEN= (kapsam: wall, photos, video, groups, offline). Proje kökünde: ./setup_vk_user_token.sh",
   "analysisTitle": "Telegram analizi",
   "analysisSubtitle": "Canlı analizden gelen sinyalleri burada topla; hangi saatler, hangi formatlar ve hangi gönderi tipleri daha güçlü görünüyor hızlıca gör.",
   "analysisEmpty": "Önce Telegram sekmesinden bir kanal analiz et. Son sonuç burada görünür.",
@@ -96,6 +128,10 @@
   "analysisMyPublications": "Bu cihazdan kanala paylaştıkların",
   "analysisMyPublicationsBody": "Telegram veya VK’ya arşivden paylaştığında burada listelenir: Telegram’da mesaj no ve izlenme; VK’da duvar gönderi no. Detayda metrikleri görebilir, VK’da yenile ile güncelleyebilirsin. Kanal analizi aşağıda devam eder.",
   "analysisNoMyPublications": "Bu uygulamadan henüz kanal paylaşımı yok. Meslek / Telegram veya Arşiv’deki paylaş akışını dene.",
+  "analysisEmptyVideoGrid": "Henüz paylaştığın video yok. Arşivden videoyu Telegram veya VK’ya paylaş; burada ızgarada görünür.",
+  "analysisNotSharedTitle": "Henüz bu içerik için metrik yok",
+  "analysisNotSharedBody": "Bu medya arşivde kayıtlı ancak uygulamadan Telegram / VK’ya eşleşen bir paylaşım yok. Arşivden paylaş; sonraki açılışlarda burada izlenme ve (VK’da) beğeni / paylaşım görebilirsin. Eski paylaşımlar kimlik eşleşmediyse de boş kalabilir.",
+  "analysisOpenPreview": "Önizleme aç",
   "analysisViewCount": "{n} izlenme",
   "@analysisViewCount": {
     "placeholders": {
@@ -108,11 +144,37 @@
   "analysisPlatformTelegram": "Telegram",
   "analysisPlatformVk": "ВКонтакте",
   "publicationDetailTitle": "Paylaşım detayı",
+  "publicationDetailSectionInfo": "Bilgiler",
+  "publicationDetailPublishedAt": "Yayın",
+  "publicationDetailRefreshTelegram": "Telegram metriklerini yenile",
   "publicationDetailRefreshVk": "VK istatistiklerini yenile",
+  "publicationDetailReactions": "Reaksiyonlar",
+  "publicationDetailReactionsEmpty": "—",
+  "publicationDetailEmojiReaction": "{emoji}  ×{count}",
+  "@publicationDetailEmojiReaction": {
+    "placeholders": {
+      "emoji": {"type": "String"},
+      "count": {"type": "int"}
+    }
+  },
+  "publicationDetailCustomReaction": "Özel  ×{count}",
+  "@publicationDetailCustomReaction": {
+    "placeholders": {
+      "count": {"type": "int"}
+    }
+  },
+  "publicationDetailReactionCountOnly": "×{count}",
+  "@publicationDetailReactionCountOnly": {
+    "placeholders": {
+      "count": {"type": "int"}
+    }
+  },
   "publicationDetailKind": "Tür",
   "publicationDetailMessageId": "Mesaj",
   "publicationDetailChat": "Sohbet",
+  "publicationDetailChannel": "Kanal (Telegram)",
   "publicationDetailViews": "İzlenme",
+  "publicationDetailForwards": "İletme (Telegram)",
   "publicationDetailVkGroup": "Grup",
   "publicationDetailVkPost": "Gönderi",
   "publicationDetailVkHint": "Yenile ile çekilebilir",

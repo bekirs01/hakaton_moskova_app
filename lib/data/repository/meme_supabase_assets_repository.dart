@@ -123,8 +123,17 @@ class MemeSupabaseAssetsRepository {
         versionNumber: vn,
         isVideo: isVid,
         briefLine: bl,
+        sourceMemeBriefId: bid,
       );
     }).toList();
+  }
+
+  /// Arşivde düzenlenen açıklamayı [suggested_caption_ru] alanına yazar.
+  Future<void> updateBriefSuggestedCaption(String briefId, String caption) async {
+    final t = caption.trim();
+    await _client.from('meme_briefs').update({
+      'suggested_caption_ru': t,
+    }).eq('id', briefId);
   }
 
   /// [meme_asset_versions] satırını siler; [storage_path] varsa depo dosyasını kaldırmayı dener.

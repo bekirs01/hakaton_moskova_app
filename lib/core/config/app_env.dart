@@ -79,13 +79,41 @@ class AppEnv {
   static bool get isTelegramPublishConfigured =>
       telegramPublishBotToken.isNotEmpty && telegramPublishChannel.isNotEmpty;
 
-  /// VK: kullanıcı token’ı (grup duvarı; [wall, photos, video, groups] kapsamı). Repoya koyma.
+  /// OAuth istemci id (yalnızca `setup_vk_user_token.sh` / dokümantasyon; API çağrılarında kullanılmaz).
+  static String get vkAppId {
+    const fromDefine = String.fromEnvironment('VK_APP_ID');
+    if (fromDefine.isNotEmpty) {
+      return fromDefine.trim();
+    }
+    return _envLine('VK_APP_ID');
+  }
+
+  /// VK: uygulamada ayrıca set edilebilen ham token (geçmiş uyumluluk). Repoya koyma.
   static String get vkAccessToken {
     const fromDefine = String.fromEnvironment('VK_ACCESS_TOKEN');
     if (fromDefine.isNotEmpty) {
       return fromDefine.trim();
     }
     return _envLine('VK_ACCESS_TOKEN');
+  }
+
+  /// Kullanıcı (OAuth) access token. Topluluk/gizli grup token’ı ile
+  /// `photos.getWallUploadServer` çağrılamaz; doluysa tüm [VkWallClient] istekleri buna gider.
+  static String get vkUserAccessToken {
+    const fromDefine = String.fromEnvironment('VK_USER_ACCESS_TOKEN');
+    if (fromDefine.isNotEmpty) {
+      return fromDefine.trim();
+    }
+    return _envLine('VK_USER_ACCESS_TOKEN');
+  }
+
+  /// [VkWallClient] için: önce kullanıcı token, yoksa [vkAccessToken].
+  static String get vkApiAccessToken {
+    final u = vkUserAccessToken;
+    if (u.isNotEmpty) {
+      return u;
+    }
+    return vkAccessToken;
   }
 
   /// Pozitif grup id (vk.com/club[ … ]), boş bırakılırsa sadece kendi duvarı (destek sınırlı).
@@ -97,5 +125,6 @@ class AppEnv {
     return _envLine('VK_GROUP_ID');
   }
 
-  static bool get isVkPublishConfigured => vkAccessToken.isNotEmpty && vkGroupId.isNotEmpty;
+  static bool get isVkPublishConfigured =>
+      vkGroupId.isNotEmpty && vkApiAccessToken.isNotEmpty;
 }

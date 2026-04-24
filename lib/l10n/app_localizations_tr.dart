@@ -171,6 +171,68 @@ class AppLocalizationsTr extends AppLocalizations {
   String get archiveShareFailed => 'Paylaşma menüsü açılamadı.';
 
   @override
+  String archiveShareFailedWithError(String error) {
+    return 'Paylaşma: $error';
+  }
+
+  @override
+  String get archiveShareSheetSubtitle =>
+      'Telegram veya VK. Zamanlama ve metin düzenleme: arşivde öğenin içine girin.';
+
+  @override
+  String get archiveCaptionLabel => 'Gönderi metni';
+
+  @override
+  String get archiveCaptionSave => 'Metni kaydet';
+
+  @override
+  String get archiveCaptionSaved => 'Metin kaydedildi.';
+
+  @override
+  String get archiveCaptionCloudNeedsBrief =>
+      'Bu bulut kaydında brief bağlantısı yok; metin yalnızca bu gönderim için kullanılır.';
+
+  @override
+  String get archivePublishTitle => 'Paylaşım';
+
+  @override
+  String get archivePublishChannelsSubtitle =>
+      'Birden fazla kanal işaretleyebilirsiniz.';
+
+  @override
+  String get archivePublishSelectAtLeastOneChannel => 'En az bir kanal seçin.';
+
+  @override
+  String get archivePublishWhenHeading => 'Gönderim zamanı';
+
+  @override
+  String get archivePublishWhenNow => 'Hemen gönder';
+
+  @override
+  String get archivePublishWhenSchedule => 'İleri tarih';
+
+  @override
+  String get archivePublishPickDateTime => 'Tarih ve saat seç';
+
+  @override
+  String get archivePublishSubmit => 'Gönder';
+
+  @override
+  String archivePublishScheduledAck(String when) {
+    return 'Zamanlandı: $when';
+  }
+
+  @override
+  String get archivePublishChooseSchedule => 'Önce tarih ve saat seçin.';
+
+  @override
+  String get archivePublishSchedulePast => 'Zaman geçmiş olamaz.';
+
+  @override
+  String get archivePublishScheduleNeedOpenApp =>
+      'Uygulama açıkken sıraya alınır; tamamen kapalıysa gönderim gecikebilir.';
+
+  @override
   String archiveDownloadFailed(int code) {
     return 'Görsel indirilemedi (HTTP $code).';
   }
@@ -222,14 +284,29 @@ class AppLocalizationsTr extends AppLocalizations {
   String get shareTargetVk => 'ВКонтакте (grup duvarı)';
 
   @override
+  String get shareTargetDzen => 'Дзен (Dzen) — yalnızca seçim (simülasyon)';
+
+  @override
   String get shareNoServiceConfigured =>
-      'Paylaşım için .env içinde TELEGRAM_PUBLISH_* veya VK_ACCESS_TOKEN + VK_GROUP_ID gerekir.';
+      'Paylaşım için .env içinde TELEGRAM_PUBLISH_* veya VK_ACCESS_TOKEN + VK_GROUP_ID gerekir; Dzen ayrıca her zaman (simüle) seçilebilir.';
+
+  @override
+  String get archivePublishNoTgVkDzenOnly =>
+      'Telegram ve VK .env’te tanımlı değil. Aşağıdan Dzen’i (simülasyon) seçebilirsin.';
+
+  @override
+  String get dzenPublishSimulated =>
+      'Dzen: gönderim yalnızca simüle edildi; gerçek yayı yok.';
 
   @override
   String get vkPostDone => 'VK’da paylaşıldı.';
 
   @override
   String get vkPostFailed => 'VK paylaşımı başarısız.';
+
+  @override
+  String get vkPostNeedUserToken =>
+      'VK: topluluk (grup) access token resim/gönderi yükleyemez. .env’e kullanıcı OAuth token ekle: VK_USER_ACCESS_TOKEN= (kapsam: wall, photos, video, groups, offline). Proje kökünde: ./setup_vk_user_token.sh';
 
   @override
   String get analysisTitle => 'Telegram analizi';
@@ -293,6 +370,20 @@ class AppLocalizationsTr extends AppLocalizations {
       'Bu uygulamadan henüz kanal paylaşımı yok. Meslek / Telegram veya Arşiv’deki paylaş akışını dene.';
 
   @override
+  String get analysisEmptyVideoGrid =>
+      'Henüz paylaştığın video yok. Arşivden videoyu Telegram veya VK’ya paylaş; burada ızgarada görünür.';
+
+  @override
+  String get analysisNotSharedTitle => 'Henüz bu içerik için metrik yok';
+
+  @override
+  String get analysisNotSharedBody =>
+      'Bu medya arşivde kayıtlı ancak uygulamadan Telegram / VK’ya eşleşen bir paylaşım yok. Arşivden paylaş; sonraki açılışlarda burada izlenme ve (VK’da) beğeni / paylaşım görebilirsin. Eski paylaşımlar kimlik eşleşmediyse de boş kalabilir.';
+
+  @override
+  String get analysisOpenPreview => 'Önizleme aç';
+
+  @override
   String analysisViewCount(int n) {
     return '$n izlenme';
   }
@@ -316,7 +407,37 @@ class AppLocalizationsTr extends AppLocalizations {
   String get publicationDetailTitle => 'Paylaşım detayı';
 
   @override
+  String get publicationDetailSectionInfo => 'Bilgiler';
+
+  @override
+  String get publicationDetailPublishedAt => 'Yayın';
+
+  @override
+  String get publicationDetailRefreshTelegram => 'Telegram metriklerini yenile';
+
+  @override
   String get publicationDetailRefreshVk => 'VK istatistiklerini yenile';
+
+  @override
+  String get publicationDetailReactions => 'Reaksiyonlar';
+
+  @override
+  String get publicationDetailReactionsEmpty => '—';
+
+  @override
+  String publicationDetailEmojiReaction(String emoji, int count) {
+    return '$emoji  ×$count';
+  }
+
+  @override
+  String publicationDetailCustomReaction(int count) {
+    return 'Özel  ×$count';
+  }
+
+  @override
+  String publicationDetailReactionCountOnly(int count) {
+    return '×$count';
+  }
 
   @override
   String get publicationDetailKind => 'Tür';
@@ -328,7 +449,13 @@ class AppLocalizationsTr extends AppLocalizations {
   String get publicationDetailChat => 'Sohbet';
 
   @override
+  String get publicationDetailChannel => 'Kanal (Telegram)';
+
+  @override
   String get publicationDetailViews => 'İzlenme';
+
+  @override
+  String get publicationDetailForwards => 'İletme (Telegram)';
 
   @override
   String get publicationDetailVkGroup => 'Grup';

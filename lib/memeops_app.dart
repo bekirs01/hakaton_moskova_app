@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:hakaton_moskova_app/core/config/app_env.dart';
 import 'package:hakaton_moskova_app/core/locale/app_locale_controller.dart';
+import 'package:hakaton_moskova_app/core/ui/memeops_messenger.dart';
 import 'package:hakaton_moskova_app/l10n/app_localizations.dart';
 import 'package:hakaton_moskova_app/presentation/screens/auth_sign_in_screen.dart';
 import 'package:hakaton_moskova_app/presentation/screens/config_missing_screen.dart';
@@ -24,6 +25,7 @@ class MemeopsApp extends StatelessWidget {
             title: title,
             theme: theme,
             debugShowCheckedModeBanner: false,
+            scaffoldMessengerKey: MemeopsMessenger.scaffoldMessengerKey,
             locale: AppLocaleController.instance.locale,
             supportedLocales: const [Locale('tr'), Locale('ru')],
             localizationsDelegates: const [
@@ -40,6 +42,7 @@ class MemeopsApp extends StatelessWidget {
           title: title,
           theme: theme,
           debugShowCheckedModeBanner: false,
+          scaffoldMessengerKey: MemeopsMessenger.scaffoldMessengerKey,
           locale: AppLocaleController.instance.locale,
           supportedLocales: const [Locale('tr'), Locale('ru')],
           localizationsDelegates: const [

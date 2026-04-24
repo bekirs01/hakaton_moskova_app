@@ -3,48 +3,48 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:hakaton_moskova_app/core/config/app_env.dart';
+import 'package:hakaton_moskova_app/core/locale/app_locale_controller.dart';
+import 'package:hakaton_moskova_app/core/ui/memeops_messenger.dart';
 import 'package:hakaton_moskova_app/data/local/meme_local_archive_repository.dart';
 import 'package:hakaton_moskova_app/data/local/telegram_published_log.dart';
 import 'package:hakaton_moskova_app/data/publication/publication_port_provider.dart';
 import 'package:hakaton_moskova_app/data/publication/vk_wall_client.dart';
 import 'package:hakaton_moskova_app/l10n/app_localizations.dart';
 import 'package:hakaton_moskova_app/presentation/utils/share_target.dart';
+import 'package:hakaton_moskova_app/presentation/widgets/memeops_archive_publish_sheet.dart';
 import 'package:http/http.dart' as http;
 import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
 
-Future<MemeopsShareTarget?> _pickOrInform(
-  BuildContext context, {
-  required AppLocalizations l10n,
-}) async {
-  final hasTg = AppEnv.isTelegramPublishConfigured;
-  final hasVk = AppEnv.isVkPublishConfigured;
-  if (!hasTg && !hasVk) {
-    if (context.mounted) {
-      ScaffoldMessenger.maybeOf(context)?.showSnackBar(
-        SnackBar(content: Text(l10n.shareNoServiceConfigured)),
-      );
-    }
-    return null;
+AppLocalizations _l10n(BuildContext? context) {
+  if (context != null) {
+    return AppLocalizations.of(context);
   }
-  if (!context.mounted) {
-    return null;
-  }
-  return pickShareTarget(
-    context,
-    hasTelegram: hasTg,
-    hasVk: hasVk,
-  );
+  return lookupAppLocalizations(AppLocaleController.instance.locale);
 }
 
-Future<void> _shareTelegram(
-  BuildContext context, {
+void _snackSafe(BuildContext? context, String text) {
+  ScaffoldMessengerState? m;
+  if (context != null && context.mounted) {
+    m = ScaffoldMessenger.maybeOf(context);
+  }
+  m ??= MemeopsMessenger.scaffoldMessengerKey.currentState;
+  m?.showSnackBar(SnackBar(content: Text(text)));
+}
+
+/// Kök [Navigator] + `useRootNavigator` ile açılır; iç içe rotada «paylaş menüsü açılamadı» riskini azaltır.
+Future<MemeopsShareTarget?> _pickMemeopsShareTarget(BuildContext context) {
+  return showMemeopsArchivePublishSheet(context);
+}
+
+Future<void> _shareTelegram({
   required File file,
   required MemeArchiveKind kind,
   required String shareText,
   required AppLocalizations l10n,
+  String? localArchiveId,
+  String? supabaseVersionId,
 }) async {
-  final messenger = ScaffoldMessenger.maybeOf(context);
   final publish = createPublicationPort();
   final result = await publish.publishMeme(
     imageUrl: null,
@@ -53,41 +53,35 @@ Future<void> _shareTelegram(
     isVideo: kind == MemeArchiveKind.video,
     captionOverride: shareText,
   );
-  if (!context.mounted) {
-    return;
-  }
   unawaited(
     TelegramPublishedLogRepository.instance
         .recordIfPublished(
           result,
           caption: shareText,
           isVideo: kind == MemeArchiveKind.video,
+          localArchiveId: localArchiveId,
+          supabaseVersionId: supabaseVersionId,
         )
         .catchError((Object e, StackTrace s) {
           debugPrint('recordIfPublished: $e\n$s');
         }),
   );
-  messenger?.showSnackBar(
-    SnackBar(
-      content: Text(
-        result.comingSoon
-            ? l10n.publicationComingSoon
-            : (result.message?.isNotEmpty == true
-                ? result.message!
-                : l10n.publicationDone),
-      ),
-    ),
-  );
+  final msg = result.comingSoon
+      ? l10n.publicationComingSoon
+      : (result.message?.isNotEmpty == true
+          ? result.message!
+          : l10n.publicationDone);
+  _snackSafe(null, msg);
 }
 
-Future<void> _shareVk(
-  BuildContext context, {
+Future<void> _shareVk({
   required File file,
   required MemeArchiveKind kind,
   required String shareText,
   required AppLocalizations l10n,
+  String? localArchiveId,
+  String? supabaseVersionId,
 }) async {
-  final messenger = ScaffoldMessenger.maybeOf(context);
   try {
     final r = await VkWallClient.instance.publishFile(
       file,
@@ -100,157 +94,25 @@ Future<void> _shareVk(
         TelegramPublishedLogRepository.instance
             .recordVkPost(
               vkGroupId: g,
-              vkPostId: r.postId,
+              vkPostId: r.postId!,
               caption: shareText,
               isVideo: kind == MemeArchiveKind.video,
+              localArchiveId: localArchiveId,
+              supabaseVersionId: supabaseVersionId,
             )
             .catchError((Object e, StackTrace s) {
               debugPrint('recordVkPost: $e\n$s');
             }),
       );
     }
-    if (context.mounted) {
-      messenger?.showSnackBar(
-        SnackBar(content: Text(l10n.vkPostDone)),
-      );
-    }
+    _snackSafe(null, l10n.vkPostDone);
   } catch (e) {
     debugPrint('VK share: $e');
-    if (context.mounted) {
-      messenger?.showSnackBar(
-        SnackBar(
-          content: Text('${l10n.vkPostFailed} $e'),
-        ),
-      );
-    }
-  }
-}
-
-/// Yerel arşiv dosyasını Telegram veya VK’ya gönderir; iki servis açıksa hedef sorulur.
-Future<void> shareArchiveFile(
-  BuildContext context, {
-  required File file,
-  required String sourceLabel,
-  required MemeArchiveKind kind,
-  String? caption,
-}) async {
-  final l10n = AppLocalizations.of(context);
-  final shareText = (caption != null && caption.trim().isNotEmpty)
-      ? caption.trim()
-      : sourceLabel;
-
-  final exists = await file.exists();
-  if (!context.mounted) {
-    return;
-  }
-  if (!exists) {
-    ScaffoldMessenger.maybeOf(context)?.showSnackBar(
-      SnackBar(content: Text(l10n.archiveFileMissing)),
-    );
-    return;
-  }
-
-  final target = await _pickOrInform(context, l10n: l10n);
-  if (target == null) {
-    return;
-  }
-  if (!context.mounted) {
-    return;
-  }
-
-  try {
-    if (target == MemeopsShareTarget.telegram) {
-      await _shareTelegram(
-        context,
-        file: file,
-        kind: kind,
-        shareText: shareText,
-        l10n: l10n,
-      );
+    final s = e.toString();
+    if (s.contains('group auth') || s.contains('unavailable with group')) {
+      _snackSafe(null, l10n.vkPostNeedUserToken);
     } else {
-      await _shareVk(
-        context,
-        file: file,
-        kind: kind,
-        shareText: shareText,
-        l10n: l10n,
-      );
-    }
-  } catch (e) {
-    if (context.mounted) {
-      ScaffoldMessenger.maybeOf(context)?.showSnackBar(
-        SnackBar(content: Text(l10n.archiveShareFailed)),
-      );
-    }
-  }
-}
-
-/// Ağdaki .mp4’ü indirip aynı hedef seçim akışıyla kabul eder.
-Future<void> shareArchiveVideoFromNetworkUrl(
-  BuildContext context, {
-  required String url,
-  required String sourceLabel,
-  String? caption,
-}) async {
-  final l10n = AppLocalizations.of(context);
-  final messenger = ScaffoldMessenger.maybeOf(context);
-  final target = await _pickOrInform(context, l10n: l10n);
-  if (target == null) {
-    return;
-  }
-  if (!context.mounted) {
-    return;
-  }
-
-  try {
-    final res = await http
-        .get(Uri.parse(url))
-        .timeout(const Duration(minutes: 3));
-    if (res.statusCode != 200) {
-      messenger?.showSnackBar(
-        SnackBar(content: Text(l10n.archiveDownloadFailed(res.statusCode))),
-      );
-      return;
-    }
-    final dir = await getTemporaryDirectory();
-    final f = File(
-      p.join(
-        dir.path,
-        'share_${DateTime.now().microsecondsSinceEpoch}.mp4',
-      ),
-    );
-    await f.writeAsBytes(res.bodyBytes);
-    if (!context.mounted) {
-      return;
-    }
-
-    final shareText = (caption != null && caption.trim().isNotEmpty)
-        ? caption.trim()
-        : sourceLabel;
-
-    if (target == MemeopsShareTarget.telegram) {
-      await _shareTelegram(
-        context,
-        file: f,
-        kind: MemeArchiveKind.video,
-        shareText: shareText,
-        l10n: l10n,
-      );
-    } else {
-      await _shareVk(
-        context,
-        file: f,
-        kind: MemeArchiveKind.video,
-        shareText: shareText,
-        l10n: l10n,
-      );
-    }
-  } catch (e, st) {
-    debugPrint('shareArchiveVideoFromNetworkUrl: $e\n$st');
-    if (context.mounted) {
-      messenger?.showSnackBar(
-        SnackBar(content: Text(l10n.archiveShareFailed)),
-      );
+      _snackSafe(null, '${l10n.vkPostFailed} $e');
     }
   }
 }
@@ -269,16 +131,123 @@ String _extForImageUrl(String url) {
   return '.jpg';
 }
 
-/// Ağdaki görseli indirip Telegram / VK akışıyla paylaşır.
-Future<void> shareArchiveImageFromNetworkUrl(
-  BuildContext context, {
-  required String url,
+/// Tek giriş noktası: yerel dosya ve/veya ağ URL’si ile Telegram, VK; Dzen sadece simüle.
+Future<void> executeArchivePublish(
+  BuildContext? context, {
+  required MemeopsShareTarget target,
+  required MemeArchiveKind kind,
+  required String shareText,
   required String sourceLabel,
-  String? caption,
+  File? localFile,
+  String? networkUrl,
+  String? localArchiveId,
+  String? supabaseVersionId,
 }) async {
-  final l10n = AppLocalizations.of(context);
-  final messenger = ScaffoldMessenger.maybeOf(context);
-  final target = await _pickOrInform(context, l10n: l10n);
+  final l10n = _l10n(context);
+  if (target == MemeopsShareTarget.dzen) {
+    _snackSafe(context, l10n.dzenPublishSimulated);
+    return;
+  }
+  assert(
+    localFile != null || (networkUrl != null && networkUrl.trim().isNotEmpty),
+    'Yerel dosya veya networkUrl gerekli',
+  );
+  final text = shareText.trim().isNotEmpty ? shareText.trim() : sourceLabel;
+
+  late final File file;
+  if (localFile != null) {
+    if (!await localFile.exists()) {
+      _snackSafe(null, l10n.archiveFileMissing);
+      return;
+    }
+    file = localFile;
+  } else {
+    try {
+      final res = await http
+          .get(Uri.parse(networkUrl!.trim()))
+          .timeout(const Duration(minutes: 3));
+      if (res.statusCode != 200) {
+        _snackSafe(null, l10n.archiveDownloadFailed(res.statusCode));
+        return;
+      }
+      final dir = await getTemporaryDirectory();
+      final ext = kind == MemeArchiveKind.video
+          ? '.mp4'
+          : _extForImageUrl(networkUrl);
+      file = File(
+        p.join(
+          dir.path,
+          'publish_${DateTime.now().microsecondsSinceEpoch}$ext',
+        ),
+      );
+      await file.writeAsBytes(res.bodyBytes);
+    } catch (e, st) {
+      debugPrint('executeArchivePublish download: $e\n$st');
+      _snackSafe(null, l10n.archiveShareFailedWithError(e.toString()));
+      return;
+    }
+  }
+
+  try {
+    if (target == MemeopsShareTarget.telegram) {
+      await _shareTelegram(
+        file: file,
+        kind: kind,
+        shareText: text,
+        l10n: l10n,
+        localArchiveId: localArchiveId,
+        supabaseVersionId: supabaseVersionId,
+      );
+    } else if (target == MemeopsShareTarget.vk) {
+      await _shareVk(
+        file: file,
+        kind: kind,
+        shareText: text,
+        l10n: l10n,
+        localArchiveId: localArchiveId,
+        supabaseVersionId: supabaseVersionId,
+      );
+    }
+  } catch (e, st) {
+    debugPrint('executeArchivePublish: $e\n$st');
+    _snackSafe(null, l10n.archiveShareFailedWithError(e.toString()));
+  }
+}
+
+/// Yerel arşiv dosyasını Telegram veya VK’ya gönderir; iki servis açıksa hedef sorulur.
+Future<void> shareArchiveFile(
+  BuildContext context, {
+  required File file,
+  required String sourceLabel,
+  required MemeArchiveKind kind,
+  String? caption,
+  String? localArchiveId,
+  String? supabaseVersionId,
+}) async {
+  final l10n = _l10n(context);
+  final shareText = (caption != null && caption.trim().isNotEmpty)
+      ? caption.trim()
+      : sourceLabel;
+
+  final exists = await file.exists();
+  if (!context.mounted) {
+    return;
+  }
+  if (!exists) {
+    _snackSafe(context, l10n.archiveFileMissing);
+    return;
+  }
+
+  MemeopsShareTarget? target;
+  try {
+    target = await _pickMemeopsShareTarget(context);
+  } catch (e, st) {
+    debugPrint('Arşiv hedef seçimi: $e\n$st');
+    if (context.mounted) {
+      _snackSafe(context, l10n.archiveShareFailedWithError(e.toString()));
+    }
+    return;
+  }
   if (target == null) {
     return;
   }
@@ -286,56 +255,96 @@ Future<void> shareArchiveImageFromNetworkUrl(
     return;
   }
 
+  await executeArchivePublish(
+    context,
+    target: target,
+    kind: kind,
+    shareText: shareText,
+    sourceLabel: sourceLabel,
+    localFile: file,
+    localArchiveId: localArchiveId,
+    supabaseVersionId: supabaseVersionId,
+  );
+}
+
+/// Ağdaki .mp4’ü indirip aynı hedef seçim akışıyla kabul eder.
+Future<void> shareArchiveVideoFromNetworkUrl(
+  BuildContext context, {
+  required String url,
+  required String sourceLabel,
+  String? caption,
+  String? supabaseVersionId,
+}) async {
+  final l10n = _l10n(context);
+  MemeopsShareTarget? target;
   try {
-    final res = await http
-        .get(Uri.parse(url))
-        .timeout(const Duration(minutes: 3));
-    if (res.statusCode != 200) {
-      messenger?.showSnackBar(
-        SnackBar(content: Text(l10n.archiveDownloadFailed(res.statusCode))),
-      );
-      return;
-    }
-    final dir = await getTemporaryDirectory();
-    final ext = _extForImageUrl(url);
-    final f = File(
-      p.join(
-        dir.path,
-        'share_img_${DateTime.now().microsecondsSinceEpoch}$ext',
-      ),
-    );
-    await f.writeAsBytes(res.bodyBytes);
-    if (!context.mounted) {
-      return;
-    }
-
-    final shareText = (caption != null && caption.trim().isNotEmpty)
-        ? caption.trim()
-        : sourceLabel;
-
-    if (target == MemeopsShareTarget.telegram) {
-      await _shareTelegram(
-        context,
-        file: f,
-        kind: MemeArchiveKind.image,
-        shareText: shareText,
-        l10n: l10n,
-      );
-    } else {
-      await _shareVk(
-        context,
-        file: f,
-        kind: MemeArchiveKind.image,
-        shareText: shareText,
-        l10n: l10n,
-      );
-    }
+    target = await _pickMemeopsShareTarget(context);
   } catch (e, st) {
-    debugPrint('shareArchiveImageFromNetworkUrl: $e\n$st');
+    debugPrint('Arşiv hedef seçimi (video URL): $e\n$st');
     if (context.mounted) {
-      messenger?.showSnackBar(
-        SnackBar(content: Text(l10n.archiveShareFailed)),
-      );
+      _snackSafe(context, l10n.archiveShareFailedWithError(e.toString()));
     }
+    return;
   }
+  if (target == null) {
+    return;
+  }
+  if (!context.mounted) {
+    return;
+  }
+
+  final shareText = (caption != null && caption.trim().isNotEmpty)
+      ? caption.trim()
+      : sourceLabel;
+
+  await executeArchivePublish(
+    context,
+    target: target,
+    kind: MemeArchiveKind.video,
+    shareText: shareText,
+    sourceLabel: sourceLabel,
+    networkUrl: url,
+    supabaseVersionId: supabaseVersionId,
+  );
+}
+
+/// Ağdaki görseli indirip Telegram / VK akışıyla paylaşır.
+Future<void> shareArchiveImageFromNetworkUrl(
+  BuildContext context, {
+  required String url,
+  required String sourceLabel,
+  String? caption,
+  String? supabaseVersionId,
+}) async {
+  final l10n = _l10n(context);
+  MemeopsShareTarget? target;
+  try {
+    target = await _pickMemeopsShareTarget(context);
+  } catch (e, st) {
+    debugPrint('Arşiv hedef seçimi (görsel URL): $e\n$st');
+    if (context.mounted) {
+      _snackSafe(context, l10n.archiveShareFailedWithError(e.toString()));
+    }
+    return;
+  }
+  if (target == null) {
+    return;
+  }
+  if (!context.mounted) {
+    return;
+  }
+
+  final shareText = (caption != null && caption.trim().isNotEmpty)
+      ? caption.trim()
+      : sourceLabel;
+
+  await executeArchivePublish(
+    context,
+    target: target,
+    kind: MemeArchiveKind.image,
+    shareText: shareText,
+    sourceLabel: sourceLabel,
+    networkUrl: url,
+    supabaseVersionId: supabaseVersionId,
+  );
 }

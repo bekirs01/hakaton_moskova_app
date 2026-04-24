@@ -1,10 +1,18 @@
+import 'dart:async';
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:hakaton_moskova_app/core/config/app_env.dart';
+import 'package:hakaton_moskova_app/data/api/memeops_api_client.dart'
+    show MemeopsApiClient, memeopsUnexpectedErrorMessage;
 import 'package:hakaton_moskova_app/data/local/telegram_published_log.dart';
+import 'package:hakaton_moskova_app/data/models/telegram_channel_post_stats.dart';
+import 'package:hakaton_moskova_app/data/publication/telegram_bot_chat_info.dart';
 import 'package:hakaton_moskova_app/data/publication/vk_wall_client.dart';
 import 'package:hakaton_moskova_app/l10n/app_localizations.dart';
 import 'package:hakaton_moskova_app/presentation/theme/memeops_design_tokens.dart';
 import 'package:hakaton_moskova_app/presentation/theme/memeops_theme.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 class PublicationDetailScreen extends StatefulWidget {
   const PublicationDetailScreen({super.key, required this.entry});
@@ -17,7 +25,26 @@ class PublicationDetailScreen extends StatefulWidget {
 }
 
 class _PublicationDetailScreenState extends State<PublicationDetailScreen> {
-  bool _refreshing = false;
+  bool _refreshingTg = false;
+  bool _refreshingVk = false;
+  late final Future<String?> _telegramChannelTitle =
+      fetchTelegramChannelTitleForCurrentPublish();
+  final _api = MemeopsApiClient(Supabase.instance.client);
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final e = widget.entry;
+      if (e.isVk && e.vkPostId != null && e.views == null) {
+        unawaited(_refreshVk());
+      } else if (e.isTelegram &&
+          e.messageId != null &&
+          AppEnv.isApiConfigured) {
+        unawaited(_refreshTelegramStats());
+      }
+    });
+  }
 
   String _two(int n) => n.toString().padLeft(2, '0');
 
@@ -26,15 +53,112 @@ class _PublicationDetailScreenState extends State<PublicationDetailScreen> {
         '${_two(d.hour)}:${_two(d.minute)}';
   }
 
+  List<TelegramPostReactionRow> _reactionsFromEntry(
+    TelegramPublishedEntry e,
+  ) {
+    final raw = e.telegramReactionsJson;
+    if (raw == null || raw.trim().isEmpty) {
+      return const [];
+    }
+    try {
+      final d = jsonDecode(raw) as List<dynamic>?;
+      if (d == null) {
+        return const [];
+      }
+      return d
+          .map(
+            (x) => TelegramPostReactionRow.fromMap(
+              Map<String, dynamic>.from(x as Map<dynamic, dynamic>),
+            ),
+          )
+          .where((r) => r.count > 0)
+          .toList();
+    } catch (err, st) {
+      debugPrint('reactions json: $err\n$st');
+      return const [];
+    }
+  }
+
+  String _reactionLine(
+    AppLocalizations l10n,
+    TelegramPostReactionRow r,
+  ) {
+    if (r.kind == 'custom_emoji' && r.label.startsWith('custom:')) {
+      return l10n.publicationDetailCustomReaction(r.count);
+    }
+    if (r.label.isNotEmpty) {
+      return l10n.publicationDetailEmojiReaction(r.label, r.count);
+    }
+    return l10n.publicationDetailReactionCountOnly(r.count);
+  }
+
+  Future<void> _refreshTelegramStats() async {
+    final e = _currentEntry;
+    if (!e.isTelegram || e.messageId == null) {
+      return;
+    }
+    if (!AppEnv.isApiConfigured) {
+      return;
+    }
+    final ch = (e.chatId != null && e.chatId!.trim().isNotEmpty)
+        ? e.chatId!
+        : AppEnv.telegramPublishChannel;
+    if (ch.isEmpty) {
+      return;
+    }
+    if (!mounted) {
+      return;
+    }
+    setState(() => _refreshingTg = true);
+    try {
+      final s = await _api.fetchTelegramChannelPostStats(
+        channel: ch,
+        messageId: e.messageId!,
+      );
+      if (!mounted) {
+        return;
+      }
+      final j = jsonEncode(
+        s.reactions
+            .map(
+              (r) => <String, dynamic>{
+                'label': r.label,
+                'count': r.count,
+                'kind': r.kind,
+              },
+            )
+            .toList(),
+      );
+      await TelegramPublishedLogRepository.instance.updateEntry(
+        e.id,
+        views: s.views,
+        telegramForwards: s.forwards,
+        telegramReactionsJson: j,
+      );
+    } catch (err, st) {
+      debugPrint('PublicationDetail _refreshTelegram: $err\n$st');
+      if (mounted) {
+        final msg = memeopsUnexpectedErrorMessage(err);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(msg)),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _refreshingTg = false);
+      }
+    }
+  }
+
   Future<void> _refreshVk() async {
-    final e = widget.entry;
+    final e = _currentEntry;
     if (!e.isVk || e.vkGroupId == null || e.vkPostId == null) {
       return;
     }
     if (!AppEnv.isVkPublishConfigured) {
       return;
     }
-    setState(() => _refreshing = true);
+    setState(() => _refreshingVk = true);
     try {
       final s = await VkWallClient.instance.fetchWallPostStats(
         groupId: e.vkGroupId!,
@@ -56,9 +180,20 @@ class _PublicationDetailScreenState extends State<PublicationDetailScreen> {
       debugPrint('PublicationDetail _refreshVk: $err\n$st');
     } finally {
       if (mounted) {
-        setState(() => _refreshing = false);
+        setState(() => _refreshingVk = false);
       }
     }
+  }
+
+  TelegramPublishedEntry get _currentEntry {
+    var e = widget.entry;
+    for (final x in TelegramPublishedLogRepository.instance.items) {
+      if (x.id == e.id) {
+        e = x;
+        break;
+      }
+    }
+    return e;
   }
 
   @override
@@ -67,14 +202,7 @@ class _PublicationDetailScreenState extends State<PublicationDetailScreen> {
     return AnimatedBuilder(
       animation: TelegramPublishedLogRepository.instance.onChanged,
       builder: (context, _) {
-        final id = widget.entry.id;
-        TelegramPublishedEntry e = widget.entry;
-        for (final x in TelegramPublishedLogRepository.instance.items) {
-          if (x.id == id) {
-            e = x;
-            break;
-          }
-        }
+        final e = _currentEntry;
         return Scaffold(
           backgroundColor: MemeopsColors.bgMid,
           appBar: AppBar(
@@ -82,14 +210,26 @@ class _PublicationDetailScreenState extends State<PublicationDetailScreen> {
             foregroundColor: Colors.white,
             title: Text(
               l10n.publicationDetailTitle,
-              style: const TextStyle(fontSize: 18),
+              style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w600),
             ),
             actions: [
+              if (e.isTelegram && e.messageId != null)
+                IconButton(
+                  tooltip: l10n.publicationDetailRefreshTelegram,
+                  onPressed: _refreshingTg ? null : _refreshTelegramStats,
+                  icon: _refreshingTg
+                      ? const SizedBox(
+                          width: 22,
+                          height: 22,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
+                      : const Icon(Icons.sync_rounded),
+                ),
               if (e.isVk && e.vkPostId != null)
                 IconButton(
                   tooltip: l10n.publicationDetailRefreshVk,
-                  onPressed: _refreshing ? null : _refreshVk,
-                  icon: _refreshing
+                  onPressed: _refreshingVk ? null : _refreshVk,
+                  icon: _refreshingVk
                       ? const SizedBox(
                           width: 22,
                           height: 22,
@@ -100,95 +240,147 @@ class _PublicationDetailScreenState extends State<PublicationDetailScreen> {
             ],
           ),
           body: ListView(
-            padding: const EdgeInsets.fromLTRB(20, 20, 20, 40),
+            padding: const EdgeInsets.fromLTRB(16, 8, 16, 32),
             children: [
-              Text(
-                e.isTelegram
-                    ? l10n.analysisPlatformTelegram
-                    : l10n.analysisPlatformVk,
-                style: MemeopsTextStyles.caption(context).copyWith(
-                  color: MemeopsColors.iosBlueBright,
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
-              const SizedBox(height: 8),
-              Text(
-                _dateTimeLine(e.publishedAt),
-                style: MemeopsTextStyles.subtitle(context).copyWith(
-                  color: Colors.white.withValues(alpha: 0.9),
-                ),
-              ),
-              const SizedBox(height: 16),
-              _row(
+              _sectionLabel(context, l10n, e.isTelegram
+                  ? l10n.analysisPlatformTelegram
+                  : l10n.analysisPlatformVk),
+              const SizedBox(height: 6),
+              _iosGroup(
                 context,
-                l10n.publicationDetailKind,
-                e.isVideo ? l10n.analysisPostKindVideo : l10n.analysisPostKindImage,
+                children: [
+                  _metricRow(
+                    context,
+                    l10n.publicationDetailPublishedAt,
+                    _dateTimeLine(e.publishedAt),
+                    isFirst: true,
+                  ),
+                ],
               ),
-              if (e.isTelegram) ...[
-                _row(
-                  context,
-                  l10n.publicationDetailMessageId,
-                  e.messageId != null ? '#${e.messageId}' : '—',
-                ),
-                if (e.chatId != null && e.chatId!.isNotEmpty)
-                  _row(context, l10n.publicationDetailChat, e.chatId!),
-                _row(
-                  context,
-                  l10n.publicationDetailViews,
-                  e.views != null
-                      ? l10n.analysisViewCount(e.views!)
-                      : l10n.analysisViewUnknown,
-                ),
-              ],
-              if (e.isVk) ...[
-                if (e.vkGroupId != null)
-                  _row(
+              const SizedBox(height: 20),
+              _sectionLabel(context, l10n, l10n.publicationDetailSectionInfo),
+              const SizedBox(height: 6),
+              _iosGroup(
+                context,
+                children: [
+                  _metricRow(
                     context,
-                    l10n.publicationDetailVkGroup,
-                    '${e.vkGroupId}',
+                    l10n.publicationDetailKind,
+                    e.isVideo
+                        ? l10n.analysisPostKindVideo
+                        : l10n.analysisPostKindImage,
+                    isFirst: true,
                   ),
-                if (e.vkPostId != null)
-                  _row(
-                    context,
-                    l10n.publicationDetailVkPost,
-                    '#${e.vkPostId}',
-                  ),
-                _row(
-                  context,
-                  l10n.publicationDetailViews,
-                  e.views != null
-                      ? l10n.analysisViewCount(e.views!)
-                      : l10n.publicationDetailVkHint,
-                ),
-                if (e.likesCount != null)
-                  _row(
-                    context,
-                    l10n.publicationDetailLikes,
-                    '${e.likesCount}',
-                  ),
-                if (e.repostsCount != null)
-                  _row(
-                    context,
-                    l10n.publicationDetailReposts,
-                    '${e.repostsCount}',
-                  ),
-              ],
+                  if (e.isTelegram) ...[
+                    _metricRow(
+                      context,
+                      l10n.publicationDetailMessageId,
+                      e.messageId != null ? '#${e.messageId}' : '—',
+                    ),
+                    if (e.chatId != null && e.chatId!.isNotEmpty)
+                      _metricRow(
+                        context,
+                        l10n.publicationDetailChat,
+                        e.chatId!,
+                      ),
+                    FutureBuilder<String?>(
+                      future: _telegramChannelTitle,
+                      builder: (context, snap) {
+                        if (snap.connectionState == ConnectionState.waiting) {
+                          return _metricRow(
+                            context,
+                            l10n.publicationDetailChannel,
+                            '…',
+                          );
+                        }
+                        final t = snap.data;
+                        if (t == null || t.isEmpty) {
+                          return const SizedBox.shrink();
+                        }
+                        return _metricRow(
+                          context,
+                          l10n.publicationDetailChannel,
+                          t,
+                        );
+                      },
+                    ),
+                    _metricRow(
+                      context,
+                      l10n.publicationDetailViews,
+                      e.views != null
+                          ? l10n.analysisViewCount(e.views!)
+                          : l10n.analysisViewUnknown,
+                    ),
+                    if (e.telegramForwards != null)
+                      _metricRow(
+                        context,
+                        l10n.publicationDetailForwards,
+                        '${e.telegramForwards}',
+                      ),
+                    ..._buildTelegramReactions(
+                      context,
+                      l10n,
+                      e,
+                    ),
+                  ],
+                  if (e.isVk) ...[
+                    if (e.vkGroupId != null)
+                      _metricRow(
+                        context,
+                        l10n.publicationDetailVkGroup,
+                        '${e.vkGroupId}',
+                        isFirst: true,
+                      ),
+                    if (e.vkPostId != null)
+                      _metricRow(
+                        context,
+                        l10n.publicationDetailVkPost,
+                        '#${e.vkPostId}',
+                        isFirst: e.vkGroupId == null,
+                      ),
+                    _metricRow(
+                      context,
+                      l10n.publicationDetailViews,
+                      e.views != null
+                          ? l10n.analysisViewCount(e.views!)
+                          : l10n.publicationDetailVkHint,
+                    ),
+                    if (e.likesCount != null)
+                      _metricRow(
+                        context,
+                        l10n.publicationDetailLikes,
+                        '${e.likesCount}',
+                      ),
+                    if (e.repostsCount != null)
+                      _metricRow(
+                        context,
+                        l10n.publicationDetailReposts,
+                        '${e.repostsCount}',
+                      ),
+                  ],
+                ],
+              ),
               if (e.caption != null && e.caption!.trim().isNotEmpty) ...[
-                const SizedBox(height: 16),
-                Text(
-                  l10n.publicationDetailCaption,
-                  style: MemeopsTextStyles.caption(context).copyWith(
-                    color: MemeopsColors.iosBlueBright,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
+                const SizedBox(height: 20),
+                _sectionLabel(context, l10n, l10n.publicationDetailCaption),
                 const SizedBox(height: 6),
-                Text(
-                  e.caption!.trim(),
-                  style: MemeopsTextStyles.subtitle(context).copyWith(
-                    color: Colors.white.withValues(alpha: 0.92),
-                    height: 1.45,
-                  ),
+                _iosGroup(
+                  context,
+                  children: [
+                    Padding(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 14,
+                      ),
+                      child: Text(
+                        e.caption!.trim(),
+                        style: MemeopsTextStyles.subtitle(context).copyWith(
+                          color: Colors.white.withValues(alpha: 0.95),
+                          height: 1.45,
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               ],
             ],
@@ -198,26 +390,117 @@ class _PublicationDetailScreenState extends State<PublicationDetailScreen> {
     );
   }
 
-  Widget _row(BuildContext context, String label, String value) {
+  List<Widget> _buildTelegramReactions(
+    BuildContext context,
+    AppLocalizations l10n,
+    TelegramPublishedEntry e,
+  ) {
+    final list = _reactionsFromEntry(e);
+    final value = list.isEmpty
+        ? l10n.publicationDetailReactionsEmpty
+        : list.map((r) => _reactionLine(l10n, r)).join('\n');
+    return [
+      _metricRow(
+        context,
+        l10n.publicationDetailReactions,
+        value,
+      ),
+    ];
+  }
+
+  Widget _sectionLabel(
+    BuildContext context,
+    AppLocalizations l10n,
+    String text,
+  ) {
     return Padding(
-      padding: const EdgeInsets.only(bottom: 10),
+      padding: const EdgeInsets.only(left: 4),
+      child: Text(
+        text.toUpperCase(),
+        style: MemeopsTextStyles.caption(context).copyWith(
+          fontSize: 13,
+          fontWeight: FontWeight.w600,
+          letterSpacing: 0.2,
+          color: Colors.white.withValues(alpha: 0.45),
+        ),
+      ),
+    );
+  }
+
+  Widget _iosGroup(BuildContext context, {required List<Widget> children}) {
+    return Container(
+      width: double.infinity,
+      decoration: BoxDecoration(
+        color: MemeopsColors.surfaceCharcoal,
+        borderRadius: BorderRadius.circular(MemeopsRadii.md + 2),
+        border: Border.all(
+          color: Colors.white.withValues(alpha: 0.08),
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.35),
+            blurRadius: 12,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      clipBehavior: Clip.antiAlias,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: _withSeparators(children),
+      ),
+    );
+  }
+
+  List<Widget> _withSeparators(List<Widget> children) {
+    if (children.isEmpty) {
+      return [];
+    }
+    final out = <Widget>[];
+    for (var i = 0; i < children.length; i++) {
+      if (i > 0) {
+        out.add(
+          Divider(
+            height: 1,
+            thickness: 1,
+            color: Colors.white.withValues(alpha: 0.08),
+          ),
+        );
+      }
+      out.add(children[i]);
+    }
+    return out;
+  }
+
+  Widget _metricRow(
+    BuildContext context,
+    String label,
+    String value, {
+    bool isFirst = false,
+  }) {
+    return Padding(
+      padding: EdgeInsets.fromLTRB(16, isFirst ? 12 : 10, 16, 10),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           SizedBox(
-            width: 130,
+            width: 120,
             child: Text(
               label,
               style: MemeopsTextStyles.caption(context).copyWith(
-                color: Colors.white.withValues(alpha: 0.6),
+                color: Colors.white.withValues(alpha: 0.55),
+                fontSize: 15,
               ),
             ),
           ),
           Expanded(
             child: Text(
               value,
-              style: MemeopsTextStyles.caption(context).copyWith(
+              textAlign: TextAlign.end,
+              style: MemeopsTextStyles.subtitle(context).copyWith(
                 color: Colors.white.withValues(alpha: 0.95),
+                fontSize: 15,
+                fontWeight: FontWeight.w500,
                 height: 1.35,
               ),
             ),

@@ -21,6 +21,7 @@ from pydantic import BaseModel, ConfigDict, Field
 from telethon import TelegramClient
 from telethon.errors import RPCError
 from telethon.sessions import StringSession
+from telethon.tl.types import ReactionCustomEmoji, ReactionEmoji
 
 _TOOL = Path(__file__).resolve().parent
 if str(_TOOL) not in sys.path:
@@ -113,6 +114,15 @@ class MemeVariantsBody(BaseModel):
     insights: dict[str, Any]
 
 
+class ChannelPostStatsBody(BaseModel):
+    """Tüm kanalda tek gönderi: sohbet kimliği veya @kullanıcıadı, mesaj id."""
+
+    model_config = ConfigDict(populate_by_name=True)
+
+    channel: str
+    message_id: int = Field(..., alias="messageId")
+
+
 class ProfessionCreateBody(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
 
@@ -163,6 +173,33 @@ def _reaction_total(msg: Any) -> int:
     for item in results:
         total += int(getattr(item, "count", 0) or 0)
     return total
+
+
+def _reaction_breakdown(msg: Any) -> list[dict[str, Any]]:
+    """Emoji / custom emoji reaksiyon listesi; mobil analiz ekranı için."""
+    out: list[dict[str, Any]] = []
+    reactions = getattr(msg, "reactions", None)
+    results = getattr(reactions, "results", None) if reactions else None
+    if not results:
+        return out
+    for item in results:
+        count = int(getattr(item, "count", 0) or 0)
+        if count <= 0:
+            continue
+        re = getattr(item, "reaction", None)
+        if re is None:
+            continue
+        if isinstance(re, ReactionEmoji):
+            label = str(re.emoticon or "")
+            kind = "emoji"
+        elif isinstance(re, ReactionCustomEmoji):
+            label = f"custom:{int(re.document_id)}"
+            kind = "custom_emoji"
+        else:
+            label = re.__class__.__name__
+            kind = "other"
+        out.append({"label": label, "count": count, "kind": kind})
+    return out
 
 
 @app.post("/api/v1/professions")
@@ -525,6 +562,93 @@ async def channel_insights(body: ChannelInsightsBody):
         image_bytes,
     )
     return {"data": data}
+
+
+@app.post("/api/v1/telegram/channel-post-stats")
+async def channel_post_stats(body: ChannelPostStatsBody):
+    """
+    Kullanıcı Telethon oturumu ile bir kanal gönderisinin görüntülenme + reaksiyon sayımlarını okur.
+    Bot API (sendPhoto yanıtı) çoğunlukla views döndürmediği için mobil bu uçu kullanır.
+    """
+    if _client is None or not await _client.is_user_authorized():
+        return JSONResponse(
+            status_code=503,
+            content={
+                "error": {
+                    "code": "telegram_not_configured",
+                    "message": (
+                        "Need TELEGRAM_API_ID, TELEGRAM_API_HASH, "
+                        "TELEGRAM_SESSION_STRING in .env and run ./run_telegram_api.sh"
+                    ),
+                }
+            },
+        )
+    ch = (body.channel or "").strip()
+    if not ch:
+        return JSONResponse(
+            status_code=400,
+            content={
+                "error": {"code": "bad_request", "message": "channel is required"},
+            },
+        )
+    if int(body.message_id) <= 0:
+        return JSONResponse(
+            status_code=400,
+            content={
+                "error": {
+                    "code": "bad_request",
+                    "message": "messageId must be a positive post id in the channel",
+                },
+            },
+        )
+    try:
+        entity = await _client.get_entity(ch)
+    except Exception as e:
+        return JSONResponse(
+            status_code=502,
+            content={
+                "error": {
+                    "code": "telegram_entity",
+                    "message": f"Could not open channel: {e}",
+                }
+            },
+        )
+    try:
+        rows = await _client.get_messages(entity, ids=int(body.message_id))
+    except RPCError as e:
+        return JSONResponse(
+            status_code=502,
+            content={
+                "error": {
+                    "code": "telegram_fetch",
+                    "message": f"Could not read message: {e.__class__.__name__}",
+                }
+            },
+        )
+    if isinstance(rows, list):
+        msg = rows[0] if rows else None
+    else:
+        msg = rows
+    if not msg or not getattr(msg, "id", None):
+        return JSONResponse(
+            status_code=404,
+            content={
+                "error": {
+                    "code": "not_found",
+                    "message": "Message not in history or not accessible to this account",
+                }
+            },
+        )
+    views = int(getattr(msg, "views", 0) or 0)
+    forwards = int(getattr(msg, "forwards", 0) or 0)
+    reactions = _reaction_breakdown(msg)
+    return {
+        "data": {
+            "views": views,
+            "forwards": forwards,
+            "reactions": reactions,
+        }
+    }
 
 
 if __name__ == "__main__":

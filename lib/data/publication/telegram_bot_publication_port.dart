@@ -134,11 +134,24 @@ class TelegramBotPublicationPort implements PublicationPort {
     } else if (v is num) {
       views = v.toInt();
     }
+    int? forwards;
+    for (final k in <String>['forwards', 'forward_count']) {
+      final x = rm[k];
+      if (x is int) {
+        forwards = x;
+        break;
+      }
+      if (x is num) {
+        forwards = x.toInt();
+        break;
+      }
+    }
     return PublicationResult(
       comingSoon: false,
       telegramMessageId: messageId,
       telegramChatId: chatId,
       telegramViews: views,
+      telegramForwards: forwards,
     );
   }
 }

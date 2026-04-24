@@ -7,6 +7,7 @@ import 'package:hakaton_moskova_app/core/locale/app_locale_controller.dart';
 import 'package:hakaton_moskova_app/l10n/app_localizations.dart';
 import 'package:hakaton_moskova_app/data/models/channel_insights.dart';
 import 'package:hakaton_moskova_app/data/models/meme_brief_list_item.dart';
+import 'package:hakaton_moskova_app/data/models/telegram_channel_post_stats.dart';
 import 'package:http/http.dart' as http;
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -250,6 +251,26 @@ class MemeopsApiClient {
       jobId: data['jobId'] as String?,
       seconds: data['seconds'] as String?,
     );
+  }
+
+  /// POST `/api/v1/telegram/channel-post-stats` — Telethon ile izlenme + reaksiyon (Bot API sınırlı).
+  Future<TelegramChannelPostStats> fetchTelegramChannelPostStats({
+    required String channel,
+    required int messageId,
+  }) async {
+    final t = await _token();
+    final res = await _post(
+      '/api/v1/telegram/channel-post-stats',
+      token: t,
+      body: jsonEncode({
+        'channel': channel,
+        'messageId': messageId,
+      }),
+      timeout: const Duration(seconds: 35),
+    );
+    final m = _jsonOrThrow(res, 'channel post stats');
+    final data = m['data'] as Map<String, dynamic>? ?? m;
+    return TelegramChannelPostStats.fromMap(data);
   }
 
   /// POST `/api/v1/telegram/channel-insights` — server parses / summarizes channel.
