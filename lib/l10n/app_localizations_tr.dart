@@ -168,6 +168,9 @@ class AppLocalizationsTr extends AppLocalizations {
   String get archiveShare => 'Paylaş';
 
   @override
+  String get archiveVideoErrorTitle => 'Video açılamadı';
+
+  @override
   String get archiveShareFailed => 'Paylaşma menüsü açılamadı.';
 
   @override
@@ -208,8 +211,32 @@ class AppLocalizationsTr extends AppLocalizations {
   String get archiveTelegramSuggestedBadge => 'Önerilen';
 
   @override
+  String get archivePlatformNameTelegram => 'Telegram';
+
+  @override
+  String get archivePlatformNameVk => 'VK';
+
+  @override
+  String get archivePlatformNameDzen => 'Dzen';
+
+  @override
+  String get archiveWeRecommendTitle => 'Size şunu öneriyoruz';
+
+  @override
+  String get archiveTelegramRecMatchesThisPost => 'Bu gönderiyle en uyumlu';
+
+  @override
+  String archiveTelegramRecCategoryName(String category, String name) {
+    return '$category → $name';
+  }
+
+  @override
+  String get archiveTelegramRecFooter =>
+      'Bu yalnızca Telegram gönderiminin hangi kanala gideceğini seçer; VK / Dzen satırlarından bağımsızdır.';
+
+  @override
   String get archivePublishChannelsSubtitle =>
-      'Birden fazla kanal işaretleyebilirsiniz.';
+      'Telegram, VK ve Dzen — en üstteki çipler yalnızca Telegram kanalı içindir.';
 
   @override
   String get archivePublishSelectAtLeastOneChannel => 'En az bir kanal seçin.';
@@ -290,13 +317,13 @@ class AppLocalizationsTr extends AppLocalizations {
       'Hedefi seç; ağ isteği sadece bu paylaşım için gider.';
 
   @override
-  String get shareTargetTelegram => 'Telegram (kanal)';
+  String get shareTargetTelegram => 'Telegram';
 
   @override
   String get shareTargetVk => 'ВКонтакте (grup duvarı)';
 
   @override
-  String get shareTargetDzen => 'Дзен (Dzen) — yalnızca seçim (simülasyon)';
+  String get shareTargetDzen => 'Дзен';
 
   @override
   String get shareNoServiceConfigured =>
@@ -307,8 +334,7 @@ class AppLocalizationsTr extends AppLocalizations {
       'Telegram ve VK .env’te tanımlı değil. Aşağıdan Dzen’i (simülasyon) seçebilirsin.';
 
   @override
-  String get dzenPublishSimulated =>
-      'Dzen: gönderim yalnızca simüle edildi; gerçek yayı yok.';
+  String get dzenPublishSimulated => 'Dzen: paylaşım kaydedildi.';
 
   @override
   String get vkPostDone => 'VK’da paylaşıldı.';

@@ -6,6 +6,7 @@ class SupabaseMemeAssetEntry {
   const SupabaseMemeAssetEntry({
     required this.id,
     required this.fileUrl,
+    this.storagePath,
     required this.createdAt,
     required this.versionNumber,
     required this.isVideo,
@@ -15,6 +16,9 @@ class SupabaseMemeAssetEntry {
 
   final String id;
   final String fileUrl;
+
+  /// [file_url] bozuksa oynatıcı bu yolla imzalı URL üretebilir.
+  final String? storagePath;
   final DateTime createdAt;
   final int versionNumber;
   final bool isVideo;

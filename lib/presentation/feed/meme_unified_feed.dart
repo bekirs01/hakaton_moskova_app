@@ -32,6 +32,12 @@ class MemeFeedLoad {
   final bool supabaseFailed;
 }
 
+String _normAssetUrl(String url) {
+  final t = url.trim();
+  final q = t.indexOf('?');
+  return q < 0 ? t : t.substring(0, q);
+}
+
 /// Yerel [meme_archive] + [meme_asset_versions] sorgusu; sonuçlar en yeni üstte.
 Future<MemeFeedLoad> loadMemeUnifiedFeed() async {
   final repo = MemeLocalArchiveRepository.instance;
@@ -57,11 +63,22 @@ Future<MemeFeedLoad> loadMemeUnifiedFeed() async {
     supabaseFailed = true;
   }
 
+  // Aynı üretim hem Supabase’de hem yerel indekste (sourceUrl) olunca liste iki satır
+  // gösteriyordu; tek görsel = tek satır (yerel öncelikli, eş bulut satırı düşer).
+  final localAssetKeys = <String>{
+    for (final e in localList)
+      if (e.sourceUrl != null && e.sourceUrl!.trim().isNotEmpty)
+        _normAssetUrl(e.sourceUrl!),
+  };
+  final cloudDeduped = cloudList
+      .where((v) => !localAssetKeys.contains(_normAssetUrl(v.fileUrl)))
+      .toList();
+
   final merged = <MemeFeedRow>[];
   for (final e in localList) {
     merged.add(MemeFeedRow.local(e));
   }
-  for (final v in cloudList) {
+  for (final v in cloudDeduped) {
     merged.add(MemeFeedRow.cloud(v));
   }
   merged.sort((a, b) {

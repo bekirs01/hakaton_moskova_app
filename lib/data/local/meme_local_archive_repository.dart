@@ -173,6 +173,31 @@ class MemeLocalArchiveRepository {
     return File(p.join(dir.path, e.localFileName));
   }
 
+  /// Bulut [meme_asset_versions] [fileUrl] ile aynı kaynaktan indirilmiş yerel .mp4 varsa döner.
+  Future<({String entryId, File file})?> findLocalVideoForCloudFileUrl(
+    String cloudFileUrl,
+  ) async {
+    final target = _urlKey(cloudFileUrl);
+    if (target.isEmpty) {
+      return null;
+    }
+    final r = await loadEntries();
+    for (final e in r.entries) {
+      if (e.kind != MemeArchiveKind.video) {
+        continue;
+      }
+      final su = e.sourceUrl?.trim();
+      if (su == null || su.isEmpty) {
+        continue;
+      }
+      if (_urlKey(su) == target) {
+        final f = await fileFor(e);
+        return (entryId: e.id, file: f);
+      }
+    }
+    return null;
+  }
+
   String _urlKey(String url) {
     final t = url.trim();
     final q = t.indexOf('?');

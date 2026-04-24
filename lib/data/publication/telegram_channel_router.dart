@@ -25,8 +25,9 @@ class TelegramChannelRouter {
         bestI = i;
       }
     }
+    // Eşleşme yoksa: ilk sırada “dar” (ör. okul), ikincide “genel” (AI/trend) — geneli öne al.
     if (bestScore <= 0) {
-      return 0;
+      return channels.length > 1 ? 1 : 0;
     }
     return bestI;
   }

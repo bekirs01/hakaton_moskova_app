@@ -1,4 +1,5 @@
 import 'package:flutter/foundation.dart';
+import 'package:hakaton_moskova_app/core/media/supabase_playable_url.dart';
 import 'package:hakaton_moskova_app/data/models/supabase_meme_asset_entry.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -48,7 +49,9 @@ class MemeSupabaseAssetsRepository {
   Future<List<SupabaseMemeAssetEntry>> listAccountAssets() async {
     final raw = await _client
         .from('meme_asset_versions')
-        .select('id, file_url, created_at, version_number, source_meme_brief_id')
+        .select(
+          'id, file_url, storage_path, created_at, version_number, source_meme_brief_id',
+        )
         .order('created_at', ascending: false)
         .limit(300) as List<dynamic>;
 
@@ -58,8 +61,15 @@ class MemeSupabaseAssetsRepository {
         continue;
       }
       final m = Map<String, dynamic>.from(e);
-      final url = m['file_url'] as String?;
-      if (url == null || url.isEmpty) {
+      final sp = m['storage_path'] as String?;
+      final rawUrl = m['file_url'] as String?;
+      final url = resolveMemeAssetPlayableUrl(
+        _client,
+        rawUrl,
+        sp,
+      );
+      m['_resolved_file_url'] = url;
+      if (url.isEmpty) {
         continue;
       }
       if (!_isImageUrl(url) && !_isVideoUrl(url)) {
@@ -103,7 +113,7 @@ class MemeSupabaseAssetsRepository {
     }
 
     return rows.map((m) {
-      final u = m['file_url'] as String;
+      final u = (m['_resolved_file_url'] as String?)?.trim() ?? '';
       final isVid = _isVideoUrl(u);
       final id = m['id'] as String;
       final createdAt = DateTime.parse(m['created_at'] as String);
@@ -119,6 +129,7 @@ class MemeSupabaseAssetsRepository {
       return SupabaseMemeAssetEntry(
         id: id,
         fileUrl: u,
+        storagePath: (m['storage_path'] as String?)?.trim(),
         createdAt: createdAt,
         versionNumber: vn,
         isVideo: isVid,

@@ -48,8 +48,8 @@ class ArchiveDetailPublishSection extends StatefulWidget {
 
 class ArchiveDetailPublishSectionState extends State<ArchiveDetailPublishSection> {
   late final TextEditingController _caption;
-  /// Çoklu Telegram hedefi: her yuva için işaret; null = tek «Telegram» kutusu ([_postTelegram]).
-  List<bool>? _tgSlotSelected;
+  /// [telegramPublishDestinations] içinde hangi hedef; yalnızca Telegram satırı işaretliyken kullanılır.
+  int _telegramTargetIndex = 0;
   bool _postTelegram = false;
   bool _postVk = false;
   bool _postDzen = false;
@@ -61,29 +61,44 @@ class ArchiveDetailPublishSectionState extends State<ArchiveDetailPublishSection
     return '${_caption.text} ${widget.sourceLabel}';
   }
 
+  String? _chatIdForTelegramSend() {
+    final d = AppEnv.telegramPublishDestinations;
+    if (d.isEmpty) {
+      return null;
+    }
+    final i = _telegramTargetIndex.clamp(0, d.length - 1);
+    return d[i].chatId;
+  }
+
   @override
   void initState() {
     super.initState();
     _caption = TextEditingController(text: widget.initialCaption ?? '');
     _caption.addListener(_onCaptionChanged);
-    final vk = AppEnv.isVkPublishConfigured;
-    _postVk = vk;
+    _postVk = AppEnv.isVkPublishConfigured;
     final tgDest = AppEnv.telegramPublishDestinations;
-    if (AppEnv.isTelegramPublishConfigured && tgDest.length > 1) {
-      _tgSlotSelected = List.filled(tgDest.length, false);
-      final rec = TelegramChannelRouter.recommendIndex(tgDest, _contentBlob());
-      _tgSlotSelected![rec] = true;
+    if (tgDest.length > 1) {
+      _telegramTargetIndex = TelegramChannelRouter.recommendIndex(
+        tgDest,
+        _contentBlob(),
+      );
     } else {
-      _tgSlotSelected = null;
-      _postTelegram = AppEnv.isTelegramPublishConfigured;
+      _telegramTargetIndex = 0;
     }
+    _postTelegram = AppEnv.isTelegramPublishConfigured;
   }
 
   void _onCaptionChanged() {
-    if (_tgSlotSelected == null || !mounted) {
+    final d = AppEnv.telegramPublishDestinations;
+    if (d.length <= 1 || !mounted) {
       return;
     }
-    setState(() {});
+    setState(() {
+      _telegramTargetIndex = TelegramChannelRouter.recommendIndex(
+        d,
+        _contentBlob(),
+      );
+    });
   }
 
   @override
@@ -99,20 +114,16 @@ class ArchiveDetailPublishSectionState extends State<ArchiveDetailPublishSection
     if (_postDzen) {
       return true;
     }
-    if (AppEnv.isVkPublishConfigured && _postVk) {
+    if (_postVk) {
       return true;
     }
-    if (!AppEnv.isTelegramPublishConfigured) {
-      return false;
+    if (AppEnv.isTelegramPublishConfigured && _postTelegram) {
+      return true;
     }
-    final slots = _tgSlotSelected;
-    if (slots != null) {
-      return slots.any((e) => e);
-    }
-    return _postTelegram;
+    return false;
   }
 
-  int _telegramRecommendIndex() {
+  int _routerSuggestedIndex() {
     final d = AppEnv.telegramPublishDestinations;
     if (d.length <= 1) {
       return 0;
@@ -126,7 +137,7 @@ class ArchiveDetailPublishSectionState extends State<ArchiveDetailPublishSection
     required String? net,
     required DateTime at,
   }) async {
-    if (AppEnv.isVkPublishConfigured && _postVk) {
+    if (_postVk) {
       await ArchivePublishScheduler.instance.enqueue(
         target: MemeopsShareTarget.vk,
         kind: widget.mediaKind,
@@ -152,27 +163,9 @@ class ArchiveDetailPublishSectionState extends State<ArchiveDetailPublishSection
         supabaseVersionId: widget.supabaseVersionId,
       );
     }
-    if (AppEnv.isTelegramPublishConfigured) {
-      final d = AppEnv.telegramPublishDestinations;
-      final slots = _tgSlotSelected;
-      if (slots != null) {
-        for (var i = 0; i < d.length; i++) {
-          if (slots[i]) {
-            await ArchivePublishScheduler.instance.enqueue(
-              target: MemeopsShareTarget.telegram,
-              kind: widget.mediaKind,
-              shareText: shareText,
-              sourceLabel: sourceLabel,
-              scheduledFor: at,
-              localFilePath: widget.localFile?.path,
-              networkUrl: net,
-              localArchiveId: widget.localArchiveId,
-              supabaseVersionId: widget.supabaseVersionId,
-              telegramChatId: d[i].chatId,
-            );
-          }
-        }
-      } else if (_postTelegram) {
+    if (AppEnv.isTelegramPublishConfigured && _postTelegram) {
+      final tid = _chatIdForTelegramSend();
+      if (tid != null) {
         await ArchivePublishScheduler.instance.enqueue(
           target: MemeopsShareTarget.telegram,
           kind: widget.mediaKind,
@@ -183,7 +176,7 @@ class ArchiveDetailPublishSectionState extends State<ArchiveDetailPublishSection
           networkUrl: net,
           localArchiveId: widget.localArchiveId,
           supabaseVersionId: widget.supabaseVersionId,
-          telegramChatId: d.first.chatId,
+          telegramChatId: tid,
         );
       }
     }
@@ -195,7 +188,7 @@ class ArchiveDetailPublishSectionState extends State<ArchiveDetailPublishSection
     required String sourceLabel,
     required String? net,
   }) async {
-    if (AppEnv.isVkPublishConfigured && _postVk) {
+    if (_postVk) {
       await executeArchivePublish(
         context,
         target: MemeopsShareTarget.vk,
@@ -227,47 +220,26 @@ class ArchiveDetailPublishSectionState extends State<ArchiveDetailPublishSection
     if (!context.mounted) {
       return;
     }
-    if (AppEnv.isTelegramPublishConfigured) {
-      final d = AppEnv.telegramPublishDestinations;
-      final slots = _tgSlotSelected;
-      if (slots != null) {
-        for (var i = 0; i < d.length; i++) {
-          if (!slots[i]) {
-            continue;
-          }
-          if (!context.mounted) {
-            return;
-          }
-          await executeArchivePublish(
-            context,
-            target: MemeopsShareTarget.telegram,
-            kind: widget.mediaKind,
-            shareText: shareText,
-            sourceLabel: sourceLabel,
-            localFile: widget.localFile,
-            networkUrl: net,
-            localArchiveId: widget.localArchiveId,
-            supabaseVersionId: widget.supabaseVersionId,
-            telegramChatId: d[i].chatId,
-          );
-        }
-      } else if (_postTelegram) {
-        if (!context.mounted) {
-          return;
-        }
-        await executeArchivePublish(
-          context,
-          target: MemeopsShareTarget.telegram,
-          kind: widget.mediaKind,
-          shareText: shareText,
-          sourceLabel: sourceLabel,
-          localFile: widget.localFile,
-          networkUrl: net,
-          localArchiveId: widget.localArchiveId,
-          supabaseVersionId: widget.supabaseVersionId,
-          telegramChatId: d.first.chatId,
-        );
+    if (AppEnv.isTelegramPublishConfigured && _postTelegram) {
+      final tid = _chatIdForTelegramSend();
+      if (tid == null) {
+        return;
       }
+      if (!context.mounted) {
+        return;
+      }
+      await executeArchivePublish(
+        context,
+        target: MemeopsShareTarget.telegram,
+        kind: widget.mediaKind,
+        shareText: shareText,
+        sourceLabel: sourceLabel,
+        localFile: widget.localFile,
+        networkUrl: net,
+        localArchiveId: widget.localArchiveId,
+        supabaseVersionId: widget.supabaseVersionId,
+        telegramChatId: tid,
+      );
     }
   }
 
@@ -417,7 +389,6 @@ class ArchiveDetailPublishSectionState extends State<ArchiveDetailPublishSection
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final tg = AppEnv.isTelegramPublishConfigured;
-    final vk = AppEnv.isVkPublishConfigured;
     final tgDest = AppEnv.telegramPublishDestinations;
 
     return Column(
@@ -476,50 +447,79 @@ class ArchiveDetailPublishSectionState extends State<ArchiveDetailPublishSection
             height: 1.3,
           ),
         ),
+        const SizedBox(height: 10),
         if (tg && tgDest.length > 1) ...[
-          const SizedBox(height: 10),
           _MemeopsInsetCard(
-            padding: const EdgeInsets.all(14),
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                Icon(
-                  Icons.tips_and_updates_rounded,
-                  color: MemeopsColors.iosBlueBright.withValues(alpha: 0.95),
-                  size: 24,
+                Text(
+                  l10n.archiveWeRecommendTitle,
+                  style: MemeopsTextStyles.caption(context).copyWith(
+                    color: Colors.white.withValues(alpha: 0.8),
+                    fontWeight: FontWeight.w700,
+                    fontSize: 13,
+                  ),
                 ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        l10n.archiveTelegramSmartRoutingTitle,
-                        style: MemeopsTextStyles.caption(context).copyWith(
-                          color: Colors.white.withValues(alpha: 0.92),
-                          fontWeight: FontWeight.w700,
-                          fontSize: 14,
+                const SizedBox(height: 8),
+                Wrap(
+                  spacing: 6,
+                  runSpacing: 6,
+                  children: List.generate(tgDest.length, (i) {
+                    final rec = _routerSuggestedIndex() == i;
+                    return FilterChip(
+                      showCheckmark: false,
+                      selected: _telegramTargetIndex == i,
+                      label: Text(
+                        tgDest[i].uiName,
+                        style: TextStyle(
+                          fontSize: 12.5,
+                          fontWeight: FontWeight.w600,
+                          color: _telegramTargetIndex == i
+                              ? Colors.white
+                              : Colors.white.withValues(alpha: 0.88),
                         ),
                       ),
-                      const SizedBox(height: 6),
-                      Text(
-                        l10n.archiveTelegramSmartRoutingHint(
-                          tgDest[_telegramRecommendIndex()].label,
-                        ),
-                        style: MemeopsTextStyles.caption(context).copyWith(
-                          height: 1.4,
-                          color: Colors.white.withValues(alpha: 0.55),
-                        ),
+                      avatar: rec
+                          ? Icon(
+                              Icons.auto_awesome,
+                              size: 16,
+                              color: MemeopsColors.iosBlueBright
+                                  .withValues(alpha: 0.95),
+                            )
+                          : null,
+                      selectedColor: MemeopsColors.iosBlue.withValues(alpha: 0.45),
+                      backgroundColor: Colors.white.withValues(alpha: 0.06),
+                      side: BorderSide(
+                        color: _telegramTargetIndex == i
+                            ? MemeopsColors.iosBlueBright
+                                .withValues(alpha: 0.6)
+                            : Colors.white.withValues(alpha: 0.12),
                       ),
-                    ],
+                      onSelected: _busy
+                          ? null
+                          : (_) {
+                              setState(() => _telegramTargetIndex = i);
+                            },
+                    );
+                  }),
+                ),
+                const SizedBox(height: 6),
+                Text(
+                  l10n.archiveTelegramRecFooter,
+                  style: MemeopsTextStyles.caption(context).copyWith(
+                    height: 1.3,
+                    color: Colors.white.withValues(alpha: 0.4),
+                    fontSize: 11,
                   ),
                 ),
               ],
             ),
           ),
+          const SizedBox(height: 10),
         ],
-        const SizedBox(height: 12),
-        if (!tg && !vk)
+        if (!tg && !AppEnv.isVkPublishConfigured)
           Padding(
             padding: const EdgeInsets.only(bottom: 8),
             child: Text(
@@ -535,58 +535,24 @@ class ArchiveDetailPublishSectionState extends State<ArchiveDetailPublishSection
           child: Column(
             children: [
               if (tg) ...[
-                if (_tgSlotSelected != null)
-                  for (var i = 0; i < tgDest.length; i++) ...[
-                    if (i > 0)
-                      Divider(
-                        height: 1,
-                        thickness: 1,
-                        indent: 52,
-                        endIndent: 14,
-                        color: Colors.white.withValues(alpha: 0.08),
-                      ),
-                    _ChannelCheckTile(
-                      busy: _busy,
-                      value: _tgSlotSelected![i],
-                      onChanged: (v) =>
-                          setState(() => _tgSlotSelected![i] = v),
-                      icon: Icons.send_rounded,
-                      iconColor: const Color(0xFF2AABEE),
-                      label: tgDest[i].label,
-                      subtitle: tgDest[i].chatId,
-                      badgeText: i == _telegramRecommendIndex()
-                          ? l10n.archiveTelegramSuggestedBadge
-                          : null,
-                    ),
-                  ]
-                else
-                  _ChannelCheckTile(
-                    busy: _busy,
-                    value: _postTelegram,
-                    onChanged: (v) => setState(() => _postTelegram = v),
-                    icon: Icons.send_rounded,
-                    iconColor: const Color(0xFF2AABEE),
-                    label: l10n.shareTargetTelegram,
-                  ),
-              ],
-              if (tg && vk)
-                Divider(
-                  height: 1,
-                  thickness: 1,
-                  indent: 52,
-                  endIndent: 14,
-                  color: Colors.white.withValues(alpha: 0.08),
-                ),
-              if (vk)
                 _ChannelCheckTile(
                   busy: _busy,
-                  value: _postVk,
-                  onChanged: (v) => setState(() => _postVk = v),
-                  icon: Icons.video_library_outlined,
-                  iconColor: const Color(0xFF0077FF),
-                  label: l10n.shareTargetVk,
+                  value: _postTelegram,
+                  onChanged: (v) => setState(() => _postTelegram = v),
+                  icon: Icons.send_rounded,
+                  iconColor: const Color(0xFF2AABEE),
+                  label: l10n.shareTargetTelegram,
+                  subtitle: tgDest.isEmpty
+                      ? null
+                      : tgDest[_telegramTargetIndex
+                              .clamp(0, tgDest.length - 1)]
+                          .uiName,
+                  badgeText: (tgDest.length > 1 &&
+                          _postTelegram &&
+                          _routerSuggestedIndex() == _telegramTargetIndex)
+                      ? l10n.archiveTelegramSuggestedBadge
+                      : null,
                 ),
-              if ((tg || vk))
                 Divider(
                   height: 1,
                   thickness: 1,
@@ -594,6 +560,22 @@ class ArchiveDetailPublishSectionState extends State<ArchiveDetailPublishSection
                   endIndent: 14,
                   color: Colors.white.withValues(alpha: 0.08),
                 ),
+              ],
+              _ChannelCheckTile(
+                busy: _busy,
+                value: _postVk,
+                onChanged: (v) => setState(() => _postVk = v),
+                icon: Icons.video_library_outlined,
+                iconColor: const Color(0xFF0077FF),
+                label: l10n.shareTargetVk,
+              ),
+              Divider(
+                height: 1,
+                thickness: 1,
+                indent: 52,
+                endIndent: 14,
+                color: Colors.white.withValues(alpha: 0.08),
+              ),
               _ChannelCheckTile(
                 busy: _busy,
                 value: _postDzen,

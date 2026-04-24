@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:hakaton_moskova_app/core/media/supabase_playable_url.dart';
 import 'package:hakaton_moskova_app/data/local/archive_publish_scheduler.dart';
 import 'package:hakaton_moskova_app/data/local/meme_local_archive_repository.dart';
 import 'package:hakaton_moskova_app/data/models/supabase_meme_asset_entry.dart';
@@ -86,6 +87,13 @@ class _MemeArchiveScreenState extends State<MemeArchiveScreen> {
   String _formatDateShort(DateTime d) {
     return '${_twoDigits(d.day)}.${_twoDigits(d.month)}.${d.year} · '
         '${_twoDigits(d.hour)}:${_twoDigits(d.minute)}';
+  }
+
+  /// Bulut satırı ile aynı URL’den indirilmiş yerel .mp4 varsa ağ yerine onu kullan.
+  Future<({String entryId, File file})?> _localVideoForCloudAsset(
+    SupabaseMemeAssetEntry v,
+  ) {
+    return _repo.findLocalVideoForCloudFileUrl(v.fileUrl);
   }
 
   String? _localPreview(MemeArchiveEntry e) {
@@ -227,10 +235,46 @@ class _MemeArchiveScreenState extends State<MemeArchiveScreen> {
     SupabaseMemeAssetEntry v,
   ) async {
     if (v.isVideo) {
+      // Aynı video yerelde "kayıtlı"ysa: ağ URL’si bozuksa bile dosyadan oynat.
+      final localTry = await _localVideoForCloudAsset(v);
+      if (localTry != null && await localTry.file.exists()) {
+        if (!context.mounted) {
+          return;
+        }
+        await Navigator.of(context).push<void>(
+          MaterialPageRoute<void>(
+            builder: (_) => ArchiveVideoPlayerScreen(
+              file: localTry.file,
+              title: l10n.tabArchive,
+              caption: v.briefLine,
+              localArchiveId: localTry.entryId,
+            ),
+          ),
+        );
+        return;
+      }
+      final resolved = resolveMemeAssetPlayableUrl(
+        Supabase.instance.client,
+        v.fileUrl,
+        v.storagePath,
+      );
+      final uri = Uri.tryParse(resolved.trim());
+      if (uri == null || !uri.hasScheme || uri.host.isEmpty) {
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(l10n.errNetworkUser)),
+          );
+        }
+        return;
+      }
+      if (!context.mounted) {
+        return;
+      }
       await Navigator.of(context).push<void>(
         MaterialPageRoute<void>(
           builder: (_) => ArchiveVideoPlayerScreen(
-            networkUri: Uri.parse(v.fileUrl),
+            networkUri: uri,
+            storagePath: v.storagePath,
             title: l10n.tabArchive,
             caption: v.briefLine,
             supabaseVersionId: v.id,

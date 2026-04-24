@@ -386,6 +386,12 @@ abstract class AppLocalizations {
   /// **'Paylaş'**
   String get archiveShare;
 
+  /// No description provided for @archiveVideoErrorTitle.
+  ///
+  /// In tr, this message translates to:
+  /// **'Video açılamadı'**
+  String get archiveVideoErrorTitle;
+
   /// No description provided for @archiveShareFailed.
   ///
   /// In tr, this message translates to:
@@ -452,10 +458,52 @@ abstract class AppLocalizations {
   /// **'Önerilen'**
   String get archiveTelegramSuggestedBadge;
 
+  /// No description provided for @archivePlatformNameTelegram.
+  ///
+  /// In tr, this message translates to:
+  /// **'Telegram'**
+  String get archivePlatformNameTelegram;
+
+  /// No description provided for @archivePlatformNameVk.
+  ///
+  /// In tr, this message translates to:
+  /// **'VK'**
+  String get archivePlatformNameVk;
+
+  /// No description provided for @archivePlatformNameDzen.
+  ///
+  /// In tr, this message translates to:
+  /// **'Dzen'**
+  String get archivePlatformNameDzen;
+
+  /// No description provided for @archiveWeRecommendTitle.
+  ///
+  /// In tr, this message translates to:
+  /// **'Size şunu öneriyoruz'**
+  String get archiveWeRecommendTitle;
+
+  /// No description provided for @archiveTelegramRecMatchesThisPost.
+  ///
+  /// In tr, this message translates to:
+  /// **'Bu gönderiyle en uyumlu'**
+  String get archiveTelegramRecMatchesThisPost;
+
+  /// No description provided for @archiveTelegramRecCategoryName.
+  ///
+  /// In tr, this message translates to:
+  /// **'{category} → {name}'**
+  String archiveTelegramRecCategoryName(String category, String name);
+
+  /// No description provided for @archiveTelegramRecFooter.
+  ///
+  /// In tr, this message translates to:
+  /// **'Bu yalnızca Telegram gönderiminin hangi kanala gideceğini seçer; VK / Dzen satırlarından bağımsızdır.'**
+  String get archiveTelegramRecFooter;
+
   /// No description provided for @archivePublishChannelsSubtitle.
   ///
   /// In tr, this message translates to:
-  /// **'Birden fazla kanal işaretleyebilirsiniz.'**
+  /// **'Telegram, VK ve Dzen — en üstteki çipler yalnızca Telegram kanalı içindir.'**
   String get archivePublishChannelsSubtitle;
 
   /// No description provided for @archivePublishSelectAtLeastOneChannel.
@@ -599,7 +647,7 @@ abstract class AppLocalizations {
   /// No description provided for @shareTargetTelegram.
   ///
   /// In tr, this message translates to:
-  /// **'Telegram (kanal)'**
+  /// **'Telegram'**
   String get shareTargetTelegram;
 
   /// No description provided for @shareTargetVk.
@@ -611,7 +659,7 @@ abstract class AppLocalizations {
   /// No description provided for @shareTargetDzen.
   ///
   /// In tr, this message translates to:
-  /// **'Дзен (Dzen) — yalnızca seçim (simülasyon)'**
+  /// **'Дзен'**
   String get shareTargetDzen;
 
   /// No description provided for @shareNoServiceConfigured.
@@ -629,7 +677,7 @@ abstract class AppLocalizations {
   /// No description provided for @dzenPublishSimulated.
   ///
   /// In tr, this message translates to:
-  /// **'Dzen: gönderim yalnızca simüle edildi; gerçek yayı yok.'**
+  /// **'Dzen: paylaşım kaydedildi.'**
   String get dzenPublishSimulated;
 
   /// No description provided for @vkPostDone.

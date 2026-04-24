@@ -2,16 +2,29 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:hakaton_moskova_app/core/config/app_env.dart';
+import 'package:hakaton_moskova_app/core/config/telegram_publish_channel.dart';
 import 'package:hakaton_moskova_app/data/models/meme_brief_list_item.dart';
+import 'package:hakaton_moskova_app/data/publication/telegram_bot_chat_info.dart';
 import 'package:hakaton_moskova_app/domain/publication_port.dart';
 import 'package:http/http.dart' as http;
 
-/// Telegram Bot API ile kanala görsel gönderir (`sendPhoto`).
-/// Bot, hedef kanalda **yönetici** olmalı ve mesaj gönderme yetkisi olmalı.
+/// Telegram Bot API ile kanala görsel gönderir (`sendPhoto` / `sendVideo`).
 class TelegramBotPublicationPort implements PublicationPort {
   TelegramBotPublicationPort();
 
   static const _timeout = Duration(seconds: 45);
+
+  String _botTokenForSend(String rawInput) {
+    final def = AppEnv.telegramPublishBotToken;
+    final d = TelegramPublishChannel.findForChatId(
+      AppEnv.telegramPublishDestinations,
+      rawInput,
+    );
+    if (d == null) {
+      return def;
+    }
+    return d.effectiveBotToken(def);
+  }
 
   @override
   Future<PublicationResult> publishMeme({
@@ -25,9 +38,30 @@ class TelegramBotPublicationPort implements PublicationPort {
     if (!AppEnv.isTelegramPublishConfigured) {
       return const PublicationResult(comingSoon: true);
     }
-    final chatId = (telegramChatId != null && telegramChatId.trim().isNotEmpty)
-        ? telegramChatId.trim()
+    final raw = (telegramChatId != null && telegramChatId.trim().isNotEmpty)
+        ? telegramChatId
         : AppEnv.telegramPublishChannel;
+    final botToken = _botTokenForSend(raw);
+    if (botToken.isEmpty) {
+      return const PublicationResult(
+        comingSoon: false,
+        message: 'No Telegram bot token (check .env).',
+      );
+    }
+    final resolved = await resolveTelegramIdForSend(raw, botToken: botToken);
+    if (resolved.abortWithMessage != null) {
+      return PublicationResult(
+        comingSoon: false,
+        message: resolved.abortWithMessage,
+      );
+    }
+    final effectiveId = resolved.idForApi;
+    if (effectiveId.isEmpty) {
+      return const PublicationResult(
+        comingSoon: false,
+        message: 'No chat_id for Telegram send.',
+      );
+    }
     final caption = (captionOverride?.trim().isNotEmpty == true
             ? captionOverride!.trim()
             : (brief?.displayLine ?? '').trim());
@@ -36,7 +70,8 @@ class TelegramBotPublicationPort implements PublicationPort {
         localFile,
         isVideo: isVideo,
         caption: caption,
-        chatId: chatId,
+        chatId: effectiveId,
+        botToken: botToken,
       );
     }
     final photo = imageUrl?.trim() ?? '';
@@ -46,10 +81,9 @@ class TelegramBotPublicationPort implements PublicationPort {
         message: 'No image URL to publish.',
       );
     }
-    final token = AppEnv.telegramPublishBotToken;
-    final uri = Uri.parse('https://api.telegram.org/bot$token/sendPhoto');
+    final uri = Uri.parse('https://api.telegram.org/bot$botToken/sendPhoto');
     final body = <String, String>{
-      'chat_id': chatId,
+      'chat_id': effectiveId,
       'photo': photo,
       if (caption.isNotEmpty)
         'caption': caption.length > 1024 ? caption.substring(0, 1024) : caption,
@@ -77,11 +111,11 @@ class TelegramBotPublicationPort implements PublicationPort {
     required bool isVideo,
     required String caption,
     required String chatId,
+    required String botToken,
   }) async {
-    final token = AppEnv.telegramPublishBotToken;
     final method = isVideo ? 'sendVideo' : 'sendPhoto';
     final field = isVideo ? 'video' : 'photo';
-    final uri = Uri.parse('https://api.telegram.org/bot$token/$method');
+    final uri = Uri.parse('https://api.telegram.org/bot$botToken/$method');
     try {
       final request = http.MultipartRequest('POST', uri)
         ..fields['chat_id'] = chatId;
@@ -108,7 +142,6 @@ class TelegramBotPublicationPort implements PublicationPort {
     }
   }
 
-  /// sendPhoto / sendVideo cevabından mesaj id ve (varsa) izlenmeyi okur.
   static PublicationResult _parseOk(Map<String, dynamic> decoded) {
     final r = decoded['result'];
     if (r is! Map) {

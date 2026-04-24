@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:hakaton_moskova_app/core/media/supabase_playable_url.dart';
 import 'package:hakaton_moskova_app/data/local/meme_local_archive_repository.dart';
 import 'package:hakaton_moskova_app/data/local/telegram_published_log.dart';
 import 'package:hakaton_moskova_app/data/models/supabase_meme_asset_entry.dart';
@@ -9,6 +10,7 @@ import 'package:hakaton_moskova_app/presentation/screens/archive_video_player_sc
 import 'package:hakaton_moskova_app/presentation/screens/publication_detail_screen.dart';
 import 'package:hakaton_moskova_app/presentation/theme/memeops_design_tokens.dart';
 import 'package:hakaton_moskova_app/presentation/theme/memeops_theme.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 /// Arşiv satırı → kanal metrikleri varsa [PublicationDetailScreen], yoksa önizleme.
 class ArchiveItemAnalysisScreen extends StatefulWidget {
@@ -167,24 +169,18 @@ class _CloudPreview extends StatelessWidget {
   Widget build(BuildContext context) {
     if (isVideo) {
       return _OpenPlayerButton(
-        onPressed: () {
-          Navigator.of(context).push<void>(
-            MaterialPageRoute<void>(
-              builder: (_) => ArchiveVideoPlayerScreen(
-                networkUri: Uri.parse(c.fileUrl),
-                title: AppLocalizations.of(context).tabArchive,
-                caption: c.briefLine,
-                supabaseVersionId: c.id,
-              ),
-            ),
-          );
-        },
+        onPressed: () => _openCloudArchiveVideo(context, c),
       );
     }
+    final playUrl = resolveMemeAssetPlayableUrl(
+      Supabase.instance.client,
+      c.fileUrl,
+      c.storagePath,
+    );
     return ClipRRect(
       borderRadius: BorderRadius.circular(MemeopsRadii.md),
       child: Image.network(
-        c.fileUrl,
+        playUrl,
         fit: BoxFit.contain,
         loadingBuilder: (c, w, p) {
           if (p == null) {
@@ -200,6 +196,57 @@ class _CloudPreview extends StatelessWidget {
       ),
     );
   }
+}
+
+Future<void> _openCloudArchiveVideo(
+  BuildContext context,
+  SupabaseMemeAssetEntry c,
+) async {
+  final l10n = AppLocalizations.of(context);
+  final repo = MemeLocalArchiveRepository.instance;
+  final local = await repo.findLocalVideoForCloudFileUrl(c.fileUrl);
+  if (local != null && await local.file.exists()) {
+    if (!context.mounted) {
+      return;
+    }
+    await Navigator.of(context).push<void>(
+      MaterialPageRoute<void>(
+        builder: (_) => ArchiveVideoPlayerScreen(
+          file: local.file,
+          title: l10n.tabArchive,
+          caption: c.briefLine,
+          localArchiveId: local.entryId,
+        ),
+      ),
+    );
+    return;
+  }
+  final client = Supabase.instance.client;
+  final resolved = resolveMemeAssetPlayableUrl(client, c.fileUrl, c.storagePath);
+  final u = Uri.tryParse(resolved.trim());
+  if (u == null || !u.hasScheme || u.host.isEmpty) {
+    if (context.mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(l10n.errNetworkUser)),
+      );
+    }
+    return;
+  }
+  if (!context.mounted) {
+    return;
+  }
+  await Navigator.of(context).push<void>(
+    MaterialPageRoute<void>(
+      builder: (_) => ArchiveVideoPlayerScreen(
+        networkUri: u,
+        storagePath: c.storagePath,
+        title: l10n.tabArchive,
+        caption: c.briefLine,
+        supabaseVersionId: c.id,
+        sourceMemeBriefId: c.sourceMemeBriefId,
+      ),
+    ),
+  );
 }
 
 class _OpenPlayerButton extends StatelessWidget {

@@ -48,6 +48,7 @@
   "archiveEmpty": "Пока нет сохранённых изображений.\nСоздайте мем во вкладке «Профессия» или «Telegram».",
   "archiveFileMissing": "Файл не найден (возможно удалён).",
   "archiveShare": "Поделиться",
+  "archiveVideoErrorTitle": "Видео не воспроизводится",
   "archiveShareFailed": "Не удалось открыть меню шаринга.",
   "archiveShareFailedWithError": "Публикация: {error}",
   "@archiveShareFailedWithError": {
@@ -69,7 +70,20 @@
     }
   },
   "archiveTelegramSuggestedBadge": "Советуем",
-  "archivePublishChannelsSubtitle": "Можно отметить несколько каналов.",
+  "archivePlatformNameTelegram": "Telegram",
+  "archivePlatformNameVk": "VK",
+  "archivePlatformNameDzen": "Дзен",
+  "archiveWeRecommendTitle": "Рекомендации для вас",
+  "archiveTelegramRecMatchesThisPost": "Лучше всего под это сообщение",
+  "archiveTelegramRecCategoryName": "{category} → {name}",
+  "@archiveTelegramRecCategoryName": {
+    "placeholders": {
+      "category": {"type": "String"},
+      "name": {"type": "String"}
+    }
+  },
+  "archiveTelegramRecFooter": "Это только направление для Telegram. VK / Дзен снизу — отдельно.",
+  "archivePublishChannelsSubtitle": "Три цели: Telegram, VK, Дзен. Вверху — варианты канала для Telegram.",
   "archivePublishSelectAtLeastOneChannel": "Выберите хотя бы один канал.",
   "archivePublishWhenHeading": "Когда отправить",
   "archivePublishWhenNow": "Сразу",
@@ -98,12 +112,12 @@
   "publicationDone": "Готово",
   "shareTargetTitle": "Куда опубликовать?",
   "shareTargetSubtitle": "Выберите сервис; сеть уйдёт только на эту публикацию.",
-  "shareTargetTelegram": "Telegram (канал)",
+  "shareTargetTelegram": "Telegram",
   "shareTargetVk": "ВКонтакте (стена группы)",
-  "shareTargetDzen": "Дзен (только выбор, имитация)",
+  "shareTargetDzen": "Дзен",
   "shareNoServiceConfigured": "В .env нужны TELEGRAM_PUBLISH_* или VK_ACCESS_TOKEN + VK_GROUP_ID; Дзен также всегда доступен (имитация).",
   "archivePublishNoTgVkDzenOnly": "Telegram и VK в .env не настроены. Можно выбрать Дзен (имитация).",
-  "dzenPublishSimulated": "Дзен: публикация только имитирована, реального поста нет.",
+  "dzenPublishSimulated": "Дзен: публикация учтена.",
   "vkPostDone": "Опубликовано в VK.",
   "vkPostFailed": "Публикация в VK не удалась.",
   "vkPostNeedUserToken": "VK: community token не подходит для загрузки. Добавь OAuth пользователя в .env: VK_USER_ACCESS_TOKEN= (права: wall, photos, video, groups, offline). Скрипт: ./setup_vk_user_token.sh",

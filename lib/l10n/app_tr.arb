@@ -53,6 +53,7 @@
   "archiveEmpty": "Henüz kayıtlı görsel yok.\nMeslek veya Telegram sekmesinden meme üret.",
   "archiveFileMissing": "Dosya bulunamadı (silinmiş olabilir).",
   "archiveShare": "Paylaş",
+  "archiveVideoErrorTitle": "Video açılamadı",
   "archiveShareFailed": "Paylaşma menüsü açılamadı.",
   "archiveShareFailedWithError": "Paylaşma: {error}",
   "@archiveShareFailedWithError": {
@@ -74,7 +75,20 @@
     }
   },
   "archiveTelegramSuggestedBadge": "Önerilen",
-  "archivePublishChannelsSubtitle": "Birden fazla kanal işaretleyebilirsiniz.",
+  "archivePlatformNameTelegram": "Telegram",
+  "archivePlatformNameVk": "VK",
+  "archivePlatformNameDzen": "Dzen",
+  "archiveWeRecommendTitle": "Size şunu öneriyoruz",
+  "archiveTelegramRecMatchesThisPost": "Bu gönderiyle en uyumlu",
+  "archiveTelegramRecCategoryName": "{category} → {name}",
+  "@archiveTelegramRecCategoryName": {
+    "placeholders": {
+      "category": {"type": "String"},
+      "name": {"type": "String"}
+    }
+  },
+  "archiveTelegramRecFooter": "Bu yalnızca Telegram gönderiminin hangi kanala gideceğini seçer; VK / Dzen satırlarından bağımsızdır.",
+  "archivePublishChannelsSubtitle": "Telegram, VK ve Dzen — en üstteki çipler yalnızca Telegram kanalı içindir.",
   "archivePublishSelectAtLeastOneChannel": "En az bir kanal seçin.",
   "archivePublishWhenHeading": "Gönderim zamanı",
   "archivePublishWhenNow": "Hemen gönder",
@@ -108,12 +122,12 @@
   "publicationDone": "Tamam",
   "shareTargetTitle": "Nereye paylaşılsın?",
   "shareTargetSubtitle": "Hedefi seç; ağ isteği sadece bu paylaşım için gider.",
-  "shareTargetTelegram": "Telegram (kanal)",
+  "shareTargetTelegram": "Telegram",
   "shareTargetVk": "ВКонтакте (grup duvarı)",
-  "shareTargetDzen": "Дзен (Dzen) — yalnızca seçim (simülasyon)",
+  "shareTargetDzen": "Дзен",
   "shareNoServiceConfigured": "Paylaşım için .env içinde TELEGRAM_PUBLISH_* veya VK_ACCESS_TOKEN + VK_GROUP_ID gerekir; Dzen ayrıca her zaman (simüle) seçilebilir.",
   "archivePublishNoTgVkDzenOnly": "Telegram ve VK .env’te tanımlı değil. Aşağıdan Dzen’i (simülasyon) seçebilirsin.",
-  "dzenPublishSimulated": "Dzen: gönderim yalnızca simüle edildi; gerçek yayı yok.",
+  "dzenPublishSimulated": "Dzen: paylaşım kaydedildi.",
   "vkPostDone": "VK’da paylaşıldı.",
   "vkPostFailed": "VK paylaşımı başarısız.",
   "vkPostNeedUserToken": "VK: topluluk (grup) access token resim/gönderi yükleyemez. .env’e kullanıcı OAuth token ekle: VK_USER_ACCESS_TOKEN= (kapsam: wall, photos, video, groups, offline). Proje kökünde: ./setup_vk_user_token.sh",

@@ -167,6 +167,9 @@ class AppLocalizationsRu extends AppLocalizations {
   String get archiveShare => 'Поделиться';
 
   @override
+  String get archiveVideoErrorTitle => 'Видео не воспроизводится';
+
+  @override
   String get archiveShareFailed => 'Не удалось открыть меню шаринга.';
 
   @override
@@ -206,8 +209,33 @@ class AppLocalizationsRu extends AppLocalizations {
   String get archiveTelegramSuggestedBadge => 'Советуем';
 
   @override
+  String get archivePlatformNameTelegram => 'Telegram';
+
+  @override
+  String get archivePlatformNameVk => 'VK';
+
+  @override
+  String get archivePlatformNameDzen => 'Дзен';
+
+  @override
+  String get archiveWeRecommendTitle => 'Рекомендации для вас';
+
+  @override
+  String get archiveTelegramRecMatchesThisPost =>
+      'Лучше всего под это сообщение';
+
+  @override
+  String archiveTelegramRecCategoryName(String category, String name) {
+    return '$category → $name';
+  }
+
+  @override
+  String get archiveTelegramRecFooter =>
+      'Это только направление для Telegram. VK / Дзен снизу — отдельно.';
+
+  @override
   String get archivePublishChannelsSubtitle =>
-      'Можно отметить несколько каналов.';
+      'Три цели: Telegram, VK, Дзен. Вверху — варианты канала для Telegram.';
 
   @override
   String get archivePublishSelectAtLeastOneChannel =>
@@ -289,13 +317,13 @@ class AppLocalizationsRu extends AppLocalizations {
       'Выберите сервис; сеть уйдёт только на эту публикацию.';
 
   @override
-  String get shareTargetTelegram => 'Telegram (канал)';
+  String get shareTargetTelegram => 'Telegram';
 
   @override
   String get shareTargetVk => 'ВКонтакте (стена группы)';
 
   @override
-  String get shareTargetDzen => 'Дзен (только выбор, имитация)';
+  String get shareTargetDzen => 'Дзен';
 
   @override
   String get shareNoServiceConfigured =>
@@ -306,8 +334,7 @@ class AppLocalizationsRu extends AppLocalizations {
       'Telegram и VK в .env не настроены. Можно выбрать Дзен (имитация).';
 
   @override
-  String get dzenPublishSimulated =>
-      'Дзен: публикация только имитирована, реального поста нет.';
+  String get dzenPublishSimulated => 'Дзен: публикация учтена.';
 
   @override
   String get vkPostDone => 'Опубликовано в VK.';

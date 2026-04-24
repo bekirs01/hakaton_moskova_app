@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:hakaton_moskova_app/core/config/telegram_publish_channel.dart';
+import 'package:hakaton_moskova_app/data/publication/telegram_chat_id.dart';
 
 /// Public configuration only. Never log key material.
 class AppEnv {
@@ -64,16 +65,29 @@ class AppEnv {
   }
 
   /// @BotFather bot token — yalnızca kanala paylaşım için; repoya yazmayın.
+  /// [TELEGRAM_PUBLISH_BOT_TOKEN] yoksa [TELEGRAM_BOT_TOKEN] kullanılır.
   static String get telegramPublishBotToken {
     const fromDefine = String.fromEnvironment('TELEGRAM_PUBLISH_BOT_TOKEN');
-    if (fromDefine.isNotEmpty) return fromDefine.trim();
-    return _envLine('TELEGRAM_PUBLISH_BOT_TOKEN');
+    if (fromDefine.isNotEmpty) {
+      return fromDefine.trim();
+    }
+    final w = _envLine('TELEGRAM_PUBLISH_BOT_TOKEN');
+    if (w.isNotEmpty) {
+      return w;
+    }
+    return _envLine('TELEGRAM_BOT_TOKEN');
   }
 
   static String _telegramPublishChannelSingleRaw() {
     const fromDefine = String.fromEnvironment('TELEGRAM_PUBLISH_CHANNEL');
-    if (fromDefine.isNotEmpty) return fromDefine.trim();
-    return _envLine('TELEGRAM_PUBLISH_CHANNEL');
+    if (fromDefine.isNotEmpty) {
+      return fromDefine.trim();
+    }
+    final a = _envLine('TELEGRAM_PUBLISH_CHANNEL');
+    if (a.isNotEmpty) {
+      return a;
+    }
+    return _envLine('TELEGRAM_CHANNEL_ID');
   }
 
   /// Birden fazla hedef: [.env] `TELEGRAM_PUBLISH_CHANNELS_JSON` (tek satır JSON dizi).
@@ -90,9 +104,10 @@ class AppEnv {
     }
     return [
       TelegramPublishChannel(
-        chatId: single,
+        chatId: TelegramChatId.normalizeForApi(single),
         label: 'Telegram',
         keywords: const [],
+        uiName: 'Telegram',
       ),
     ];
   }
@@ -103,9 +118,22 @@ class AppEnv {
     return d.isEmpty ? '' : d.first.chatId;
   }
 
-  static bool get isTelegramPublishConfigured =>
-      telegramPublishBotToken.isNotEmpty &&
-      telegramPublishDestinations.isNotEmpty;
+  /// En az bir token: genel [TELEGRAM_PUBLISH_BOT_TOKEN] veya her satırda [bot_token].
+  static bool get isTelegramPublishConfigured {
+    final d = telegramPublishDestinations;
+    if (d.isEmpty) {
+      return false;
+    }
+    if (telegramPublishBotToken.isNotEmpty) {
+      return true;
+    }
+    for (final c in d) {
+      if (c.botToken == null || c.botToken!.trim().isEmpty) {
+        return false;
+      }
+    }
+    return true;
+  }
 
   /// OAuth istemci id (yalnızca `setup_vk_user_token.sh` / dokümantasyon; API çağrılarında kullanılmaz).
   static String get vkAppId {

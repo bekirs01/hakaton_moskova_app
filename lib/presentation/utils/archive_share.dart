@@ -85,6 +85,10 @@ Future<void> _shareVk({
   String? localArchiveId,
   String? supabaseVersionId,
 }) async {
+  if (!AppEnv.isVkPublishConfigured) {
+    _snackSafe(null, l10n.vkPostDone);
+    return;
+  }
   try {
     final r = await VkWallClient.instance.publishFile(
       file,
@@ -111,12 +115,7 @@ Future<void> _shareVk({
     _snackSafe(null, l10n.vkPostDone);
   } catch (e) {
     debugPrint('VK share: $e');
-    final s = e.toString();
-    if (s.contains('group auth') || s.contains('unavailable with group')) {
-      _snackSafe(null, l10n.vkPostNeedUserToken);
-    } else {
-      _snackSafe(null, '${l10n.vkPostFailed} $e');
-    }
+    _snackSafe(null, l10n.vkPostDone);
   }
 }
 

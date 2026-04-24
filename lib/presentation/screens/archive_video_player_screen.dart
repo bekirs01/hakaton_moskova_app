@@ -1,11 +1,14 @@
 import 'dart:io';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:hakaton_moskova_app/data/local/meme_local_archive_repository.dart';
 import 'package:hakaton_moskova_app/l10n/app_localizations.dart';
 import 'package:hakaton_moskova_app/presentation/theme/memeops_design_tokens.dart';
 import 'package:hakaton_moskova_app/presentation/theme/memeops_theme.dart';
 import 'package:hakaton_moskova_app/presentation/widgets/archive_detail_publish_section.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:video_player/video_player.dart';
 
 /// Arşivden yerel .mp4 veya Supabase’deki public video URL’ini tam ekran oynatır.
@@ -14,6 +17,7 @@ class ArchiveVideoPlayerScreen extends StatefulWidget {
     super.key,
     this.file,
     this.networkUri,
+    this.storagePath,
     required this.title,
     this.caption,
     this.localArchiveId,
@@ -26,6 +30,9 @@ class ArchiveVideoPlayerScreen extends StatefulWidget {
 
   final File? file;
   final Uri? networkUri;
+
+  /// Ağ oynatma başarısız olursa (veya public URL bozuksa) imzalı URL denemesi için.
+  final String? storagePath;
   final String title;
   final String? caption;
   final String? localArchiveId;
@@ -41,7 +48,7 @@ class _ArchiveVideoPlayerScreenState extends State<ArchiveVideoPlayerScreen> {
   final _publishKey = GlobalKey<ArchiveDetailPublishSectionState>();
   VideoPlayerController? _controller;
   bool _ready = false;
-  String? _error;
+  Object? _playError;
 
   @override
   void initState() {
@@ -51,12 +58,34 @@ class _ArchiveVideoPlayerScreenState extends State<ArchiveVideoPlayerScreen> {
 
   Future<void> _init() async {
     try {
-      final VideoPlayerController c;
       if (widget.file != null) {
-        c = VideoPlayerController.file(widget.file!);
-      } else {
-        c = VideoPlayerController.networkUrl(widget.networkUri!);
+        final c = VideoPlayerController.file(widget.file!);
+        await c.initialize();
+        if (!mounted) {
+          await c.dispose();
+          return;
+        }
+        c.setLooping(true);
+        c.play();
+        setState(() {
+          _controller = c;
+          _ready = true;
+        });
+        return;
       }
+      await _playNetworkUri(widget.networkUri!);
+    } catch (e, st) {
+      debugPrint('ArchiveVideoPlayerScreen init: $e\n$st');
+      if (!mounted) {
+        return;
+      }
+      setState(() => _playError = e);
+    }
+  }
+
+  Future<void> _playNetworkUri(Uri uri) async {
+    try {
+      final c = VideoPlayerController.networkUrl(uri);
       await c.initialize();
       if (!mounted) {
         await c.dispose();
@@ -69,9 +98,45 @@ class _ArchiveVideoPlayerScreenState extends State<ArchiveVideoPlayerScreen> {
         _ready = true;
       });
     } catch (e) {
-      if (!mounted) return;
-      setState(() => _error = e.toString());
+      final sp = widget.storagePath?.trim();
+      if (sp != null && sp.isNotEmpty && Supabase.instance.client.auth.currentSession != null) {
+        try {
+          final signed = await Supabase.instance.client.storage
+              .from('meme-assets')
+              .createSignedUrl(sp, 60 * 30);
+          final c2 = VideoPlayerController.networkUrl(Uri.parse(signed));
+          await c2.initialize();
+          if (!mounted) {
+            await c2.dispose();
+            return;
+          }
+          c2.setLooping(true);
+          c2.play();
+          setState(() {
+            _controller = c2;
+            _ready = true;
+          });
+          return;
+        } catch (e2, st2) {
+          debugPrint('ArchiveVideoPlayer signed URL fallback: $e2\n$st2');
+        }
+      }
+      rethrow;
     }
+  }
+
+  String _userFacingError(AppLocalizations l10n) {
+    final e = _playError;
+    if (e is PlatformException) {
+      final m = '${e.message ?? ''} ${e.details ?? ''}'.toLowerCase();
+      if (m.contains('hostname') ||
+          m.contains('could not be found') ||
+          m.contains('network') ||
+          m.contains('-1003')) {
+        return l10n.errNetworkUser;
+      }
+    }
+    return l10n.errNetworkUser;
   }
 
   @override
@@ -114,15 +179,44 @@ class _ArchiveVideoPlayerScreenState extends State<ArchiveVideoPlayerScreen> {
               aspectRatio: _controller?.value.isInitialized == true
                   ? _controller!.value.aspectRatio
                   : 9 / 16,
-              child: _error != null
+              child: _playError != null
                   ? Container(
                       color: Colors.black,
                       alignment: Alignment.center,
                       padding: const EdgeInsets.all(24),
-                      child: Text(
-                        'Video oynatılamadı: $_error',
-                        style: const TextStyle(color: Colors.white70),
-                        textAlign: TextAlign.center,
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(
+                            l10n.archiveVideoErrorTitle,
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 16,
+                              fontWeight: FontWeight.w600,
+                            ),
+                            textAlign: TextAlign.center,
+                          ),
+                          const SizedBox(height: 10),
+                          Text(
+                            _userFacingError(l10n),
+                            style: const TextStyle(
+                              color: Colors.white70,
+                              height: 1.35,
+                            ),
+                            textAlign: TextAlign.center,
+                          ),
+                          if (kDebugMode) ...[
+                            const SizedBox(height: 12),
+                            Text(
+                              _playError.toString(),
+                              style: const TextStyle(
+                                color: Colors.white38,
+                                fontSize: 11,
+                              ),
+                              textAlign: TextAlign.center,
+                            ),
+                          ],
+                        ],
                       ),
                     )
                   : !_ready || _controller == null
